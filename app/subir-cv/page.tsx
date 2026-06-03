@@ -1,36 +1,60 @@
+"use client";
+
+import { useState } from "react";
+
 export default function SubirCVPage() {
+  const [archivo, setArchivo] = useState<File | null>(null);
+  const [mensaje, setMensaje] = useState("");
+
+  const manejarArchivo = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    if (event.target.files && event.target.files.length > 0) {
+      setArchivo(event.target.files[0]);
+      setMensaje("");
+    }
+  };
+
+  const subirCV = () => {
+    if (!archivo) {
+      setMensaje("Por favor selecciona un archivo.");
+      return;
+    }
+
+    setMensaje(`CV seleccionado: ${archivo.name}`);
+  };
+
   return (
-    <main className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      
-      <div className="w-full max-w-2xl bg-white rounded-2xl shadow-lg p-8 border border-gray-200">
-        
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          Subir Currículum
+    <main className="min-h-screen bg-gray-100 p-10">
+      <div className="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow">
+        <h1 className="text-4xl font-bold mb-4">
+          Subir CV
         </h1>
 
         <p className="text-gray-600 mb-6">
-          Carga tu CV para aplicar a vacantes internacionales en minería, agricultura y construcción.
+          Carga tu currículum para futuras aplicaciones laborales.
         </p>
 
-        <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center bg-gray-50 hover:bg-gray-100 transition">
-          
-          <input
-            type="file"
-            className="w-full text-gray-700"
-          />
+        <input
+          type="file"
+          accept=".pdf,.doc,.docx"
+          onChange={manejarArchivo}
+          className="mb-4 block w-full"
+        />
 
-          <p className="text-sm text-gray-500 mt-3">
-            Formatos aceptados: PDF, DOCX
-          </p>
-
-        </div>
-
-        <button className="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition">
-          Enviar CV
+        <button
+          onClick={subirCV}
+          className="bg-blue-600 text-white px-6 py-3 rounded-lg"
+        >
+          Subir CV
         </button>
 
+        {mensaje && (
+          <p className="mt-4 font-medium">
+            {mensaje}
+          </p>
+        )}
       </div>
-
     </main>
   );
 }
