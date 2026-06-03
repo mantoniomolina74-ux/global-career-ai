@@ -11,6 +11,7 @@ export default function Home() {
             <a href="/">Inicio</a>
             <a href="/empleos">Empleos</a>
             <a href="/subir-cv">Subir CV</a>
+            <a href="/registro">Registro</a>
           </div>
         </div>
       </nav>
@@ -20,10 +21,25 @@ export default function Home() {
           Global Career AI
         </h1>
 
-        <p className="text-xl">
-          Plataforma internacional de empleo para minería,
-          agricultura, construcción y petróleo.
+        <p className="text-xl text-gray-600 mb-8">
+          Encuentra oportunidades laborales internacionales con ayuda de inteligencia artificial.
         </p>
+
+        <div className="flex justify-center gap-4">
+          <a
+            href="/empleos"
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg"
+          >
+            Ver Empleos
+          </a>
+
+          <a
+            href="/subir-cv"
+            className="bg-white border border-gray-300 px-6 py-3 rounded-lg"
+          >
+            Subir CV
+          </a>
+        </div>
       </section>
     </main>
   );
