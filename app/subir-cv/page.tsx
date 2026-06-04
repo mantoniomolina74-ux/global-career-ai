@@ -1,56 +1,64 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-export default function SubirCVPage() {
+export default function SubirCV() {
+  const [autorizado, setAutorizado] = useState(false);
+  const [nombre, setNombre] = useState("");
   const [archivo, setArchivo] = useState<File | null>(null);
   const [mensaje, setMensaje] = useState("");
 
-  const manejarArchivo = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    if (event.target.files && event.target.files.length > 0) {
-      setArchivo(event.target.files[0]);
-      setMensaje("");
+  useEffect(() => {
+    const session = localStorage.getItem("session");
+
+    if (session === "active") {
+      setAutorizado(true);
+    } else {
+      window.location.href = "/login";
     }
-  };
+  }, []);
 
   const subirCV = () => {
-    if (!archivo) {
-      setMensaje("Por favor selecciona un archivo.");
+    if (!nombre || !archivo) {
+      setMensaje("Completa todos los campos");
       return;
     }
 
-    setMensaje(`CV seleccionado: ${archivo.name}`);
+    setMensaje("CV subido correctamente (simulado)");
   };
 
+  if (!autorizado) {
+    return null;
+  }
+
   return (
-    <main className="min-h-screen bg-gray-100 p-10">
-      <div className="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow">
-        <h1 className="text-4xl font-bold mb-4">
+    <main className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="bg-white p-8 rounded-xl shadow w-full max-w-md">
+        <h1 className="text-3xl font-bold mb-6">
           Subir CV
         </h1>
 
-        <p className="text-gray-600 mb-6">
-          Carga tu currículum para futuras aplicaciones laborales.
-        </p>
+        <input
+          className="w-full mb-3 p-2 border rounded"
+          placeholder="Nombre completo"
+          onChange={(e) => setNombre(e.target.value)}
+        />
 
         <input
           type="file"
-          accept=".pdf,.doc,.docx"
-          onChange={manejarArchivo}
-          className="mb-4 block w-full"
+          className="w-full mb-3"
+          onChange={(e) => setArchivo(e.target.files?.[0] || null)}
         />
 
         <button
           onClick={subirCV}
-          className="bg-blue-600 text-white px-6 py-3 rounded-lg"
+          className="bg-green-600 text-white w-full py-2 rounded"
         >
           Subir CV
         </button>
 
         {mensaje && (
-          <p className="mt-4 font-medium">
+          <p className="mt-4 text-center font-medium">
             {mensaje}
           </p>
         )}
