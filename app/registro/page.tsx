@@ -1,56 +1,142 @@
 "use client";
 
 import { useState } from "react";
+import { supabase } from "@/lib/supabase";
 
-export default function LoginPage() {
+export default function RegistroPage() {
+  const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmarPassword, setConfirmarPassword] = useState("");
   const [mensaje, setMensaje] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const login = () => {
-    const user = JSON.parse(localStorage.getItem("user") || "null");
-
-    if (!user) {
-      setMensaje("No hay usuario registrado");
+  const registrar = async () => {
+    if (!nombre || !email || !password || !confirmarPassword) {
+      setMensaje("Completa todos los campos");
       return;
     }
 
-    if (user.email === email && user.password === password) {
-      setMensaje("Login exitoso");
-      localStorage.setItem("session", "active");
-    } else {
-      setMensaje("Credenciales incorrectas");
+    if (password !== confirmarPassword) {
+      setMensaje("Las contraseñas no coinciden");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            nombre,
+          },
+        },
+      });
+
+      if (error) {
+        setMensaje(error.message);
+        return;
+      }
+
+      setMensaje("Cuenta creada correctamente");
+
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 2000);
+    } catch (err) {
+      console.error(err);
+      setMensaje("Error al crear la cuenta");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <main className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-xl shadow w-full max-w-md">
-        <h1 className="text-3xl font-bold mb-6">Login</h1>
+    <main className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
+      <div className="bg-white shadow-2xl rounded-2xl p-10 w-full max-w-md border border-slate-200">
 
-        <input
-          className="w-full mb-3 p-2 border rounded"
-          placeholder="Email"
-          onChange={(e) => setEmail(e.target.value)}
-        />
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-extrabold text-slate-900">
+            Global Career AI
+          </h1>
 
-        <input
-          type="password"
-          className="w-full mb-3 p-2 border rounded"
-          placeholder="Password"
-          onChange={(e) => setPassword(e.target.value)}
-        />
+          <p className="text-slate-600 mt-2">
+            Crea tu cuenta y accede a oportunidades internacionales
+          </p>
+        </div>
+
+        <div className="mb-4">
+          <label className="block mb-2 font-medium text-slate-700">
+            Nombre completo
+          </label>
+
+          <input
+            type="text"
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            placeholder="Tu nombre completo"
+            className="w-full p-3 border border-slate-300 rounded-lg text-slate-900"
+          />
+        </div>
+
+        <div className="mb-4">
+          <label className="block mb-2 font-medium text-slate-700">
+            Correo electrónico
+          </label>
+
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="correo@ejemplo.com"
+            className="w-full p-3 border border-slate-300 rounded-lg text-slate-900"
+          />
+        </div>
+
+        <div className="mb-4">
+          <label className="block mb-2 font-medium text-slate-700">
+            Contraseña
+          </label>
+
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="********"
+            className="w-full p-3 border border-slate-300 rounded-lg text-slate-900"
+          />
+        </div>
+
+        <div className="mb-6">
+          <label className="block mb-2 font-medium text-slate-700">
+            Confirmar contraseña
+          </label>
+
+          <input
+            type="password"
+            value={confirmarPassword}
+            onChange={(e) => setConfirmarPassword(e.target.value)}
+            placeholder="********"
+            className="w-full p-3 border border-slate-300 rounded-lg text-slate-900"
+          />
+        </div>
 
         <button
-          onClick={login}
-          className="bg-blue-600 text-white w-full py-2 rounded"
+          onClick={registrar}
+          disabled={loading}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold transition"
         >
-          Iniciar sesión
+          {loading ? "Creando cuenta..." : "Crear Cuenta"}
         </button>
 
         {mensaje && (
-          <p className="mt-4 text-center">{mensaje}</p>
+          <div className="mt-5 text-center font-semibold text-slate-800">
+            {mensaje}
+          </div>
         )}
+
       </div>
     </main>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -10,75 +11,78 @@ export default function LoginPage() {
 
   useEffect(() => {
     setMounted(true);
-
-    // Usuario de prueba automático
-    const existingUser = localStorage.getItem("user");
-
-    if (!existingUser) {
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          email: "test@test.com",
-          password: "1234",
-        })
-      );
-    }
   }, []);
 
-  const login = () => {
-    const user = JSON.parse(localStorage.getItem("user") || "null");
+  const login = async () => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-    if (!user) {
-      setMensaje("No hay usuario registrado");
-      return;
-    }
+    if (error) {
+  console.log(error);
+  setMensaje(error.message);
+  return;
+}
 
-    if (user.email === email && user.password === password) {
-      localStorage.setItem("session", "active");
-      setMensaje("Login exitoso");
+    setMensaje("Inicio de sesión exitoso");
 
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 1000);
-    } else {
-      setMensaje("Credenciales incorrectas");
-    }
+    setTimeout(() => {
+      window.location.href = "/dashboard";
+    }, 1000);
   };
 
   if (!mounted) return null;
 
   return (
-    <main className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-xl shadow w-full max-w-md">
-        <h1 className="text-3xl font-bold mb-6">
-          Login
+    <main className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
+      <div className="bg-white shadow-2xl rounded-2xl p-10 w-full max-w-md border border-slate-200">
+
+        <h1 className="text-3xl font-bold text-center mb-6">
+          Iniciar sesión
         </h1>
 
-        <input
-          type="email"
-          placeholder="Email"
-          className="w-full mb-3 p-2 border rounded"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+        {/* EMAIL */}
+        <div className="mb-4">
+          <label className="block mb-2 font-medium text-slate-700">
+            Correo electrónico
+          </label>
 
-        <input
-          type="password"
-          placeholder="Password"
-          className="w-full mb-3 p-2 border rounded"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="correo@ejemplo.com"
+            className="w-full p-3 border border-slate-300 rounded-lg text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
 
+        {/* PASSWORD */}
+        <div className="mb-6">
+          <label className="block mb-2 font-medium text-slate-700">
+            Contraseña
+          </label>
+
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="********"
+            className="w-full p-3 border border-slate-300 rounded-lg text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        {/* BOTÓN */}
         <button
           onClick={login}
-          className="bg-blue-600 text-white w-full py-2 rounded"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold transition"
         >
           Iniciar sesión
         </button>
 
+        {/* MENSAJE */}
         {mensaje && (
-          <p className="mt-4 text-center font-medium">
+          <p className="mt-4 text-center font-semibold text-slate-700">
             {mensaje}
           </p>
         )}

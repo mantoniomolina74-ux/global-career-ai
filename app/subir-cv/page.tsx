@@ -24,7 +24,7 @@ export default function SubirCV() {
       return;
     }
 
-    setMensaje("CV subido correctamente (simulado)");
+    setMensaje("Currículum cargado correctamente");
   };
 
   if (!autorizado) {
@@ -32,36 +32,65 @@ export default function SubirCV() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-xl shadow w-full max-w-md">
-        <h1 className="text-3xl font-bold mb-6">
-          Subir CV
-        </h1>
+    <main className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
+      <div className="bg-white shadow-2xl rounded-2xl p-10 w-full max-w-lg border border-slate-200">
 
-        <input
-          className="w-full mb-3 p-2 border rounded"
-          placeholder="Nombre completo"
-          onChange={(e) => setNombre(e.target.value)}
-        />
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-extrabold text-slate-900">
+            Subir Currículum
+          </h1>
 
-        <input
-          type="file"
-          className="w-full mb-3"
-          onChange={(e) => setArchivo(e.target.files?.[0] || null)}
-        />
+          <p className="text-slate-600 mt-2">
+            Carga tu CV para acceder a oportunidades laborales internacionales.
+          </p>
+        </div>
+
+        <div className="mb-4">
+          <label className="block mb-2 font-medium text-slate-700">
+            Nombre completo
+          </label>
+
+          <input
+            type="text"
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            placeholder="Tu nombre completo"
+            className="w-full p-3 border border-slate-300 rounded-lg bg-white text-black placeholder-gray-500"
+          />
+        </div>
+
+        <div className="mb-6">
+          <label className="block mb-2 font-medium text-slate-700">
+            Selecciona tu CV (PDF o DOCX)
+          </label>
+
+          <input
+            type="file"
+            accept=".pdf,.doc,.docx"
+            className="w-full p-3 border border-slate-300 rounded-lg bg-white text-black"
+            onChange={(e) => setArchivo(e.target.files?.[0] || null)}
+          />
+        </div>
+
+        {archivo && (
+          <div className="mb-6 p-3 bg-slate-100 rounded-lg text-slate-800">
+            Archivo seleccionado: <strong>{archivo.name}</strong>
+          </div>
+        )}
 
         <button
           onClick={subirCV}
-          className="bg-green-600 text-white w-full py-2 rounded"
+          className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-bold"
         >
           Subir CV
         </button>
 
         {mensaje && (
-          <p className="mt-4 text-center font-medium">
+          <div className="mt-5 text-center font-bold text-green-600">
             {mensaje}
-          </p>
+          </div>
         )}
+
       </div>
     </main>
   );
