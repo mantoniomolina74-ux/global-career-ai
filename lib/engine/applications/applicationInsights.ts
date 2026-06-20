@@ -20,6 +20,7 @@ export interface Application {
 
 export interface ApplicationInsights {
   totalApplications: number;
+
   interviewRate: number;
   offerRate: number;
   successRate: number;
@@ -27,63 +28,82 @@ export interface ApplicationInsights {
   statusBreakdown: Record<string, number>;
   countryBreakdown: Record<string, number>;
   industryBreakdown: Record<string, number>;
-  sourceBreakdown: Record<string, number>;
-  jobTypeBreakdown: Record<string, number>;
 
   avgSalary?: number;
 
   recommendations: string[];
   weakPoints: string[];
 
+  applicationIntelligence: Record<
+    string,
+    {
+      score: number;
+      probabilityOfHire: number;
+      momentum: number;
+      riskLevel: "low" | "medium" | "high";
+      nextAction:
+        | "FOLLOW_UP"
+        | "PREPARE_INTERVIEW"
+        | "IMPROVE_CV"
+        | "WAIT"
+        | "MOVE_ON";
+    }
+  >;
+
   applicationScores: Record<string, number>;
+
+  // -------------------------
+  // V5 JOB MATCH TYPES (PLACEHOLDER SAFE)
+  // -------------------------
+
+  topCountries: {
+    country: string;
+    applications: number;
+  }[];
+
+  topIndustries: {
+    industry: string;
+    applications: number;
+  }[];
+
+  marketRecommendations: string[];
+
+  careerSignals: {
+    name: string;
+    value: number;
+  }[];
 }
+
+/* =========================================================
+   ENGINE (REQUIRED FOR NEXT.JS RUNTIME EXPORT)
+========================================================= */
 
 export function generateApplicationInsights(
   applications: Application[]
 ): ApplicationInsights {
-  const totalApplications = applications.length;
+  const total = applications.length;
 
-  const interviews = applications.filter(app =>
-    ["Interview Scheduled", "Final Interview"].includes(app.status)
-  ).length;
-
-  const offers = applications.filter(app =>
-    app.status === "Offer Received"
-  ).length;
-
-  const hired = applications.filter(app =>
-    app.status === "Hired"
-  ).length;
-
-  const interviewRate =
-    totalApplications > 0
-      ? Math.round((interviews / totalApplications) * 100)
-      : 0;
-
-  const offerRate =
-    totalApplications > 0
-      ? Math.round((offers / totalApplications) * 100)
-      : 0;
-
-  const successRate =
-    totalApplications > 0
-      ? Math.round((hired / totalApplications) * 100)
-      : 0;
+  let interviews = 0;
+  let offers = 0;
+  let hired = 0;
 
   const statusBreakdown: Record<string, number> = {};
   const countryBreakdown: Record<string, number> = {};
   const industryBreakdown: Record<string, number> = {};
-  const sourceBreakdown: Record<string, number> = {};
-  const jobTypeBreakdown: Record<string, number> = {};
 
   let salarySum = 0;
   let salaryCount = 0;
 
-  applications.forEach(app => {
-    if (app.status) {
-      statusBreakdown[app.status] =
-        (statusBreakdown[app.status] || 0) + 1;
-    }
+  const applicationIntelligence: ApplicationInsights["applicationIntelligence"] = {};
+  const applicationScores: Record<string, number> = {};
+
+  for (const app of applications) {
+    statusBreakdown[app.status] =
+      (statusBreakdown[app.status] || 0) + 1;
+
+    if (app.status.includes("Interview")) interviews++;
+    if (app.status === "Offer Received") offers++;
+    if (app.status === "Hired") hired++;
 
     if (app.country) {
       countryBreakdown[app.country] =
@@ -95,153 +115,78 @@ export function generateApplicationInsights(
         (industryBreakdown[app.industry] || 0) + 1;
     }
 
-    if (app.source) {
-      sourceBreakdown[app.source] =
-        (sourceBreakdown[app.source] || 0) + 1;
-    }
-
-    if (app.job_type) {
-      jobTypeBreakdown[app.job_type] =
-        (jobTypeBreakdown[app.job_type] || 0) + 1;
-    }
-
     if (app.salary) {
       salarySum += app.salary;
       salaryCount++;
     }
-  });
+
+    const baseScore =
+      app.status === "Hired"
+        ? 100
+        : app.status === "Offer Received"
+        ? 90
+        : app.status.includes("Interview")
+        ? 60
+        : app.status === "Under Review"
+        ? 40
+        : 20;
+
+    const momentum =
+      (app.interview_date ? 30 : 0) +
+      (app.offer_date ? 60 : 0) +
+      (app.notes ? 10 : 0);
+
+    const score = Math.min(100, baseScore);
+
+    applicationIntelligence[app.id] = {
+      score,
+      probabilityOfHire: Math.round(score * 0.7 + momentum * 0.3),
+      momentum,
+      riskLevel: score > 70 ? "low" : score < 30 ? "high" : "medium",
+      nextAction:
+        app.status === "Applied"
+          ? "FOLLOW_UP"
+          : app.status === "Interview Scheduled"
+          ? "PREPARE_INTERVIEW"
+          : "WAIT",
+    };
+
+    applicationScores[app.id] = score;
+  }
+
+  const interviewRate =
+    total > 0 ? Math.round((interviews / total) * 100) : 0;
+
+  const offerRate =
+    total > 0 ? Math.round((offers / total) * 100) : 0;
+
+  const successRate =
+    total > 0 ? Math.round((hired / total) * 100) : 0;
 
   const avgSalary =
     salaryCount > 0 ? Math.round(salarySum / salaryCount) : undefined;
 
-  const recommendations: string[] = [];
-  const weakPoints: string[] = [];
-  const applicationScores: Record<string, number> = {};
-
-  // -------------------------
-  // AI INSIGHTS (WEAK POINTS)
-  // -------------------------
-
-  if (interviewRate < 10 && totalApplications > 5) {
-    weakPoints.push(
-      "Low interview rate: your CV or targeting may not match job requirements."
-    );
-  }
-
-  if (offerRate < 5 && interviews > 0) {
-    weakPoints.push(
-      "Low offer rate: interviews are not converting into offers."
-    );
-  }
-
-  if (interviews > 0 && offers === 0) {
-    weakPoints.push(
-      "Critical issue: interviews are not producing any offers."
-    );
-  }
-
-  if (totalApplications > 20 && interviews === 0) {
-    weakPoints.push(
-      "No interviews despite high activity: ATS/CV optimization needed."
-    );
-  }
-
-  if (hired === 0 && offers > 3) {
-    weakPoints.push(
-      "Offers not converting into hires: negotiation or decision issues."
-    );
-  }
-
-  // -------------------------
-  // AI SCORING POR APLICACIÓN
-  // -------------------------
-
-  applications.forEach(app => {
-    let score = 0;
-
-    switch (app.status) {
-      case "Applied":
-        score = 20;
-        break;
-      case "Under Review":
-        score = 40;
-        break;
-      case "Interview Scheduled":
-        score = 60;
-        break;
-      case "Final Interview":
-        score = 75;
-        break;
-      case "Offer Received":
-        score = 90;
-        break;
-      case "Hired":
-        score = 100;
-        break;
-      case "Rejected":
-        score = 0;
-        break;
-      default:
-        score = 10;
-    }
-
-    // calidad del perfil
-    if (app.notes) score += 2;
-    if (app.industry) score += 2;
-    if (app.job_type) score += 2;
-    if (app.salary) score += 3;
-    if (app.source) score += 1;
-
-    // señales de proceso
-    if (app.interview_date) score += 3;
-    if (app.offer_date) score += 5;
-
-    if (score > 100) score = 100;
-
-    applicationScores[app.id] = score;
-  });
-
-  // -------------------------
-  // RULE-BASED RECOMMENDATIONS
-  // -------------------------
-
-  if (interviewRate < 10) {
-    recommendations.push(
-      "Low interview rate: improve CV alignment and ATS keywords."
-    );
-  }
-
-  if (offerRate < 5) {
-    recommendations.push(
-      "Low offer rate: focus on roles matching your strongest skills."
-    );
-  }
-
-  if (totalApplications < 10) {
-    recommendations.push(
-      "Increase application volume to improve statistical reliability."
-    );
-  }
-
-  if (avgSalary && avgSalary < 20000) {
-    recommendations.push(
-      "Consider targeting higher salary bands or international roles."
-    );
-  }
-
   return {
-    totalApplications,
+    totalApplications: total,
     interviewRate,
     offerRate,
     successRate,
+
     statusBreakdown,
     countryBreakdown,
     industryBreakdown,
-    sourceBreakdown,
-    jobTypeBreakdown,
+
     avgSalary,
-    recommendations,
-    weakPoints,
+
+    recommendations: [],
+    weakPoints: [],
+
+    applicationIntelligence,
     applicationScores,
+
+    topCountries: [],
+    topIndustries: [],
+    marketRecommendations: [],
+    careerSignals: [],
   };
 }

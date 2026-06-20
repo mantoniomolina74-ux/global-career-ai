@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import Sidebar from "@/components/Sidebar";
 import { generateApplicationInsights } from "@/lib/engine/applications/applicationInsights";
+import { generateJobMatches } from "@/lib/engine/jobs/jobMatchEngine";
 
 type Application = {
   id: string;
@@ -24,42 +25,85 @@ export default function ApplicationsPage() {
   const [mensaje, setMensaje] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
-  // ✅ OPTIMIZADO CON useMemo
   const insights = useMemo(() => {
     return generateApplicationInsights(applications);
   }, [applications]);
+
   const total = applications.length;
 
-const applied = insights.statusBreakdown["Applied"] || 0;
+  const applied = insights.statusBreakdown["Applied"] || 0;
 
-const underReview = insights.statusBreakdown["Under Review"] || 0;
+  const underReview = insights.statusBreakdown["Under Review"] || 0;
 
-const interviews =
-  (insights.statusBreakdown["Interview Scheduled"] || 0) +
-  (insights.statusBreakdown["Final Interview"] || 0);
+  const interviews =
+    (insights.statusBreakdown["Interview Scheduled"] || 0) +
+    (insights.statusBreakdown["Final Interview"] || 0);
 
-const offers = insights.statusBreakdown["Offer Received"] || 0;
+  const offers = insights.statusBreakdown["Offer Received"] || 0;
 
-const hired = insights.statusBreakdown["Hired"] || 0;
+  const hired = insights.statusBreakdown["Hired"] || 0;
 
-const toPercent = (value: number) =>
-  total > 0 ? Math.round((value / total) * 100) : 0;
+  const toPercent = (value: number) =>
+    total > 0 ? Math.round((value / total) * 100) : 0;
+
   const rankedApplications = [...applications]
-  .map(app => ({
-    ...app,
-    score: insights.applicationScores[app.id] || 0,
-  }))
-  .sort((a, b) => b.score - a.score);
+    .map(app => ({
+      ...app,
+      score: insights.applicationScores[app.id] || 0,
+    }))
+    .sort((a, b) => b.score - a.score);
 
   const [form, setForm] = useState({
-    company: "",
-    position: "",
-    country: "",
-    application_date: "",
-    status: "Applied",
-    notes: "",
-  });
+  company: "",
+  position: "",
+  country: "",
+  application_date: "",
+  status: "Applied",
+  notes: "",
+});
 
+// =========================
+// V5 - MOCK JOB POSTINGS
+// =========================
+
+const mockJobs = [
+  {
+    id: "job-1",
+    company: "Google",
+    position: "Frontend Engineer",
+    country: "USA",
+    industry: "Tech",
+    job_type: "Full-time",
+    salary: 140000,
+    currency: "USD",
+    source: "LinkedIn",
+    requirements: ["React", "TypeScript", "System Design"],
+  },
+  {
+    id: "job-2",
+    company: "Microsoft",
+    position: "Software Engineer",
+    country: "Canada",
+    industry: "Tech",
+    job_type: "Full-time",
+    salary: 130000,
+    currency: "USD",
+    source: "Company Site",
+    requirements: ["C#", ".NET", "Azure"],
+  },
+  {
+    id: "job-3",
+    company: "BHP",
+    position: "Mining Data Analyst",
+    country: "Australia",
+    industry: "Mining",
+    job_type: "Contract",
+    salary: 110000,
+    currency: "USD",
+    source: "Indeed",
+    requirements: ["Python", "SQL", "Power BI"],
+  },
+];
   useEffect(() => {
     init();
   }, []);
@@ -284,6 +328,101 @@ const toPercent = (value: number) =>
   </p>
 </div>
         </div>
+
+ {/* =========================
+   V3 MARKET INTELLIGENCE
+========================= */}
+
+<div className="grid md:grid-cols-2 gap-6 mb-8">
+
+  {/* TOP COUNTRIES */}
+  <div className="bg-white p-6 rounded-xl shadow">
+    <h2 className="text-lg font-semibold mb-4">
+      Top Countries
+    </h2>
+
+    {insights.topCountries.length === 0 ? (
+      <p className="text-gray-500 text-sm">No data</p>
+    ) : (
+      <div className="space-y-3">
+        {insights.topCountries.map((c) => (
+          <div key={c.country} className="flex justify-between">
+            <span>{c.country}</span>
+            <span className="font-bold">{c.applications}</span>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+
+  {/* TOP INDUSTRIES */}
+  <div className="bg-white p-6 rounded-xl shadow">
+    <h2 className="text-lg font-semibold mb-4">
+      Top Industries
+    </h2>
+
+    {insights.topIndustries.length === 0 ? (
+      <p className="text-gray-500 text-sm">No data</p>
+    ) : (
+      <div className="space-y-3">
+        {insights.topIndustries.map((i) => (
+          <div key={i.industry} className="flex justify-between">
+            <span>{i.industry}</span>
+            <span className="font-bold">{i.applications}</span>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+</div>
+
+{/* =========================
+   CAREER SIGNALS
+========================= */}
+
+<div className="bg-white p-6 rounded-xl shadow mb-8">
+  <h2 className="text-lg font-semibold mb-4">
+    Career Signals
+  </h2>
+
+  <div className="grid md:grid-cols-4 gap-4">
+    {insights.careerSignals.map((s) => (
+      <div
+        key={s.name}
+        className="p-4 bg-gray-50 rounded-lg text-center"
+      >
+        <p className="text-sm text-gray-500">{s.name}</p>
+        <p className="text-2xl font-bold">{s.value}</p>
+      </div>
+    ))}
+  </div>
+</div>
+
+{/* =========================
+   MARKET RECOMMENDATIONS
+========================= */}
+
+<div className="bg-white p-6 rounded-xl shadow mb-8">
+  <h2 className="text-lg font-semibold mb-4">
+    AI Recommendations
+  </h2>
+
+  {insights.marketRecommendations.length === 0 ? (
+    <p className="text-gray-500 text-sm">No insights yet</p>
+  ) : (
+    <ul className="space-y-2">
+      {insights.marketRecommendations.map((r, idx) => (
+        <li
+          key={idx}
+          className="p-3 bg-blue-50 rounded-lg text-sm"
+        >
+          {r}
+        </li>
+      ))}
+    </ul>
+  )}
+</div>
+        
         {/* STATUS BREAKDOWN VISUAL */}
 <div className="bg-white p-6 rounded-xl shadow mb-8">
   <h2 className="text-xl font-semibold mb-4">
@@ -437,8 +576,7 @@ const toPercent = (value: number) =>
 </div>
 <div className="bg-white p-6 rounded-xl shadow mb-8">
   <h2 className="text-xl font-semibold mb-5">
-  <div className="bg-white p-6 rounded-xl shadow mb-8">
-  <h2 className="text-xl font-semibold mb-5">
+  
     Conversion Funnel
   </h2>
 
@@ -487,7 +625,77 @@ const toPercent = (value: number) =>
 
   </div>
 </div>
+      <div className="bg-white p-6 rounded-xl shadow mb-8">
+  <h2 className="text-lg font-semibold mb-4">
+    AI Career Strategy (V4)
+  </h2>
 
+  <p className="mb-3 text-sm text-gray-600">
+    Mode: <strong>{insights.careerStrategy?.mode}</strong>
+  </p>
+
+  <p className="mb-4 text-sm text-gray-600">
+    Priority: <strong>{insights.careerStrategy?.priority}</strong>
+  </p>
+
+  <div className="space-y-2">
+    {insights.nextBestActions?.map((a, i) => (
+      <div key={i} className="p-3 bg-blue-50 rounded">
+        {a}
+      </div>
+    ))}
+  </div>
+</div>  
+
+     {/* V4 AI CAREER STRATEGY */}
+<div className="bg-white p-6 rounded-xl shadow mb-8">
+  <h2 className="text-xl font-semibold mb-4">
+    AI Career Strategy (V4)
+  </h2>
+
+  <div className="mb-4 text-sm text-gray-600">
+    <p>
+      Mode:{" "}
+      <span className="font-bold">
+        {insights.careerStrategy?.mode || "N/A"}
+      </span>
+    </p>
+
+    <p>
+      Priority:{" "}
+      <span className="font-bold">
+        {insights.careerStrategy?.priority || "N/A"}
+      </span>
+    </p>
+
+    <p>
+      Focus:{" "}
+      <span className="font-bold">
+        {insights.strategySignals?.focusScore || "N/A"}
+      </span>
+    </p>
+  </div>
+
+  <div className="space-y-2">
+    {(insights.nextBestActions || []).length === 0 ? (
+      <p className="text-gray-500 text-sm">
+        No actions available yet.
+      </p>
+    ) : (
+      insights.nextBestActions.map((action, i) => (
+        <div
+          key={i}
+          className="p-3 bg-blue-50 rounded-lg text-sm"
+        >
+          {action}
+        </div>
+      ))
+    )}
+  </div>
+</div>
+
+<div className="bg-white p-6 rounded-xl shadow mb-8">
+  <h2 className="text-xl font-semibold mb-5">
     Top Opportunities (AI Ranking)
   </h2>
 
