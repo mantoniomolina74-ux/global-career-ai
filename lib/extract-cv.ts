@@ -11,7 +11,7 @@ export async function extractCVText(buffer: Buffer): Promise<string> {
     }
 
     return text.trim();
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("PDF EXTRACT ERROR:", error);
     throw new Error("Error extrayendo texto del PDF");
   }

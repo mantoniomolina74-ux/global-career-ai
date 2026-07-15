@@ -1,15 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { ChangeEvent, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
-export default function CvUploader({ user }: any) {
+export interface CvUploaderUser {
+  id: string;
+}
+
+interface CvUploaderProps {
+  user: CvUploaderUser | null;
+}
+
+export default function CvUploader({ user }: CvUploaderProps) {
   const [uploading, setUploading] = useState(false);
   const [cvName, setCvName] = useState("");
 
-  const uploadCV = async (event: any) => {
+  const uploadCV = async (
+    event: ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
-    if (!file || !user) return;
+
+    if (!file || !user) {
+      return;
+    }
 
     setUploading(true);
 
@@ -48,6 +61,7 @@ export default function CvUploader({ user }: any) {
       <input type="file" onChange={uploadCV} />
 
       {uploading && <p>Subiendo...</p>}
+
       {cvName && <p>CV: {cvName}</p>}
     </div>
   );

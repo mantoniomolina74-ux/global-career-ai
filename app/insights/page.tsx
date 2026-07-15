@@ -1,138 +1,204 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Sidebar from "@/components/Sidebar";
 
+type Application = {
+status: string;
+country: string;
+company: string;
+position: string;
+};
+
+type Stats = {
+total: number;
+applied: number;
+interview: number;
+hired: number;
+rejected: number;
+topCountry: string;
+topCompany: string;
+topPosition: string;
+};
+
 export default function InsightsPage() {
-  const [user, setUser] = useState<any>(null);
-  const [applications, setApplications] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+const [loading, setLoading] = useState(true);
 
-  const [stats, setStats] = useState({
-    total: 0,
-    applied: 0,
-    interview: 0,
-    hired: 0,
-    rejected: 0,
-    topCountry: "N/A",
-    topCompany: "N/A",
-    topPosition: "N/A",
-  });
+const [stats, setStats] = useState<Stats>({
+total: 0,
+applied: 0,
+interview: 0,
+hired: 0,
+rejected: 0,
+topCountry: "N/A",
+topCompany: "N/A",
+topPosition: "N/A",
+});
 
-  useEffect(() => {
-    init();
-  }, []);
+const calculateStats = useCallback(
+(data: Application[]) => {
+const countBy = (
+key: keyof Application
+): string => {
+const map: Record<string, number> = {};
 
-  const init = async () => {
-    const { data } = await supabase.auth.getUser();
+    data.forEach((item) => {
+      const value = item[key];
 
-    if (!data.user) {
-      window.location.href = "/login";
-      return;
-    }
+      if (!value) return;
 
-    setUser(data.user);
-
-    const { data: apps } = await supabase
-      .from("applications")
-      .select("*")
-      .eq("user_id", data.user.id);
-
-    const list = apps || [];
-    setApplications(list);
-
-    calculateStats(list);
-    setLoading(false);
-  };
-
-  const calculateStats = (data: any[]) => {
-    const countBy = (key: string) => {
-      const map: any = {};
-
-      data.forEach((item) => {
-        const value = item[key];
-        if (!value) return;
-        map[value] = (map[value] || 0) + 1;
-      });
-
-      return Object.entries(map).sort(
-        (a: any, b: any) => b[1] - a[1]
-      )[0]?.[0] || "N/A";
-    };
-
-    setStats({
-      total: data.length,
-      applied: data.filter((a) => a.status === "Applied").length,
-      interview: data.filter((a) => a.status === "Interview").length,
-      hired: data.filter((a) => a.status === "Hired").length,
-      rejected: data.filter((a) => a.status === "Rejected").length,
-      topCountry: countBy("country"),
-      topCompany: countBy("company"),
-      topPosition: countBy("position"),
+      map[value] =
+        (map[value] || 0) + 1;
     });
+
+    return (
+      Object.entries(map).sort(
+        (a, b) => b[1] - a[1]
+      )[0]?.[0] || "N/A"
+    );
   };
 
-  if (loading) {
-    return (
-      <main className="min-h-screen flex items-center justify-center">
-        <p className="text-lg font-semibold">
-          Cargando insights...
-        </p>
-      </main>
-    );
+  setStats({
+    total: data.length,
+
+    applied: data.filter(
+      (a) => a.status === "Applied"
+    ).length,
+
+    interview: data.filter(
+      (a) => a.status === "Interview"
+    ).length,
+
+    hired: data.filter(
+      (a) => a.status === "Hired"
+    ).length,
+
+    rejected: data.filter(
+      (a) => a.status === "Rejected"
+    ).length,
+
+    topCountry: countBy("country"),
+    topCompany: countBy("company"),
+    topPosition: countBy("position"),
+  });
+},
+[]
+
+);
+
+const init = useCallback(async () => {
+const { data } =
+await supabase.auth.getUser();
+
+
+if (!data.user) {
+  window.location.href = "/login";
+  return;
+}
+
+const { data: apps } =
+  await supabase
+    .from("applications")
+    .select("*")
+    .eq("user_id", data.user.id);
+
+calculateStats(
+  (apps || []) as Application[]
+);
+
+setLoading(false);
+
+}, [calculateStats]);
+
+useEffect(() => {
+  let mounted = true;
+
+  async function loadInsights() {
+    if (mounted) {
+      await init();
+    }
   }
 
-  return (
-    <div className="flex min-h-screen">
-      <Sidebar />
+  void loadInsights();
 
-      <main className="flex-1 p-6 bg-slate-50">
-        <h1 className="text-3xl font-bold mb-6">
-          Insights de Carrera
-        </h1>
+  return () => {
+    mounted = false;
+  };
+}, [init]);
 
-        {/* STATS */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+if (loading) {
+return ( <main className="min-h-screen flex items-center justify-center"> <p className="text-lg font-semibold">
+Cargando insights... </p> </main>
+);
+}
 
-          <div className="bg-white p-4 rounded shadow">
-            <p>Total</p>
-            <p className="text-2xl font-bold">{stats.total}</p>
-          </div>
+return ( <div className="flex min-h-screen"> <Sidebar />
 
-          <div className="bg-white p-4 rounded shadow">
-            <p>Applied</p>
-            <p className="text-2xl font-bold">{stats.applied}</p>
-          </div>
+  <main className="flex-1 p-6 bg-slate-50">
+    <h1 className="text-3xl font-bold mb-6">
+      Insights de Carrera
+    </h1>
 
-          <div className="bg-white p-4 rounded shadow">
-            <p>Interview</p>
-            <p className="text-2xl font-bold">{stats.interview}</p>
-          </div>
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+      <div className="bg-white p-4 rounded shadow">
+        <p>Total</p>
+        <p className="text-2xl font-bold">
+          {stats.total}
+        </p>
+      </div>
 
-          <div className="bg-white p-4 rounded shadow">
-            <p>Hired</p>
-            <p className="text-2xl font-bold">{stats.hired}</p>
-          </div>
+      <div className="bg-white p-4 rounded shadow">
+        <p>Applied</p>
+        <p className="text-2xl font-bold">
+          {stats.applied}
+        </p>
+      </div>
 
-          <div className="bg-white p-4 rounded shadow">
-            <p>Rejected</p>
-            <p className="text-2xl font-bold">{stats.rejected}</p>
-          </div>
+      <div className="bg-white p-4 rounded shadow">
+        <p>Interview</p>
+        <p className="text-2xl font-bold">
+          {stats.interview}
+        </p>
+      </div>
 
-        </div>
+      <div className="bg-white p-4 rounded shadow">
+        <p>Hired</p>
+        <p className="text-2xl font-bold">
+          {stats.hired}
+        </p>
+      </div>
 
-        {/* INSIGHTS */}
-        <div className="bg-white p-6 rounded shadow">
-          <h2 className="text-xl font-semibold mb-4">
-            Análisis Inteligente
-          </h2>
-
-          <p>🌎 País más frecuente: <b>{stats.topCountry}</b></p>
-          <p>🏢 Empresa más frecuente: <b>{stats.topCompany}</b></p>
-          <p>💼 Puesto más frecuente: <b>{stats.topPosition}</b></p>
-        </div>
-      </main>
+      <div className="bg-white p-4 rounded shadow">
+        <p>Rejected</p>
+        <p className="text-2xl font-bold">
+          {stats.rejected}
+        </p>
+      </div>
     </div>
-  );
+
+    <div className="bg-white p-6 rounded shadow">
+      <h2 className="text-xl font-semibold mb-4">
+        Análisis Inteligente
+      </h2>
+
+      <p>
+        🌎 País más frecuente:{" "}
+        <b>{stats.topCountry}</b>
+      </p>
+
+      <p>
+        🏢 Empresa más frecuente:{" "}
+        <b>{stats.topCompany}</b>
+      </p>
+
+      <p>
+        💼 Puesto más frecuente:{" "}
+        <b>{stats.topPosition}</b>
+      </p>
+    </div>
+  </main>
+</div>
+
+);
 }

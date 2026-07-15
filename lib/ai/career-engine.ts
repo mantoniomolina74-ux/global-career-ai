@@ -1,4 +1,9 @@
-export function careerEngine(jobs: any[]) {
+export type CareerJob = {
+  country: string;
+  score: number;
+};
+
+export function careerEngine(jobs: CareerJob[]) {
   let canada = 0;
   let australia = 0;
 

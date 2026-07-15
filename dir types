@@ -1,0 +1,12 @@
+warning: in the working copy of 'package-lock.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tsconfig.json', LF will be replaced by CRLF the next time Git touches it
+ .gitignore                                     | Bin [31m480[m -> [32m500[m bytes
+ app/applications/page.tsx                      | 813 [32m++++++++[m[31m-----------------[m
+ app/dashboard/page.tsx                         |   2 [32m+[m[31m-[m
+ app/profile/page.tsx                           |   6 [32m+[m[31m-[m
+ lib/engine/applications/applicationInsights.ts | 168 [32m+++[m[31m--[m
+ package-lock.json                              |  11 [32m+[m
+ package.json                                   |   1 [32m+[m
+ tsconfig.json                                  |   2 [32m+[m[31m-[m
+ 8 files changed, 401 insertions(+), 602 deletions(-)

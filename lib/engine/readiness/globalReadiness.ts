@@ -1,13 +1,36 @@
+type CareerReadinessProfileInput = {
+  ats_score?: number | string | null;
+  skills?: string | string[] | null;
+  industry?: string | null;
+};
+
+type CertificationInput = {
+  id?: string;
+  name?: string;
+  status?: string;
+};
+
 export function calculateGlobalReadiness(
-  cv: any,
-  certifications: any[] = []
+  cv: CareerReadinessProfileInput,
+  certifications: CertificationInput[] = []
 ) {
   const atsScore = Number(cv?.ats_score || 0);
 
-  const skills =
-    typeof cv?.skills === "string"
-      ? JSON.parse(cv.skills || "[]")
-      : cv?.skills || [];
+  let skills: string[] = [];
+
+  if (typeof cv?.skills === "string") {
+    try {
+      const parsedSkills = JSON.parse(cv.skills || "[]");
+
+      skills = Array.isArray(parsedSkills)
+        ? parsedSkills
+        : [];
+    } catch {
+      skills = [];
+    }
+  } else if (Array.isArray(cv?.skills)) {
+    skills = cv.skills;
+  }
 
   const skillCount = skills.length;
   const certificationCount = certifications.length;

@@ -4,7 +4,17 @@ export interface ProfileIntelligenceResult {
   improvementAreas: string[];
 }
 
-export function buildProfileIntelligence(profile: any): ProfileIntelligenceResult {
+interface ProfileIntelligenceInput {
+  experience_years?: number | string | null;
+  profession?: string | null;
+  target_industry?: string | null;
+  cv_url?: string | null;
+  english_level?: string | null;
+}
+
+export function buildProfileIntelligence(
+  profile: ProfileIntelligenceInput
+): ProfileIntelligenceResult {
   const years = Number(profile.experience_years || 0);
 
   let careerLevel = "Beginner";
@@ -19,6 +29,7 @@ export function buildProfileIntelligence(profile: any): ProfileIntelligenceResul
   if (profile.profession) marketFit += 15;
   if (profile.target_industry) marketFit += 15;
   if (profile.cv_url) marketFit += 15;
+
   if (
     profile.english_level === "Advanced" ||
     profile.english_level === "Fluent"

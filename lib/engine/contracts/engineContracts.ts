@@ -1,0 +1,245 @@
+
+/**
+ * ============================================================
+ * Global Career AI
+ * Engine Contracts (SOURCE OF TRUTH - V8.1)
+ * ============================================================
+ *
+ * Central contracts shared across the Engine Layer.
+ *
+ * This file represents the official boundary between:
+ * - ATS
+ * - Ranking
+ * - Decision
+ * - Orchestration
+ * - Core Engine flows
+ *
+ * ============================================================
+ */
+
+// ============================
+// SHARED TYPES
+// ============================
+
+export interface CareerApplication {
+  applicationId: string;
+
+  candidateSkills?: string[];
+
+  jobDescription?: string;
+
+  cvStrengthScore?: number;
+
+  // ATS enrichment fields
+  atsScore?: number;
+
+  hiringScore?: number;
+
+  semanticScore?: number;
+}
+
+
+// ============================
+// ATS DOMAIN
+// ============================
+
+export interface ATSResult {
+  atsScore: number;
+
+  keywordScore: number;
+
+  cvStrengthScore: number;
+
+  semanticScore: number;
+
+  interviewProbability: number;
+
+  offerProbability: number;
+
+  hiringScore: number;
+
+  passProbability: number;
+
+  matchedSkills: string[];
+
+  missingSkills: string[];
+
+  recommendation: string;
+
+  learningSignal: number;
+}
+
+
+export interface ATSMetadata {
+  engine: string;
+
+  version: string;
+
+  generatedAt: string;
+
+  executionTimeMs: number;
+}
+
+
+export interface ATSResponse {
+  data: ATSResult;
+
+  metadata: ATSMetadata;
+
+  success: boolean;
+}
+
+
+// ============================
+// SCORING DOMAIN
+// ============================
+
+export interface ScoringResultItem {
+  applicationId: string;
+
+  score: number;
+
+  breakdown: Record<string, number>;
+
+  signals: string[];
+}
+
+
+export interface ScoringMetadata {
+  processedAt: string;
+
+  modelVersion: string;
+}
+
+
+export interface ScoringResult {
+  items: ScoringResultItem[];
+
+  metadata: ScoringMetadata;
+}
+
+
+// ============================
+// RANKING DOMAIN
+// ============================
+
+export interface RankingResultItem {
+  applicationId: string;
+
+  finalScore: number;
+
+  rank: number;
+
+  delta?: number;
+}
+
+
+export interface RankingMetadata {
+  strategy:
+    | "score_desc"
+    | "weighted"
+    | "hybrid";
+
+  processedAt: string;
+}
+
+
+export interface RankingResult {
+  items: RankingResultItem[];
+
+  metadata: RankingMetadata;
+}
+
+
+// ============================
+// DECISION DOMAIN
+// ============================
+
+export type DecisionType =
+  | "SHORTLIST"
+  | "REJECT"
+  | "INTERVIEW";
+
+
+export type DecisionPriority =
+  | "LOW"
+  | "MEDIUM"
+  | "HIGH"
+  | "CRITICAL";
+
+
+export interface DecisionOutput {
+  applicationId: string;
+
+  decision: DecisionType;
+
+  priority: DecisionPriority;
+
+  score: number;
+
+  reasoning: string[];
+}
+
+
+// ============================
+// ORCHESTRATOR INPUT
+// ============================
+
+export interface CareerOrchestratorInput {
+
+  userId: string;
+
+  applications: CareerApplication[];
+
+  candidateSkills: string[];
+
+  requiredSkills: string[];
+
+  jobDescription: string;
+
+  cvStrengthScore: number;
+
+  // Knowledge Layer enrichment
+  industry?: string;
+
+  country?: string;
+}
+
+
+// ============================
+// ORCHESTRATOR OUTPUT
+// ============================
+
+export interface OrchestratorSummary {
+
+  totalApplications: number;
+
+  averageATS: number;
+
+  topScore: number;
+
+  systemConfidence: number;
+}
+
+
+export interface OrchestratorResult {
+  userId: string;
+
+  ats: ATSResult[];
+
+  ranking: RankingResult;
+
+  recommendations: unknown;
+
+  knowledge: unknown;
+
+  decision: unknown;
+
+  context: unknown;
+
+  summary: OrchestratorSummary;
+
+  generatedAt: string;
+
+  traceId?: string;
+}

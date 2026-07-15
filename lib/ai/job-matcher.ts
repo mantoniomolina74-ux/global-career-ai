@@ -1,4 +1,9 @@
-export function matchJob(cvSkills: string[], job: any) {
+export type JobMatch = {
+  skills?: string[];
+  [key: string]: unknown;
+};
+
+export function matchJob(cvSkills: string[], job: JobMatch) {
   const required = job.skills || [];
 
   let score = 0;

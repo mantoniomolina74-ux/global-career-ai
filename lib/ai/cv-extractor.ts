@@ -20,7 +20,7 @@ export async function extractCVText(fileUrl: string): Promise<string> {
       .trim();
 
     return cleanedText;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("CV EXTRACTION ERROR:", error);
     return "";
   }

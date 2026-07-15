@@ -1,38 +1,49 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
+type Empleo = {
+  region: string;
+  titulo: string;
+  pais: string;
+  pago: string;
+  descripcion: string;
+};
+
 export default function EmpleosPage() {
-  const empleos = [
+  const router = useRouter();
+
+  const empleos: Empleo[] = [
     {
       region: "🌎 Norteamérica",
       titulo: "Operador de Equipo Pesado",
       pais: "Canadá",
       pago: "CAD $28 - $38/hora",
-      descripcion: "Visa patrocinada y oportunidad en minería."
+      descripcion: "Visa patrocinada y oportunidad en minería.",
     },
     {
       region: "🌏 Oceanía",
       titulo: "Trabajador Agrícola",
       pais: "Australia",
       pago: "AUD $30 - $35/hora",
-      descripcion: "Incluye alojamiento y soporte migratorio."
+      descripcion: "Incluye alojamiento y soporte migratorio.",
     },
     {
       region: "🌍 Europa",
       titulo: "Ayudante de Construcción",
       pais: "Alemania",
       pago: "€2,300 - €3,200/mes",
-      descripcion: "Oportunidades en proyectos de infraestructura."
-    }
+      descripcion: "Oportunidades en proyectos de infraestructura.",
+    },
   ];
 
-  const aplicar = async (empleo: any) => {
+  const aplicar = async (empleo: Empleo) => {
     const userId = localStorage.getItem("user_id");
 
     if (!userId) {
       alert("Debes iniciar sesión primero");
-      window.location.href = "/login";
+      router.push("/login");
       return;
     }
 
@@ -58,7 +69,6 @@ export default function EmpleosPage() {
   return (
     <main className="min-h-screen bg-slate-50 p-10">
       <div className="max-w-7xl mx-auto">
-
         <h1 className="text-5xl font-extrabold text-slate-900 mb-3">
           Vacantes Internacionales
         </h1>
@@ -68,7 +78,6 @@ export default function EmpleosPage() {
         </p>
 
         <div className="grid md:grid-cols-3 gap-8">
-
           {empleos.map((empleo, index) => (
             <div
               key={index}
@@ -82,13 +91,9 @@ export default function EmpleosPage() {
                 {empleo.titulo}
               </h2>
 
-              <p className="text-slate-700 mb-2">
-                📍 {empleo.pais}
-              </p>
+              <p className="text-slate-700 mb-2">📍 {empleo.pais}</p>
 
-              <p className="text-slate-700 mb-2">
-                💰 {empleo.pago}
-              </p>
+              <p className="text-slate-700 mb-2">💰 {empleo.pago}</p>
 
               <p className="text-slate-600 mb-6">
                 {empleo.descripcion}
@@ -102,9 +107,7 @@ export default function EmpleosPage() {
               </button>
             </div>
           ))}
-
         </div>
-
       </div>
     </main>
   );

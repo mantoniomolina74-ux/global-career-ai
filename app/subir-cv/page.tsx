@@ -3,6 +3,24 @@
 import { useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
+type Job = {
+  id: string;
+  title: string;
+  company: string;
+  location: string;
+  description: string;
+};
+
+type JobMatch = {
+  match: number;
+  reasons: string[];
+  job: Job;
+};
+
+type AnalysisResult = {
+  matchResults: JobMatch[];
+};
+
 // ⚠️ cliente (ok aquí, pero estable)
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,7 +30,7 @@ const supabase = createClient(
 export default function SubirCVPage() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
     const uploadCV = async () => {
@@ -44,7 +62,7 @@ export default function SubirCVPage() {
   return data.publicUrl;
 };
 
-  const saveJob = async (job: any) => {
+  const saveJob = async (job: Job) => {
     try {
       const {
         data: { user },
@@ -71,10 +89,10 @@ export default function SubirCVPage() {
       }
 
       alert("✅ Empleo guardado correctamente");
-    } catch (error: any) {
-      console.error(error);
-      alert("❌ Error al guardar empleo");
-    }
+    } catch (error: unknown) {
+    console.error(error);
+    alert("❌ Error al guardar empleo");
+}
   };
 
   const handleSubmit = async () => {
@@ -119,10 +137,14 @@ export default function SubirCVPage() {
       }
 
       setResult(data);
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message);
-    } finally {
+    } catch (err: unknown) {
+    console.error(err);
+
+    setError(
+      err instanceof Error ? err.message : "Error desconocido"
+    );
+}
+      finally {
       setLoading(false);
     }
   };
@@ -143,13 +165,13 @@ export default function SubirCVPage() {
 
       {error && <p style={{ color: "red" }}>{error}</p>}
 
-      {result?.matchResults?.length > 0 && (
+      {(result?.matchResults?.length ?? 0) > 0 && (
   <div style={{ marginTop: 40 }}>
     <h2 style={{ fontSize: 22, marginBottom: 20 }}>
       💼 Empleos recomendados para ti
     </h2>
 
-    {result.matchResults.map((item: any, index: number) => {
+    {result!.matchResults.map((item: JobMatch, index: number) => {
       const score = item.match;
 
       let color = "#22c55e"; // verde

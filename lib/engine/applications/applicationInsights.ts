@@ -1,192 +1,206 @@
-export interface Application {
+import { supabase } from "@/lib/supabase";
+
+/**
+ * ============================
+ * TYPES
+ * ============================
+ */
+
+export interface ApplicationRecord {
   id: string;
+  user_id: string;
   company: string;
-  position: string;
-  country: string;
-  industry?: string;
-  job_type?: string;
-  salary?: number;
-  currency?: string;
-  source?: string;
-  application_date: string;
-  interview_date?: string;
-  offer_date?: string;
-  rejection_date?: string;
+  role: string;
   status: string;
-  notes?: string;
-  created_at?: string;
-  updated_at?: string;
+  created_at: string;
+  updated_at: string;
+  country?: string;
+  industry?: string;
+  required_skills?: string[];
+  matched_skills?: string[];
+  job_description?: string;
+  cv_strength_score?: number;
+
+  atsResult?: AtsResult;
+  ats?: AtsResult;
 }
 
-export interface ApplicationInsights {
-  totalApplications: number;
-
-  interviewRate: number;
-  offerRate: number;
-  successRate: number;
-
-  statusBreakdown: Record<string, number>;
-  countryBreakdown: Record<string, number>;
-  industryBreakdown: Record<string, number>;
-
-  avgSalary?: number;
-
-  recommendations: string[];
-  weakPoints: string[];
-
-  applicationIntelligence: Record<
-    string,
-    {
-      score: number;
-      probabilityOfHire: number;
-      momentum: number;
-      riskLevel: "low" | "medium" | "high";
-      nextAction:
-        | "FOLLOW_UP"
-        | "PREPARE_INTERVIEW"
-        | "IMPROVE_CV"
-        | "WAIT"
-        | "MOVE_ON";
-    }
-  >;
-
-  applicationScores: Record<string, number>;
-
-  // -------------------------
-  // V5 JOB MATCH TYPES (PLACEHOLDER SAFE)
-  // -------------------------
-
-  topCountries: {
-    country: string;
-    applications: number;
-  }[];
-
-  topIndustries: {
-    industry: string;
-    applications: number;
-  }[];
-
-  marketRecommendations: string[];
-
-  careerSignals: {
-    name: string;
-    value: number;
-  }[];
+interface AtsResult {
+  atsScore: number;
+  passProbability: number;
+  interviewProbability?: number;
+  offerProbability?: number;
+  matchedSkills: string[];
+  missingSkills: string[];
 }
 
-/* =========================================================
-   ENGINE (REQUIRED FOR NEXT.JS RUNTIME EXPORT)
-========================================================= */
+/**
+ * ============================
+ * DATA ACCESS
+ * ============================
+ */
 
-export function generateApplicationInsights(
-  applications: Application[]
-): ApplicationInsights {
-  const total = applications.length;
+async function fetchApplications(userId: string): Promise<ApplicationRecord[]> {
+  const { data, error } = await supabase
+    .from("applications")
+    .select("*")
+    .eq("user_id", userId);
 
-  let interviews = 0;
-  let offers = 0;
-  let hired = 0;
+  if (error) {
+    throw new Error(`Failed to fetch applications: ${error.message}`);
+  }
+
+  return (data || []) as ApplicationRecord[];
+}
+
+/**
+ * ============================
+ * FUNNEL ENGINE
+ * ============================
+ */
+
+export function calculateFunnel(apps: ApplicationRecord[]) {
+  const safeDiv = (a: number, b: number) =>
+    b === 0 ? 0 : a / b;
+
+  const saved = apps.filter((a) => a.status === "saved").length;
+  const applied = apps.filter((a) => a.status === "applied").length;
+  const in_review = apps.filter((a) => a.status === "in_review").length;
+  const interview = apps.filter((a) => a.status === "interview").length;
+  const offer = apps.filter((a) => a.status === "offer").length;
+  const rejected = apps.filter((a) => a.status === "rejected").length;
+
+  return {
+    total: apps.length,
+    saved,
+    applied,
+    in_review,
+    interview,
+    offer,
+    rejected,
+    conversionRate: safeDiv(interview, applied),
+    offerRate: safeDiv(offer, applied),
+    successRate: safeDiv(offer, interview),
+  };
+}
+
+/**
+ * ============================
+ * PERFORMANCE ENGINE
+ * ============================
+ */
+
+export function calculatePerformance(apps: ApplicationRecord[]) {
+  const total = apps.length;
+
+  const activePipeline = apps.filter((a) =>
+    ["applied", "in_review", "interview"].includes(a.status)
+  ).length;
+
+  const responded = apps.filter((a) =>
+    ["in_review", "interview", "offer", "rejected"].includes(a.status)
+  ).length;
+
+  const rejected = apps.filter((a) => a.status === "rejected").length;
+
+  const responseRate = total === 0 ? 0 : responded / total;
+  const rejectionRate = total === 0 ? 0 : rejected / total;
+
+  return {
+    totalApplications: total,
+    activePipeline,
+    responseRate,
+    rejectionRate,
+  };
+}
+
+/**
+ * ============================
+ * INSIGHTS ENGINE
+ * ============================
+ */
+
+export async function getApplicationInsights(userId: string) {
+  const applications = await fetchApplications(userId);
+
+  const funnel = calculateFunnel(applications);
+  const performance = calculatePerformance(applications);
 
   const statusBreakdown: Record<string, number> = {};
-  const countryBreakdown: Record<string, number> = {};
-  const industryBreakdown: Record<string, number> = {};
-
-  let salarySum = 0;
-  let salaryCount = 0;
-
-  const applicationIntelligence: ApplicationInsights["applicationIntelligence"] = {};
   const applicationScores: Record<string, number> = {};
+  const applicationIntelligence: Record<string, ApplicationIntelligence> = {};
 
   for (const app of applications) {
     statusBreakdown[app.status] =
       (statusBreakdown[app.status] || 0) + 1;
 
-    if (app.status.includes("Interview")) interviews++;
-    if (app.status === "Offer Received") offers++;
-    if (app.status === "Hired") hired++;
+    const ats: AtsResult =
+      app.atsResult ??
+      app.ats ??
+      {
+        atsScore: app.cv_strength_score ?? 50,
+        passProbability: Math.round(
+          (app.cv_strength_score ?? 50) * 0.9
+        ),
+        interviewProbability: Math.round(
+          (app.cv_strength_score ?? 50) * 0.6
+        ),
+        offerProbability: Math.round(
+          (app.cv_strength_score ?? 50) * 0.4
+        ),
+        matchedSkills: app.matched_skills || [],
+        missingSkills: [],
+      };
 
-    if (app.country) {
-      countryBreakdown[app.country] =
-        (countryBreakdown[app.country] || 0) + 1;
-    }
-
-    if (app.industry) {
-      industryBreakdown[app.industry] =
-        (industryBreakdown[app.industry] || 0) + 1;
-    }
-
-    if (app.salary) {
-      salarySum += app.salary;
-      salaryCount++;
-    }
-
-    const baseScore =
-      app.status === "Hired"
-        ? 100
-        : app.status === "Offer Received"
-        ? 90
-        : app.status.includes("Interview")
-        ? 60
-        : app.status === "Under Review"
-        ? 40
-        : 20;
-
-    const momentum =
-      (app.interview_date ? 30 : 0) +
-      (app.offer_date ? 60 : 0) +
-      (app.notes ? 10 : 0);
-
-    const score = Math.min(100, baseScore);
+    applicationScores[app.id] = ats.atsScore;
 
     applicationIntelligence[app.id] = {
-      score,
-      probabilityOfHire: Math.round(score * 0.7 + momentum * 0.3),
-      momentum,
-      riskLevel: score > 70 ? "low" : score < 30 ? "high" : "medium",
-      nextAction:
-        app.status === "Applied"
-          ? "FOLLOW_UP"
-          : app.status === "Interview Scheduled"
-          ? "PREPARE_INTERVIEW"
-          : "WAIT",
+      atsScore: ats.atsScore,
+      atsPassProbability: ats.passProbability,
+      riskLevel:
+        ats.atsScore >= 75
+          ? "low"
+          : ats.atsScore >= 50
+          ? "medium"
+          : "high",
+      matchedSkills: ats.matchedSkills,
+      missingSkills: ats.missingSkills,
     };
-
-    applicationScores[app.id] = score;
   }
 
-  const interviewRate =
-    total > 0 ? Math.round((interviews / total) * 100) : 0;
-
-  const offerRate =
-    total > 0 ? Math.round((offers / total) * 100) : 0;
-
-  const successRate =
-    total > 0 ? Math.round((hired / total) * 100) : 0;
-
-  const avgSalary =
-    salaryCount > 0 ? Math.round(salarySum / salaryCount) : undefined;
-
   return {
-    totalApplications: total,
-    interviewRate,
-    offerRate,
-    successRate,
-
+    funnel,
+    performance,
     statusBreakdown,
-    countryBreakdown,
-    industryBreakdown,
-
-    avgSalary,
-
-    recommendations: [],
-    weakPoints: [],
-
-    applicationIntelligence,
     applicationScores,
-
-    topCountries: [],
-    topIndustries: [],
-    marketRecommendations: [],
-    careerSignals: [],
+    applicationIntelligence,
+    meta: {
+      generatedAt: new Date().toISOString(),
+      source: "server-engine-v2",
+    },
   };
+}
+
+/**
+ * ============================
+ * LIGHTWEIGHT HELPERS
+ * ============================
+ */
+
+export async function getFunnelStats(userId: string) {
+  const apps = await fetchApplications(userId);
+  return calculateFunnel(apps);
+}
+
+export async function getPerformanceMetrics(userId: string) {
+  const apps = await fetchApplications(userId);
+  return calculatePerformance(apps);
+}
+
+interface ApplicationIntelligence {
+  atsScore: number;
+  atsPassProbability: number;
+  riskLevel: "low" | "medium" | "high";
+  matchedSkills: string[];
+  missingSkills: string[];
 }

@@ -1,18 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useState } from "react";
 
 export default function Home() {
-  const [session, setSession] = useState<string | null>(null);
+  const [session, setSession] = useState<string | null>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("session");
+    }
 
-  useEffect(() => {
-    setSession(localStorage.getItem("session"));
-  }, []);
+    return null;
+  });
 
   const logout = () => {
     localStorage.removeItem("session");
     setSession(null);
-    window.location.href = "/";
   };
 
   return (
@@ -28,39 +30,39 @@ export default function Home() {
 
           <div className="flex gap-6 items-center">
 
-            <a href="/" className="hover:text-blue-400">
+            <Link href="/" className="hover:text-blue-400">
               Inicio
-            </a>
+            </Link>
 
-            <a href="/empleos" className="hover:text-blue-400">
+            <Link href="/empleos" className="hover:text-blue-400">
               Empleos
-            </a>
+            </Link>
 
-            <a href="/subir-cv" className="hover:text-blue-400">
+            <Link href="/subir-cv" className="hover:text-blue-400">
               Subir CV
-            </a>
+            </Link>
 
             {!session ? (
               <>
-                <a href="/registro" className="hover:text-blue-400">
+                <Link href="/registro" className="hover:text-blue-400">
                   Registro
-                </a>
+                </Link>
 
-                <a
+                <Link
                   href="/login"
                   className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-semibold"
                 >
                   Login
-                </a>
+                </Link>
               </>
             ) : (
               <>
-                <a
+                <Link
                   href="/dashboard"
                   className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-semibold"
                 >
                   Mi Panel
-                </a>
+                </Link>
 
                 <button
                   onClick={logout}
@@ -76,6 +78,7 @@ export default function Home() {
         </div>
       </nav>
 
+
       {/* HERO */}
       <section className="py-24 px-6 text-center">
 
@@ -88,21 +91,23 @@ export default function Home() {
           Australia y Europa con ayuda de Inteligencia Artificial.
         </p>
 
+
         <div className="flex justify-center gap-6">
 
-          <a
+          <Link
             href="/empleos"
             className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-bold shadow-lg"
           >
             Ver Empleos
-          </a>
+          </Link>
 
-          <a
+
+          <Link
             href="/subir-cv"
             className="bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-bold shadow-lg"
           >
             Subir CV
-          </a>
+          </Link>
 
         </div>
 

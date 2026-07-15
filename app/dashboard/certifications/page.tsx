@@ -1,11 +1,24 @@
+
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+
+type Certification = {
+  id: string;
+  user_id: string;
+  name: string;
+  status: string;
+  issuing_body: string;
+  country: string;
+  issue_date: string;
+  expiry_date: string | null;
+  created_at: string;
+};
 
 export default function CertificationsPage() {
   const [userId, setUserId] = useState<string | null>(null);
-  const [certifications, setCertifications] = useState<any[]>([]);
+  const [certifications, setCertifications] = useState<Certification[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [name, setName] = useState("");
@@ -15,22 +28,12 @@ export default function CertificationsPage() {
   const [issueDate, setIssueDate] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
 
-  useEffect(() => {
-    loadUser();
-  }, []);
+  const loadCertifications = useCallback(async () => {
+  if (!userId) return;
 
-  useEffect(() => {
-    if (userId) {
-      loadCertifications();
-    }
-  }, [userId]);
+  setLoading(true);
 
-  async function loadUser() {
-    const { data } = await supabase.auth.getUser();
-    setUserId(data.user?.id || null);
-  }
-
-  async function loadCertifications() {
+  try {
     const { data, error } = await supabase
       .from("certifications")
       .select("*")
@@ -43,8 +46,65 @@ export default function CertificationsPage() {
     }
 
     setCertifications(data || []);
+  } finally {
     setLoading(false);
   }
+}, [userId]);
+
+  useEffect(() => {
+  let active = true;
+
+  async function fetchUser() {
+    const { data } = await supabase.auth.getUser();
+
+    if (active) {
+      setUserId(data.user?.id || null);
+    }
+  }
+
+  void fetchUser();
+
+  return () => {
+    active = false;
+  };
+}, []);
+
+useEffect(() => {
+  if (!userId) return;
+
+  let active = true;
+
+  async function fetchCertifications() {
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase
+        .from("certifications")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      if (active) {
+        setCertifications(data || []);
+      }
+    } finally {
+      if (active) {
+        setLoading(false);
+      }
+    }
+  }
+
+  void fetchCertifications();
+
+  return () => {
+    active = false;
+  };
+}, [userId]);
 
   async function saveCertification() {
     if (!userId) {
@@ -52,13 +112,7 @@ export default function CertificationsPage() {
       return;
     }
 
-    if (
-      !name ||
-      !status ||
-      !issuingBody ||
-      !country ||
-      !issueDate
-    ) {
+    if (!name || !status || !issuingBody || !country || !issueDate) {
       alert("Completa todos los campos obligatorios");
       return;
     }
@@ -110,8 +164,6 @@ export default function CertificationsPage() {
         Certificaciones internacionales registradas en tu perfil.
       </p>
 
-      {/* FORMULARIO */}
-
       <div
         style={{
           background: "white",
@@ -127,44 +179,28 @@ export default function CertificationsPage() {
           placeholder="Nombre de certificación"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          style={{
-            width: "100%",
-            padding: 10,
-            marginBottom: 10,
-          }}
+          style={{ width: "100%", padding: 10, marginBottom: 10 }}
         />
 
         <input
           placeholder="Status (Active, Expired, Pending)"
           value={status}
           onChange={(e) => setStatus(e.target.value)}
-          style={{
-            width: "100%",
-            padding: 10,
-            marginBottom: 10,
-          }}
+          style={{ width: "100%", padding: 10, marginBottom: 10 }}
         />
 
         <input
           placeholder="Organismo emisor"
           value={issuingBody}
           onChange={(e) => setIssuingBody(e.target.value)}
-          style={{
-            width: "100%",
-            padding: 10,
-            marginBottom: 10,
-          }}
+          style={{ width: "100%", padding: 10, marginBottom: 10 }}
         />
 
         <input
           placeholder="País"
           value={country}
           onChange={(e) => setCountry(e.target.value)}
-          style={{
-            width: "100%",
-            padding: 10,
-            marginBottom: 10,
-          }}
+          style={{ width: "100%", padding: 10, marginBottom: 10 }}
         />
 
         <label>Fecha de emisión</label>
@@ -173,11 +209,7 @@ export default function CertificationsPage() {
           type="date"
           value={issueDate}
           onChange={(e) => setIssueDate(e.target.value)}
-          style={{
-            width: "100%",
-            padding: 10,
-            marginBottom: 10,
-          }}
+          style={{ width: "100%", padding: 10, marginBottom: 10 }}
         />
 
         <label>Fecha de vencimiento (opcional)</label>
@@ -186,11 +218,7 @@ export default function CertificationsPage() {
           type="date"
           value={expiryDate}
           onChange={(e) => setExpiryDate(e.target.value)}
-          style={{
-            width: "100%",
-            padding: 10,
-            marginBottom: 15,
-          }}
+          style={{ width: "100%", padding: 10, marginBottom: 15 }}
         />
 
         <button
@@ -208,8 +236,6 @@ export default function CertificationsPage() {
           Guardar Certificación
         </button>
       </div>
-
-      {/* LISTA */}
 
       <h2>📋 Certificaciones Registradas</h2>
 

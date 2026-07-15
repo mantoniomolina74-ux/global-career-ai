@@ -4,7 +4,12 @@ import { supabaseServer } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
 
-function calculateMatch(cvText: string, job: any) {
+type JobRecord = {
+  description?: string | null;
+  [key: string]: unknown;
+};
+
+function calculateMatch(cvText: string, job: JobRecord) {
   const text = cvText.toLowerCase();
   const jobText = job.description?.toLowerCase() || "";
 
@@ -51,7 +56,6 @@ export async function POST(req: Request) {
 
     console.log("Procesando CV:", user_id);
 
-    // 1. EXTRAER TEXTO
     const text = await extractCVText(fileUrl);
 
     if (!text || text.trim().length === 0) {
@@ -63,7 +67,6 @@ export async function POST(req: Request) {
 
     console.log("Texto extraído:", text.length);
 
-    // 2. ATS SIMPLE
     const lower = text.toLowerCase();
 
     const skills = [
@@ -83,11 +86,12 @@ export async function POST(req: Request) {
 
     let atsScore = 50;
     atsScore += Math.min(skills.length * 5, 30);
+
     if (text.length > 1500) atsScore += 10;
     if (text.length > 2500) atsScore += 10;
+
     atsScore = Math.min(atsScore, 100);
 
-    // 3. JOBS
     const { data: jobs } = await supabaseServer
       .from("jobs")
       .select("*");
@@ -105,7 +109,6 @@ export async function POST(req: Request) {
 
     matchResults.sort((a, b) => b.match - a.match);
 
-    // 4. GUARDAR
     await supabaseServer.from("cv_analyses").insert({
       user_id,
       ats_score: atsScore,
@@ -115,7 +118,6 @@ export async function POST(req: Request) {
       cv_preview: text.slice(0, 1000),
     });
 
-    // 5. RESPUESTA FINAL
     return NextResponse.json({
       success: true,
       user_id,
@@ -126,11 +128,16 @@ export async function POST(req: Request) {
       preview: text.slice(0, 300),
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("ERROR analyze-cv:", error);
 
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Error interno";
+
     return NextResponse.json(
-      { error: error.message || "Error interno" },
+      { error: message },
       { status: 500 }
     );
   }

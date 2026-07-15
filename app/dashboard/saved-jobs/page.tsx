@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -8,21 +8,29 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+type SavedJob = {
+  id: string;
+  title: string;
+  company: string;
+  country: string;
+  description: string;
+  created_at?: string;
+};
+
 export default function SavedJobsPage() {
-  const [jobs, setJobs] = useState<any[]>([]);
+  const [jobs, setJobs] = useState<SavedJob[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadJobs();
-  }, []);
-
-  const loadJobs = async () => {
+  const loadJobs = useCallback(async () => {
     try {
       const {
         data: { user },
       } = await supabase.auth.getUser();
 
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
       const { data, error } = await supabase
         .from("saved_jobs")
@@ -30,15 +38,33 @@ export default function SavedJobsPage() {
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
-      setJobs(data || []);
+      setJobs((data as SavedJob[]) || []);
     } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+  let active = true;
+
+  async function initialize() {
+    if (!active) return;
+
+    await loadJobs();
+  }
+
+  initialize();
+
+  return () => {
+    active = false;
   };
+}, [loadJobs]);
 
   const deleteJob = async (id: string) => {
     const { error } = await supabase

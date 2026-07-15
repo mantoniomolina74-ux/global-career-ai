@@ -1,20 +1,33 @@
-export function analyzeCvGap(cv: any, job: any) {
-  const cvSkills = (cv.skills || []).map((s: string) =>
-    s.toLowerCase()
-  );
+type CvGapProfile = {
+  skills?: string[];
+};
+
+type JobGapProfile = {
+  title?: string;
+  description?: string;
+  industry?: string;
+};
+
+export function analyzeCvGap(
+  cv: CvGapProfile,
+  job: JobGapProfile
+) {
+  const cvSkills = Array.isArray(cv.skills)
+    ? cv.skills.map((s) => s.toLowerCase())
+    : [];
 
   const jobText = `
-    ${job.title} 
-    ${job.description} 
-    ${job.industry}
+    ${job.title || ""}
+    ${job.description || ""}
+    ${job.industry || ""}
   `.toLowerCase();
 
-  const matchedSkills = cvSkills.filter((skill: string) =>
+  const matchedSkills = cvSkills.filter((skill) =>
     jobText.includes(skill.toLowerCase())
   );
 
   const missingSkills = cvSkills.filter(
-    (skill: string) => !jobText.includes(skill.toLowerCase())
+    (skill) => !jobText.includes(skill.toLowerCase())
   );
 
   const matchPercentage = Math.round(
@@ -28,6 +41,6 @@ export function analyzeCvGap(cv: any, job: any) {
     recommendation:
       missingSkills.length > 0
         ? `Improve: ${missingSkills.slice(0, 3).join(", ")}`
-        : "Excellent match. You meet most requirements."
+        : "Excellent match. You meet most requirements.",
   };
 }

@@ -1,9 +1,27 @@
-export function rankJobs(jobs: any[], cvSkills: string[], cvIndustries: string[]) {
+
+type JobInput = {
+  title: string;
+  description?: string;
+  industry?: string;
+  requires_whmis?: boolean;
+  requires_csts?: boolean;
+  requires_first_aid?: boolean;
+  country?: string;
+  [key: string]: unknown;
+};
+
+export function rankJobs(
+  jobs: JobInput[],
+  cvSkills: string[],
+  cvIndustries: string[]
+) {
   return jobs
     .map((job) => {
       let score = 0;
 
-      const text = `${job.title} ${job.description} ${job.industry}`.toLowerCase();
+      const text =
+        `${job.title} ${job.description ?? ""} ${job.industry ?? ""}`
+          .toLowerCase();
 
       // 🔥 MATCH POR SKILLS REALES DEL USUARIO
       cvSkills.forEach((skill) => {
@@ -30,7 +48,7 @@ export function rankJobs(jobs: any[], cvSkills: string[], cvIndustries: string[]
 
       return {
         ...job,
-        match_score: Math.min(score, 100)
+        match_score: Math.min(score, 100),
       };
     })
     .sort((a, b) => b.match_score - a.match_score);

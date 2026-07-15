@@ -1,13 +1,28 @@
+type CareerProfileInput = {
+  ats_score?: number | string | null;
+  skills?: string | string[] | null;
+  industry?: string | null;
+};
+
 export function calculateGapAnalysis(
-  cv: any,
-  certifications: any[] = []
+  cv: CareerProfileInput,
+  _certifications: unknown[] = []
 ) {
   const atsScore = Number(cv?.ats_score || 0);
 
-  const skills =
-    typeof cv?.skills === "string"
-      ? JSON.parse(cv.skills || "[]")
-      : cv?.skills || [];
+  let skills: string[] = [];
+
+  if (typeof cv?.skills === "string") {
+    try {
+      const parsedSkills = JSON.parse(cv.skills || "[]");
+
+      skills = Array.isArray(parsedSkills) ? parsedSkills : [];
+    } catch {
+      skills = [];
+    }
+  } else if (Array.isArray(cv?.skills)) {
+    skills = cv.skills;
+  }
 
   const industry = cv?.industry || "";
 

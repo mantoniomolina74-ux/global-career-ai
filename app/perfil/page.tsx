@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 export default function PerfilPage() {
@@ -17,14 +17,13 @@ export default function PerfilPage() {
     target_industry: "",
   });
 
-  useEffect(() => {
-    cargarPerfil();
-  }, []);
-
-  const cargarPerfil = async () => {
+  const cargarPerfil = useCallback(async () => {
     const { data: userData } = await supabase.auth.getUser();
 
-    if (!userData.user) return;
+    if (!userData.user) {
+      setLoading(false);
+      return;
+    }
 
     const { data } = await supabase
       .from("profiles")
@@ -45,7 +44,15 @@ export default function PerfilPage() {
     }
 
     setLoading(false);
-  };
+  }, []);
+
+    useEffect(() => {
+    const load = async () => {
+      await cargarPerfil();
+    };
+
+    load();
+  }, [cargarPerfil]);
 
   const guardarPerfil = async () => {
     const { data: userData } = await supabase.auth.getUser();
@@ -89,7 +96,6 @@ export default function PerfilPage() {
       </h1>
 
       <div className="grid gap-4">
-
         <input
           placeholder="Nombre completo"
           value={form.full_name}

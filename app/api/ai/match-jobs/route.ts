@@ -5,11 +5,15 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+type JobRecord = {
+  id: string;
+  industry?: string | null;
+};
+
 export async function POST(req: Request) {
   try {
     const { cv_id } = await req.json();
 
-    // 1. Obtener CV
     const { data: cv, error: cvError } = await supabase
       .from("cv_analyses")
       .select("*")
@@ -26,7 +30,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // 2. Obtener jobs
     const { data: jobs, error: jobsError } = await supabase
       .from("jobs")
       .select("*");
@@ -45,8 +48,7 @@ export async function POST(req: Request) {
       ? cv.industries
       : [];
 
-    // 3. Calcular matches (solo por industria)
-    const matches = jobs.map((job: any) => {
+    const matches = jobs.map((job: JobRecord) => {
       const matchScore = cvIndustries.includes(job.industry)
         ? 100
         : 0;
@@ -59,13 +61,11 @@ export async function POST(req: Request) {
       };
     });
 
-    // 4. Limpiar matches anteriores del CV
     await supabase
       .from("job_matches")
       .delete()
       .eq("cv_id", cv_id);
 
-    // 5. Guardar matches
     const { error: insertError } = await supabase
       .from("job_matches")
       .insert(matches);
@@ -80,7 +80,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // 6. Ordenar resultados
     const sorted = matches.sort(
       (a, b) => b.match_score - a.match_score
     );
@@ -91,11 +90,16 @@ export async function POST(req: Request) {
       top_matches: sorted.slice(0, 10),
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Server error";
+
     return Response.json(
       {
         error: "Server error",
-        details: error.message,
+        details: message,
       },
       { status: 500 }
     );
