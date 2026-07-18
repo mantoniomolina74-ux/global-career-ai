@@ -2027,7 +2027,107 @@ The system preserves not only software functionality, but also the knowledge req
 **End of ADR-008**
 
 ---
+## ADR-009 — Context Weighted Matching Engine Scoring
 
+## ADR-009 — Context Weighted Matching Engine Scoring
+
+### Estado
+Aceptado
+
+### Fecha
+2026-07-18
+
+### Contexto
+
+El Matching Engine de Global Career AI requiere diferenciar el valor de una coincidencia dependiendo del contexto donde una habilidad aparece dentro del CV.
+
+Un modelo basado únicamente en coincidencias de palabras puede producir falsos positivos al considerar equivalentes:
+
+- Experiencia laboral demostrada.
+- Skills declaradas.
+- Educación.
+- Cursos.
+- Keywords repetidas.
+
+El sistema debe evaluar evidencia contextual para mejorar la precisión del matching y evitar que la repetición artificial de palabras aumente el score.
+
+### Decisión
+
+El Matching Engine utilizará un modelo de puntuación basado en evidencia contextual.
+
+Cada coincidencia de habilidad recibirá un peso dependiendo del campo donde fue encontrada.
+
+La prioridad de evidencia será:
+
+1. Experiencia laboral.
+2. Skills declaradas.
+3. Resumen profesional.
+4. Educación.
+5. Certificaciones.
+6. Cursos.
+7. Keywords generales.
+
+Los pesos serán gestionados centralmente mediante `weights.ts`.
+
+El algoritmo no contendrá valores numéricos fijos dentro de la lógica de scoring.
+
+### Reglas del algoritmo
+
+#### 1. Evidencia contextual
+
+Una habilidad encontrada en experiencia laboral tendrá mayor valor que una habilidad encontrada únicamente como declaración.
+
+Ejemplo:
+
+"5 años usando Python en proyectos reales"
+
+tendrá mayor peso que:
+
+"Python listado en habilidades".
+
+#### 2. Acumulación controlada
+
+Se permitirá acumular evidencia proveniente de diferentes campos.
+
+Cada habilidad tendrá un límite máximo de contribución para evitar inflación artificial.
+
+#### 3. Reducción por repetición
+
+La frecuencia de aparición de una palabra no aumentará el score de forma lineal.
+
+El sistema utilizará rendimiento decreciente para evitar que CVs optimizados con keywords superen candidatos con experiencia real.
+
+#### 4. Explicabilidad
+
+El Matching Engine deberá conservar las razones utilizadas para calcular el score.
+
+El resultado debe poder explicar:
+
+- Habilidad encontrada.
+- Campo donde apareció.
+- Peso aplicado.
+- Contribución al resultado final.
+
+### Consecuencias positivas
+
+- Mejora la precisión del matching.
+- Reduce falsos positivos.
+- Mantiene transparencia del algoritmo.
+- Permite calibración futura mediante Learning System.
+- Mantiene separación entre configuración y lógica.
+
+### Riesgos aceptados
+
+- Los pesos iniciales requerirán calibración con datos reales.
+- El modelo deberá validarse con diferentes tipos de CV.
+- La calidad dependerá de la extracción correcta de evidencia.
+
+### Próximos pasos
+
+1. Definir estructuras internas de evidencia.
+2. Integrar pesos contextuales en `jobScoring.ts`.
+3. Crear pruebas unitarias.
+4. Validar resultados con CVs reales.
 # Decision History
 
 ## Overview
