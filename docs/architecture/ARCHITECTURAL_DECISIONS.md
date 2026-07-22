@@ -2190,9 +2190,459 @@ Razones:
 5. Crear pruebas con escenarios reales.
 6. Validar resultados con diferentes tipos de CV.
 
+# ADR-010 — Evidence Layer Integration Strategy
+
+**Status:** Accepted  
+**Date:** 2026-07-18
+
+## Context
+
+The current Matching Engine evaluates compatibility between a candidate CV and a job opportunity using aggregated scoring logic based on available CV information, job requirements, skills, and contextual attributes.
+
+During the evolution toward a more explainable and reliable matching system, a limitation was identified:
+
+The existing scoring model can determine similarity between candidate and opportunity, but it does not explicitly measure the strength and quality of the evidence supporting each match.
+
+A candidate may contain a keyword, skill, or related experience, but the system must distinguish between:
+
+* Verified direct experience.
+* Related professional experience.
+* Transferable skills.
+* Weak or irrelevant signals.
+
+Without an evidence evaluation layer, the system risks overestimating compatibility based only on textual similarity.
+
+## Decision
+
+A new Evidence Layer will be introduced as an additional intelligence layer inside the Matching Engine architecture.
+
+The Evidence Layer will generate an Evidence Score based on the quality, relevance, and strength of detected candidate evidence.
+
+The Evidence Score will not immediately replace the existing Matching Score.
+
+Instead, it will operate as a hybrid scoring component that enhances the existing Matching Engine through additional evidence validation and confidence adjustment.
+
+The Evidence Score will initially operate in **shadow mode**, running alongside the existing scoring system without affecting production decisions.
+
+The purpose of shadow mode is:
+
+* Validate scoring behavior.
+* Compare Evidence Score results against existing Matching Scores.
+* Measure improvement in recommendation accuracy.
+* Identify unexpected scoring patterns.
+* Tune evidence weights before production integration.
+
+## Approved Architecture
+CV Analyzer
+|
+↓
+Candidate Evidence Extraction
+|
+↓
+Evidence Evaluation Layer
+|
+↓
+Evidence Score
+|
+↓
+Base Matching Score
+|
++
+Confidence Adjustment
+|
+↓
+Final Match Result
+
+The final matching decision will follow a hybrid model:
+Base Matching Score
++
+Evidence Score
++
+Confidence Adjustment
+↓
+Final Match Result
+
+
+This approach preserves existing scoring behavior while allowing evidence-based intelligence to progressively improve matching accuracy.
+
+## Evidence Classification Model
+
+Each detected evidence item must be classified according to contextual relevance:
+
+### Direct Evidence
+
+Evidence that directly demonstrates the required skill, role, certification, or experience.
+
+Example:
+
+* Job requires welding.
+* CV contains professional welding experience.
+
+### Related Evidence
+
+Evidence that belongs to a closely connected domain.
+
+Example:
+
+* Job requires industrial maintenance.
+* CV contains mechanical equipment maintenance.
+
+### Transferable Evidence
+
+Evidence that provides supporting capability but does not prove direct experience.
+
+Example:
+
+* Job requires mining experience.
+* CV contains heavy equipment operation in agriculture.
+
+### Irrelevant Evidence
+
+Evidence that does not contribute meaningful compatibility.
+
+## Evidence Accumulation Rules
+
+The Evidence Layer must avoid artificial score inflation.
+
+Approved rules:
+
+* Multiple confirmations of the same evidence type have diminishing returns.
+* Each skill has a maximum accumulation limit.
+* Additional evidence only increases confidence when it provides independent support.
+* Repeated keywords alone cannot significantly increase the final score.
+
+## Weight Management Strategy
+
+Evidence weights will be externalized and configurable.
+
+Initial weight categories:
+
+* Evidence type weight.
+* Experience duration adjustment.
+* Context relevance adjustment.
+* Confidence adjustment.
+* Maximum contribution limits.
+
+Weights will be maintained separately from scoring logic to allow calibration without architectural changes.
+
+## Consequences
+
+### Positive Consequences
+
+* More explainable recommendations.
+* Better distinction between real experience and keyword similarity.
+* Reduced false positive matches.
+* Improved transparency for candidates and employers.
+* Foundation for future AI learning calibration.
+
+### Trade-offs
+
+* Additional processing layer.
+* More complex scoring pipeline.
+* Requires validation before increasing Evidence Score influence.
+
+## Migration Strategy
+
+The Evidence Layer will follow a progressive adoption model:
+
+### Phase 1 — Shadow Mode
+
+Evidence Score calculated but not used for final ranking.
+
+### Phase 2 — Hybrid Assisted Scoring
+
+Evidence Score contributes partially to final matching decisions through confidence adjustment and controlled weighting.
+
+### Phase 3 — Evidence Driven Matching
+
+Evidence Score becomes a primary intelligence component of the Matching Engine.
+
+Migration will only proceed after validation metrics demonstrate improved recommendation quality.
+
+## Implementation Constraints
+
+The Evidence Layer must preserve:
+
+* Existing engine contracts.
+* Type safety.
+* Backward compatibility.
+* Current Matching Engine behavior during validation.
+
+The Evidence Layer extends the architecture without replacing existing scoring abruptly.
+
+## Decision Outcome
+
+ADR-010 is accepted.
+
+The Evidence Layer becomes the official evolution path toward a Hybrid Evidence Based Matching Engine architecture.
+
+# ADR-010.1 — Evidence Transparency Layer Validation Findings
+
+## Estado
+
+Aceptado y validado en entorno local.
+
+## Contexto
+
+Después de integrar la Evidence Layer en modo Shadow Mode, se agregó la capa de transparencia para observar cómo el sistema construye el Evidence Score.
+
+La validación se realizó utilizando datos reales provenientes de:
+
+```
+Supabase
+   ↓
+cv_analyses
+   ↓
+/api/jobs
+   ↓
+jobScoring.ts
+   ↓
+Evidence Layer
+   ↓
+evidence_analysis
+```
+
+## Objetivo de la validación
+
+Confirmar que la Evidence Layer:
+
+* genera resultados explicables;
+* mantiene separado el `match_score` oficial;
+* permite analizar la calidad y origen de la evidencia;
+* evita modificar el comportamiento existente del Matching Engine.
+
+## Resultados confirmados
+
+### 1. Match Score independiente
+
+Se confirmó que:
+
+```
+match_score
+```
+
+permanece como métrica oficial del Matching Engine.
+
+La Evidence Layer funciona como una capa adicional de análisis y no reemplaza el scoring existente.
+
+Ejemplo:
+
+```
+match_score: 75
+
+evidence_analysis.totalScore: 74
+```
+
+Ambos valores representan perspectivas diferentes del candidato.
+
+---
+
+### 2. Evidence Transparency funcionando
+
+La salida ahora incluye:
+
+```json
+{
+  "transparency": {
+    "relevanceBreakdown": {},
+    "confidenceBreakdown": {},
+    "sourceBreakdown": {},
+    "evidenceTypeBreakdown": {}
+  }
+}
+```
+
+Esto permite conocer:
+
+* tipo de evidencia;
+* fuente de evidencia;
+* nivel de confianza;
+* relación con la habilidad evaluada.
+
+---
+
+## Casos validados
+
+### Caso A — Operador de maquinaria (Construction)
+
+Resultado:
+
+* match_score alto;
+* evidencia consistente;
+* combinación de experiencia y habilidades relacionadas.
+
+Conclusión:
+
+La Evidence Layer identifica correctamente una relación fuerte entre el perfil del candidato y la oportunidad.
+
+---
+
+### Caso B — Trabajador agrícola (Agriculture)
+
+Resultado:
+
+* evidencia directa y relacionada;
+* confianza alta y media;
+* experiencia proveniente de fuentes del CV.
+
+Conclusión:
+
+El sistema reconoce correctamente la alineación con la experiencia demostrada del candidato.
+
+---
+
+### Caso C — Minero en Canadá (Mining)
+
+Resultado:
+
+* match_score bajo;
+* ausencia de habilidades e industria coincidente;
+* recomendaciones limitadas.
+
+Conclusión:
+
+El Matching Engine mantiene correctamente una baja compatibilidad.
+
+---
+
+# Hallazgo arquitectónico
+
+Durante la validación se identificó una limitación esperada de la primera versión de Evidence Layer.
+
+Actualmente la evaluación funciona como:
+
+```
+Candidate Profile Evidence
+          ↓
+Evidence Score general
+          ↓
+evidence_analysis
+```
+
+Esto permite conocer la fortaleza general de la evidencia del candidato.
+
+Sin embargo, todavía no evalúa completamente:
+
+```
+Candidate Evidence
+          +
+Specific Job Requirements
+          ↓
+Job-Specific Evidence Score
+```
+
+Por lo tanto, el mismo perfil de evidencia puede aparecer en diferentes empleos aunque la relación específica con cada puesto sea distinta.
+
+---
+
+# Decisión futura
+
+Este hallazgo no requiere cambios inmediatos.
+
+La arquitectura actual cumple el objetivo de ADR-010:
+
+* introducir evidencia sin riesgo;
+* observar comportamiento real;
+* mantener reversibilidad;
+* evitar degradar el Matching Engine.
+
+La siguiente evolución será definida como:
+
+## ADR-010.2 — Job-Specific Evidence Matching
+
+Objetivo:
+
+Crear una evaluación de evidencia específica por empleo capaz de distinguir:
+
+* evidencia directa;
+* evidencia transferible;
+* evidencia insuficiente;
+* ausencia de experiencia relevante.
+
+---
+
+# Estado final
+
+ADR-010:
+
+✅ Evidence Layer integrada.
+
+ADR-010.1:
+
+✅ Evidence Transparency implementada y validada.
+
+Próximo paso:
+
+ADR-010.2 — Job-Specific Evidence Matching.
+
+## ADR-010.2 – Evidence Analytics Layer
+
+### Status
+Accepted
+
+### Context
+
+The Evidence Layer currently operates in Shadow Mode, generating evidence-based metrics without influencing the official match_score.
+
+Although evidence is already calculated, the system lacks an analytics layer capable of evaluating evidence quality, coverage, confidence, and gaps over time.
+
+Without objective analytics, future calibration of the matching engine would rely on assumptions rather than measurable data.
+
+### Decision
+
+Introduce an Evidence Analytics Layer immediately after the Evidence Layer.
+
+Responsibilities:
+
+- Analyze evidence quality.
+- Calculate evidence coverage.
+- Measure confidence.
+- Detect missing evidence.
+- Produce analytics only.
+
+The module SHALL NOT modify:
+
+- match_score
+- Ranking Engine
+- Decision Engine
+
+### Consequences
+
+Positive:
+
+- Objective measurement.
+- Historical analytics.
+- Safer future calibration.
+- Better explainability.
+
+Negative:
+
+- Small increase in processing time.
+- Additional analytics object generated.
+
+### Compatibility
+
+Fully backward compatible.
+
+Shadow Mode remains unchanged.
+
+No API changes.
+
+No database schema changes.
+
+### Future Evolution
+
+ADR-011 Adaptive Calibration
+
+ADR-011.7.8 Competency Evidence Weighting
+
+ADR-011.8 Competency Evaluation Contract
+
+ADR-012 Evidence Weight Learning
+
+ADR-013 Knowledge Domain Intelligence Engine
 
 The following architectural decisions define the foundation of Global Career AI V1.0.
-
 | ADR | Decision | Status |
 |---|---|---|
 | ADR-001 | Engine Contracts as Source of Truth | Accepted |
@@ -2204,6 +2654,15 @@ The following architectural decisions define the foundation of Global Career AI 
 | ADR-007 | Validation Boundary Strategy | Accepted |
 | ADR-008 | Documentation Governance | Accepted |
 | ADR-009 | Evidence Based Matching Engine Scoring | Accepted |
+| ADR-010 | Evidence Layer Integration Strategy | Accepted |
+| ADR-010.1 | Evidence Transparency Layer | Accepted |
+| ADR-010.2 | Evidence Analytics Layer | Accepted |
+| ADR-011 | Competency Intelligence Architecture | Accepted |
+| ADR-011.7.8 | Competency Evidence Weighting | Accepted |
+| ADR-011.8 | Competency Evaluation Contract | Accepted |
+| ADR-012 | Evidence Weight Learning | Accepted |
+| ADR-013 | Knowledge Domain Intelligence Engine | Accepted |
+| ADR-013.1 | Knowledge Domain Scoring Strategy | Accepted |
 ---
 
 # Final Architecture Governance Statement
