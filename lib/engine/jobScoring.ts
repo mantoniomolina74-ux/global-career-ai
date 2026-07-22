@@ -1,11 +1,17 @@
 import { SCORING_WEIGHTS, SCORE_LIMITS } from "./weights";
 import { buildMatchReasons } from "./matchReasons";
+import { buildCandidateEvidence } from "./evidenceAdapter";
+import { accumulateEvidence } from "./evidenceAccumulator";
 
 type JobScoreInput = {
+  id: string;
   title?: string;
   description?: string;
   industry?: string;
   country?: string;
+  category?: string;
+  tags?: string;
+  match_score?: number;
   requires_whmis?: boolean;
   requires_csts?: boolean;
   requires_first_aid?: boolean;
@@ -15,6 +21,110 @@ type CvScoreInput = {
   skills?: string[];
   industries?: string[];
 };
+
+const MATCH_GROUPS = [
+  {
+    name: "Mining",
+    keywords: [
+      "mining",
+      "mine",
+      "mina",
+      "mineria",
+      "minería",
+      "minero",
+      "miner",
+      "underground",
+      "subterranea",
+      "subterránea",
+    ],
+  },
+  {
+    name: "Heavy Equipment",
+    keywords: [
+      "machinery",
+      "maquinaria",
+      "equipment",
+      "heavy equipment",
+      "equipo pesado",
+      "operator",
+      "operador",
+      "forklift",
+      "montacargas",
+      "tractor",
+    ],
+  },
+  {
+    name: "Agriculture",
+    keywords: [
+      "agriculture",
+      "agricultura",
+      "farm",
+      "granja",
+      "harvest",
+      "cosecha",
+      "campo",
+      "cultivo",
+    ],
+  },
+  {
+    name: "Construction",
+    keywords: [
+      "construction",
+      "construccion",
+      "construcción",
+      "building",
+      "obra",
+    ],
+  },
+  {
+    name: "Maintenance",
+    keywords: [
+      "maintenance",
+      "mantenimiento",
+      "repair",
+      "reparacion",
+      "reparación",
+      "mechanic",
+      "mecanico",
+      "mecánico",
+    ],
+  },
+  {
+    name: "Welding",
+    keywords: [
+      "welding",
+      "soldadura",
+      "welder",
+      "soldador",
+    ],
+  },
+];
+
+function normalizeText(value: string = "") {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function matchesConcept(
+  text: string,
+  value: string
+) {
+  const normalizedValue = normalizeText(value);
+
+  const group = MATCH_GROUPS.find((item) =>
+    item.keywords.includes(normalizedValue)
+  );
+
+  if (!group) {
+    return text.includes(normalizedValue);
+  }
+
+  return group.keywords.some((keyword) =>
+    text.includes(normalizeText(keyword))
+  );
+}
 
 export function scoreJobs(
   jobs: JobScoreInput[],
@@ -28,29 +138,43 @@ export function scoreJobs(
     ? cv.industries
     : [];
 
+  const candidateEvidences =
+    buildCandidateEvidence(cv);
+
+  const evidenceAnalysis =
+    candidateEvidences.length > 0
+      ? accumulateEvidence(
+          "career_profile",
+          candidateEvidences
+        )
+      : null;
+
   return jobs
     .map((job) => {
       let score = 0;
 
-      const text =
-        `${job.title || ""} ${job.description || ""} ${job.industry || ""}`
-          .toLowerCase();
+      const fields = {
+        title: normalizeText(job.title ?? ""),
+        description: normalizeText(job.description ?? ""),
+        industry: normalizeText(job.industry ?? ""),
+        category: normalizeText(job.category ?? ""),
+        tags: normalizeText(job.tags ?? ""),
+      };
 
-      // Skills
+      const text = Object.values(fields).join(" ");
+
       skills.forEach((skill) => {
-        if (text.includes(skill.toLowerCase())) {
+        if (matchesConcept(text, skill)) {
           score += SCORING_WEIGHTS.skillsMatch;
         }
       });
 
-      // Industries
       industries.forEach((industry) => {
-        if (text.includes(industry.toLowerCase())) {
+        if (matchesConcept(text, industry)) {
           score += SCORING_WEIGHTS.industryMatch;
         }
       });
 
-      // Certifications
       if (job.requires_whmis) {
         score += SCORING_WEIGHTS.certifications.whmis;
       }
@@ -63,33 +187,29 @@ export function scoreJobs(
         score += SCORING_WEIGHTS.certifications.firstAid;
       }
 
-      // Country bonus
-      if (
-        job.country &&
-        SCORING_WEIGHTS.countries[
-          job.country as keyof typeof SCORING_WEIGHTS.countries
-        ]
-      ) {
-        score +=
-          SCORING_WEIGHTS.countries[
-            job.country as keyof typeof SCORING_WEIGHTS.countries
-          ];
+      if (job.country) {
+        score += SCORING_WEIGHTS.geography.countryMatch;
       }
 
       return {
         ...job,
 
-        match_score: Math.min(score, SCORE_LIMITS.maxScore),
+        match_score: Math.min(
+          score,
+          SCORE_LIMITS.maxScore
+        ),
+
+        evidence_analysis: evidenceAnalysis,
 
         match_reasons: buildMatchReasons(job, cv),
 
         match_explanation: {
           matched_skills: skills.filter((skill) =>
-            text.includes(skill.toLowerCase())
+            matchesConcept(text, skill)
           ),
 
           matched_industries: industries.filter((industry) =>
-            text.includes(industry.toLowerCase())
+            matchesConcept(text, industry)
           ),
 
           certifications: {

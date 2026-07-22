@@ -5,35 +5,121 @@ import { supabaseServer } from "@/lib/supabase-server";
 export const runtime = "nodejs";
 
 type JobRecord = {
+  title?: string | null;
   description?: string | null;
+  industry?: string | null;
+  category?: string | null;
+  tags?: string | null;
   [key: string]: unknown;
 };
 
 function calculateMatch(cvText: string, job: JobRecord) {
   const text = cvText.toLowerCase();
-  const jobText = job.description?.toLowerCase() || "";
+
+  const jobText =
+    `${job.title || ""}
+     ${job.description || ""}
+     ${job.industry || ""}
+     ${job.category || ""}
+     ${job.tags || ""}`
+      .toLowerCase();
 
   let score = 0;
   const reasons: string[] = [];
 
-  const keywords = [
-    "agriculture",
-    "tractor",
-    "welding",
-    "forklift",
-    "machinery",
-    "equipment",
-    "construction",
-    "maintenance",
-    "mining",
-    "irrigation",
-    "harvest",
+  const skillGroups = [
+    {
+      name: "Agriculture",
+      keywords: [
+        "agriculture",
+        "agricultura",
+        "farm",
+        "granja",
+        "harvest",
+        "cosecha",
+        "campo",
+        "cultivo",
+      ],
+    },
+    {
+      name: "Heavy Equipment",
+      keywords: [
+        "machinery",
+        "maquinaria",
+        "equipment",
+        "equipo",
+        "equipo pesado",
+        "heavy equipment",
+        "operator",
+        "operador",
+        "tractor",
+        "forklift",
+        "montacargas",
+      ],
+    },
+    {
+      name: "Maintenance",
+      keywords: [
+        "maintenance",
+        "mantenimiento",
+        "repair",
+        "reparacion",
+        "reparación",
+        "mechanic",
+        "mecanico",
+        "mecánico",
+      ],
+    },
+    {
+      name: "Construction",
+      keywords: [
+        "construction",
+        "construccion",
+        "construcción",
+        "building",
+        "obra",
+        "edificacion",
+        "edificación",
+      ],
+    },
+    {
+      name: "Mining",
+      keywords: [
+        "mining",
+        "mineria",
+        "minería",
+        "miner",
+        "minero",
+        "mine",
+        "mina",
+        "subterranea",
+        "subterránea",
+        "underground",
+      ],
+    },
+    {
+      name: "Welding",
+      keywords: [
+        "welding",
+        "soldadura",
+        "welder",
+        "soldador",
+      ],
+    },
   ];
 
-  for (const word of keywords) {
-    if (text.includes(word) && jobText.includes(word)) {
-      score += 15;
-      reasons.push(word);
+  for (const skill of skillGroups) {
+    const cvMatch = skill.keywords.some((word) =>
+      text.includes(word)
+    );
+
+    const jobMatch = skill.keywords.some((word) =>
+      jobText.includes(word)
+    );
+
+    if (cvMatch && jobMatch) {
+      score += 20;
+      reasons.push(skill.name);
     }
   }
 
@@ -70,21 +156,86 @@ export async function POST(req: Request) {
     const lower = text.toLowerCase();
 
     const skills = [
-      lower.includes("agriculture") && "Agriculture",
-      lower.includes("tractor") && "Tractor Operation",
-      lower.includes("welding") && "Welding",
-      lower.includes("forklift") && "Forklift",
-      lower.includes("construction") && "Construction",
-      lower.includes("machinery") && "Machinery Operation",
+      (
+        lower.includes("agriculture") ||
+        lower.includes("agricultura") ||
+        lower.includes("campo") ||
+        lower.includes("cosecha")
+      ) && "Agriculture",
+
+      (
+        lower.includes("tractor") ||
+        lower.includes("machinery") ||
+        lower.includes("maquinaria") ||
+        lower.includes("equipo pesado") ||
+        lower.includes("heavy equipment") ||
+        lower.includes("montacargas") ||
+        lower.includes("forklift")
+      ) && "Machinery Operation",
+
+      (
+        lower.includes("mining") ||
+        lower.includes("mina") ||
+        lower.includes("minería") ||
+        lower.includes("mineria") ||
+        lower.includes("minero") ||
+        lower.includes("subterránea") ||
+        lower.includes("subterranea")
+      ) && "Mining",
+
+      (
+        lower.includes("welding") ||
+        lower.includes("soldadura") ||
+        lower.includes("soldador")
+      ) && "Welding",
+
+      (
+        lower.includes("construction") ||
+        lower.includes("construccion") ||
+        lower.includes("construcción") ||
+        lower.includes("obra")
+      ) && "Construction",
+
+      (
+        lower.includes("maintenance") ||
+        lower.includes("mantenimiento") ||
+        lower.includes("mecanico") ||
+        lower.includes("mecánico")
+      ) && "Maintenance",
+
     ].filter(Boolean) as string[];
+
 
     const industries = [
-      (lower.includes("agriculture") || lower.includes("harvest")) && "Agriculture",
-      (lower.includes("mining") || lower.includes("equipment")) && "Mining",
-      lower.includes("construction") && "Construction",
+      (
+        lower.includes("agriculture") ||
+        lower.includes("agricultura") ||
+        lower.includes("harvest") ||
+        lower.includes("cosecha")
+      ) && "Agriculture",
+
+      (
+        lower.includes("mining") ||
+        lower.includes("mina") ||
+        lower.includes("mineria") ||
+        lower.includes("minería") ||
+        lower.includes("equipment") ||
+        lower.includes("subterranea") ||
+        lower.includes("subterránea")
+      ) && "Mining",
+
+      (
+        lower.includes("construction") ||
+        lower.includes("construccion") ||
+        lower.includes("construcción") ||
+        lower.includes("obra")
+      ) && "Construction",
+
     ].filter(Boolean) as string[];
 
+
     let atsScore = 50;
+
     atsScore += Math.min(skills.length * 5, 30);
 
     if (text.length > 1500) atsScore += 10;
@@ -92,9 +243,11 @@ export async function POST(req: Request) {
 
     atsScore = Math.min(atsScore, 100);
 
+
     const { data: jobs } = await supabaseServer
       .from("jobs")
       .select("*");
+
 
     const matchResults =
       jobs?.map((job) => {
@@ -107,7 +260,9 @@ export async function POST(req: Request) {
         };
       }) || [];
 
+
     matchResults.sort((a, b) => b.match - a.match);
+
 
     await supabaseServer.from("cv_analyses").insert({
       user_id,
@@ -117,6 +272,7 @@ export async function POST(req: Request) {
       recommendations: [],
       cv_preview: text.slice(0, 1000),
     });
+
 
     return NextResponse.json({
       success: true,
@@ -129,12 +285,14 @@ export async function POST(req: Request) {
     });
 
   } catch (error: unknown) {
+
     console.error("ERROR analyze-cv:", error);
 
     const message =
       error instanceof Error
         ? error.message
         : "Error interno";
+
 
     return NextResponse.json(
       { error: message },

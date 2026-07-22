@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { scoreJobs } from "@/lib/engine/jobScoring";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -7,7 +8,15 @@ const supabase = createClient(
 
 type JobRecord = {
   id: string;
-  industry?: string | null;
+  title?: string;
+  description?: string;
+  industry?: string;
+  country?: string;
+  category?: string;
+  tags?: string;
+  requires_whmis?: boolean;
+  requires_csts?: boolean;
+  requires_first_aid?: boolean;
 };
 
 export async function POST(req: Request) {
@@ -44,22 +53,28 @@ export async function POST(req: Request) {
       );
     }
 
-    const cvIndustries = Array.isArray(cv.industries)
-      ? cv.industries
-      : [];
+    const scoredJobs = scoreJobs(
+      jobs as JobRecord[],
+      {
+        skills: Array.isArray(cv.skills)
+          ? cv.skills
+          : [],
 
-    const matches = jobs.map((job: JobRecord) => {
-      const matchScore = cvIndustries.includes(job.industry)
-        ? 100
-        : 0;
+        industries: Array.isArray(cv.industries)
+          ? cv.industries
+          : [],
+      }
+    );
 
-      return {
-        cv_id,
-        job_id: job.id,
-        match_score: matchScore,
-        matched_skills: [],
-      };
-    });
+    const matches = scoredJobs.map((job) => ({
+      user_id: cv.user_id ?? null,
+      cv_id,
+      job_id: job.id,
+      match_score: job.match_score,
+
+      matched_skills:
+        job.match_explanation?.matched_skills ?? [],
+    }));
 
     await supabase
       .from("job_matches")
@@ -80,17 +95,16 @@ export async function POST(req: Request) {
       );
     }
 
-    const sorted = matches.sort(
-      (a, b) => b.match_score - a.match_score
-    );
-
     return Response.json({
       success: true,
-      total_matches: sorted.length,
-      top_matches: sorted.slice(0, 10),
+
+      total_matches: scoredJobs.length,
+
+      top_matches: scoredJobs.slice(0, 10),
     });
 
   } catch (error: unknown) {
+
     const message =
       error instanceof Error
         ? error.message
