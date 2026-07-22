@@ -3,12 +3,91 @@ import {
 } from "../lib/knowledge/scoring/competencyScorer";
 
 import {
-  procurementDomain
-} from "../lib/knowledge/domains/procurementDomain";
-
-import {
   evaluateKnowledgeDomain
 } from "../lib/knowledge/evaluation/knowledgeDomainEvaluator";
+
+import {
+  getKnowledgeDomains,
+  getKnowledgeDomainById
+} from "../lib/knowledge/knowledgeDomainCatalog";
+
+
+console.log(
+  "=== Knowledge Domain Hierarchy Validation ==="
+);
+
+
+const domains =
+  getKnowledgeDomains();
+
+
+console.log(
+  "\nRegistered Domains:"
+);
+
+
+console.log(
+  JSON.stringify(
+    domains.map(
+      domain => ({
+        id: domain.id,
+        name: domain.name,
+        parentDomainId:
+          domain.parentDomainId
+      })
+    ),
+    null,
+    2
+  )
+);
+
+
+
+const supplyChainDomain =
+  getKnowledgeDomainById(
+    "supply_chain"
+  );
+
+
+const procurementDomain =
+  getKnowledgeDomainById(
+    "procurement"
+  );
+
+
+console.log(
+  "\nHierarchy Validation:"
+);
+
+
+console.log(
+  JSON.stringify(
+    {
+      supplyChainExists:
+        Boolean(supplyChainDomain),
+
+      procurementExists:
+        Boolean(procurementDomain),
+
+      procurementParent:
+        procurementDomain?.parentDomainId
+
+    },
+    null,
+    2
+  )
+);
+
+
+
+if (!procurementDomain) {
+
+  throw new Error(
+    "Procurement domain not found"
+  );
+
+}
+
 
 
 const professionalExperience =
@@ -20,10 +99,12 @@ and optimized operational costs.
 `;
 
 
+
 const competencyResults =
   scoreCompetencies(
     professionalExperience
   );
+
 
 
 const domainEvaluation =
@@ -33,8 +114,9 @@ const domainEvaluation =
   );
 
 
+
 console.log(
-  "Knowledge Domain Evaluation Result:"
+  "\nKnowledge Domain Evaluation Result:"
 );
 
 
@@ -47,8 +129,9 @@ console.log(
 );
 
 
+
 console.log(
-  "\nDomain Scoring Strategy:"
+  "\nDomain Competency Weights:"
 );
 
 
