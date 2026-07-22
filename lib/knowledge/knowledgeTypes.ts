@@ -31,7 +31,9 @@ export interface KnowledgeDomainCompetencyWeight {
  *
  * Produced by ADR-013 Knowledge Domain Intelligence Engine.
  *
- * Extended by ADR-013.1 Domain Scoring Strategy.
+ * Extended by:
+ * - ADR-013.1 Domain Scoring Strategy.
+ * - ADR-013.2 Knowledge Domain Hierarchy.
  */
 export interface KnowledgeDomain {
 
@@ -48,6 +50,16 @@ export interface KnowledgeDomain {
 
 
   /**
+   * Parent knowledge domain identifier.
+   *
+   * Used by ADR-013.2 Knowledge Domain Hierarchy.
+   *
+   * Root domains do not define a parent.
+   */
+  parentDomainId?: string;
+
+
+  /**
    * Weighted competencies belonging to this domain.
    */
   competencies: KnowledgeDomainCompetencyWeight[];
@@ -57,7 +69,7 @@ export interface KnowledgeDomain {
 /**
  * Runtime evaluation result for a knowledge domain.
  *
- * Produced by ADR-012 Knowledge Domain Intelligence Engine.
+ * Produced by ADR-013 Knowledge Domain Intelligence Engine.
  */
 export interface KnowledgeDomainEvaluationResult {
 

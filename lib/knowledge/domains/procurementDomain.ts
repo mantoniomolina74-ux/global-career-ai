@@ -2,19 +2,30 @@ import {
   KnowledgeDomain
 } from "../knowledgeTypes";
 
-
 /**
  * Procurement knowledge domain.
  *
- * Produced by ADR-012 Knowledge Domain Intelligence Engine.
+ * Produced by ADR-013 Knowledge Domain Intelligence Engine.
  *
- * Extended by ADR-013.1 Domain Scoring Strategy.
+ * Extended by:
+ * - ADR-013.1 Domain Scoring Strategy.
+ * - ADR-013.2 Knowledge Domain Hierarchy.
  */
+
 export const procurementDomain: KnowledgeDomain = {
 
   id: "procurement",
 
   name: "Procurement",
+
+    /**
+   * Parent domain reference.
+   *
+   * Defined by ADR-013.2 Knowledge Domain Hierarchy.
+   */
+  
+  parentDomainId:
+    "supply_chain",
 
   competencies: [
 
