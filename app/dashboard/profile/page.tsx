@@ -36,6 +36,20 @@ type Certification = {
   country?: string;
 };
 
+type KnowledgeProfile = {
+  dominantDomainId: string | null;
+  averageScore: number;
+  averageConfidence: number;
+  domains: {
+    domain: {
+      id: string;
+      name: string;
+    };
+    score: number;
+    confidence: number;
+  }[];
+};
+
 /**
  * =========================================================
  * PROFILE PAGE
@@ -53,6 +67,9 @@ export default function ProfilePage() {
 
   const [certifications, setCertifications] =
     useState<Certification[]>([]);
+
+  const [knowledgeProfile, setKnowledgeProfile] =
+    useState<KnowledgeProfile | null>(null);
 
   /**
    * =====================================================
@@ -97,6 +114,33 @@ export default function ProfilePage() {
     setCertifications(
       (certData ?? []) as Certification[]
     );
+
+    try {
+
+  const response =
+    await fetch(
+      "/api/knowledge/profile"
+    );
+
+  if (response.ok) {
+
+    const result =
+      await response.json();
+
+    setKnowledgeProfile(
+      result.profile
+    );
+
+  }
+
+} catch (error) {
+
+  console.error(
+    "Knowledge profile error:",
+    error
+  );
+
+}
   }, [router]);
 
   useEffect(() => {
@@ -543,6 +587,43 @@ export default function ProfilePage() {
             : "No CV analysis available yet. Upload a CV to generate your profile."}
         </p>
       </div>
+
+            {/* KNOWLEDGE INTELLIGENCE */}
+      {knowledgeProfile && (
+        <div
+          style={{
+            background: "white",
+            padding: 20,
+            borderRadius: 12,
+            marginBottom: 20,
+          }}
+        >
+          <h2>
+            🧠 Knowledge Intelligence
+          </h2>
+
+          <p>
+            <strong>Dominant Domain:</strong>{" "}
+            {knowledgeProfile.dominantDomainId ?? "N/A"}
+          </p>
+
+          <p>
+            <strong>Knowledge Confidence:</strong>{" "}
+            {Math.round(
+              knowledgeProfile.averageConfidence * 100
+            )}
+            %
+          </p>
+
+          <p>
+            <strong>Knowledge Score:</strong>{" "}
+            {Math.round(
+              knowledgeProfile.averageScore * 100
+            )}
+            %
+          </p>
+        </div>
+      )}
 
       {/* SKILLS */}
       <div
