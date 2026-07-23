@@ -14,6 +14,18 @@ import {
   knowledgeDomainCatalog
 } from "../knowledgeDomainCatalog";
 
+import type {
+  KnowledgeProfile
+} from "../knowledgeTypes";
+
+import {
+  analyzeKnowledgeGaps
+} from "../knowledgeGapAnalyzer";
+
+import {
+  generateLearningRecommendations
+} from "../learningRecommendationEngine";
+
 
 export function analyzeKnowledgeProfile(
   professionalText: string
@@ -41,22 +53,54 @@ export function analyzeKnowledgeProfile(
     );
 
 
-  return {
+  const profile: KnowledgeProfile = {
 
     dominantDomainId:
       aggregation.dominantDomainId,
 
-
     averageScore:
       aggregation.averageScore,
-
 
     averageConfidence:
       aggregation.averageConfidence,
 
-
     domains:
-      aggregation.domains
+      aggregation.domains.map(
+        domain => ({
+          domain: {
+            id: domain.domain.id,
+            name: domain.domain.name
+          },
+
+          score:
+            domain.score,
+
+          confidence:
+            domain.confidence
+        })
+      )
+
+  };
+
+
+  const gapAnalysis =
+    analyzeKnowledgeGaps(
+      profile
+    );
+
+
+  const learning =
+    generateLearningRecommendations(
+      gapAnalysis
+    );
+
+
+  return {
+
+    profile,
+
+    analysis:
+      learning
 
   };
 
