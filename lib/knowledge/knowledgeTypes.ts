@@ -1,7 +1,6 @@
 import {
-  CompetencyEvaluationResult
+  CompetencyEvaluationResult,
 } from "./scoring/competencyTypes";
-
 
 /**
  * Competency weighting inside a knowledge domain.
@@ -9,12 +8,10 @@ import {
  * Produced by ADR-013.1 Domain Scoring Strategy.
  */
 export interface KnowledgeDomainCompetencyWeight {
-
   /**
    * Competency identifier.
    */
   competencyId: string;
-
 
   /**
    * Relative importance inside the domain.
@@ -24,7 +21,6 @@ export interface KnowledgeDomainCompetencyWeight {
    */
   weight: number;
 }
-
 
 /**
  * Static definition of a knowledge domain.
@@ -36,18 +32,15 @@ export interface KnowledgeDomainCompetencyWeight {
  * - ADR-013.2 Knowledge Domain Hierarchy.
  */
 export interface KnowledgeDomain {
-
   /**
    * Unique domain identifier.
    */
   id: string;
 
-
   /**
    * Human-readable domain name.
    */
   name: string;
-
 
   /**
    * Parent knowledge domain identifier.
@@ -58,13 +51,11 @@ export interface KnowledgeDomain {
    */
   parentDomainId?: string;
 
-
   /**
    * Weighted competencies belonging to this domain.
    */
   competencies: KnowledgeDomainCompetencyWeight[];
 }
-
 
 /**
  * Runtime evaluation result for a knowledge domain.
@@ -72,39 +63,64 @@ export interface KnowledgeDomain {
  * Produced by ADR-013 Knowledge Domain Intelligence Engine.
  */
 export interface KnowledgeDomainEvaluationResult {
-
   /**
    * Domain evaluated.
    */
   domain: KnowledgeDomain;
-
 
   /**
    * Weighted competency score.
    */
   score: number;
 
-
   /**
    * Weighted evidence quality.
    */
   evidenceScore: number;
-
 
   /**
    * Overall confidence.
    */
   confidence: number;
 
-
   /**
    * Number of competencies detected.
    */
   competencyCount: number;
 
-
   /**
    * Competencies contributing to this evaluation.
    */
   competencies: CompetencyEvaluationResult[];
+}
+
+/**
+ * Knowledge profile domain summary.
+ *
+ * Produced by ADR-013.4 Knowledge Profile Integration.
+ */
+export interface KnowledgeProfileDomain {
+  domain: {
+    id: string;
+    name: string;
+  };
+
+  score: number;
+
+  confidence: number;
+}
+
+/**
+ * Complete knowledge profile.
+ *
+ * Produced by ADR-013.4 Knowledge Profile Integration.
+ */
+export interface KnowledgeProfile {
+  dominantDomainId: string | null;
+
+  averageScore: number;
+
+  averageConfidence: number;
+
+  domains: KnowledgeProfileDomain[];
 }

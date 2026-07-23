@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
+import type { KnowledgeProfile } from "@/lib/knowledge/knowledgeTypes";
+
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -35,21 +37,6 @@ type Certification = {
   issuing_body?: string;
   country?: string;
 };
-
-type KnowledgeProfile = {
-  dominantDomainId: string | null;
-  averageScore: number;
-  averageConfidence: number;
-  domains: {
-    domain: {
-      id: string;
-      name: string;
-    };
-    score: number;
-    confidence: number;
-  }[];
-};
-
 /**
  * =========================================================
  * PROFILE PAGE
