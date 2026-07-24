@@ -2666,6 +2666,7 @@ The following architectural decisions define the foundation of Global Career AI 
 | ADR-013.2 | Knowledge Domain Hierarchy | Accepted |
 | ADR-013.5 | Knowledge Gap Analysis Engine | Accepted |
 | ADR-013.5.1 | Score Normalization Fix | Accepted |
+| ADR-013.6 | Knowledge Learning Integration | Accepted |
 ---
 
 # Final Architecture Governance Statement
