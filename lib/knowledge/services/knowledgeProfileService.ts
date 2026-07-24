@@ -26,9 +26,16 @@ import {
   generateLearningRecommendations
 } from "../learningRecommendationEngine";
 
+import {
+  emitKnowledgeLearningEvent
+} from "../adapters/knowledgeLearningAdapter";
+
 
 export function analyzeKnowledgeProfile(
-  professionalText: string
+  professionalText: string,
+  options?: {
+    userId?: string;
+  }
 ) {
 
   const competencyResults =
@@ -84,16 +91,27 @@ export function analyzeKnowledgeProfile(
 
 
   const gapAnalysis =
-  analyzeKnowledgeGaps(
-    profile,
-    domainEvaluations
-  );
+    analyzeKnowledgeGaps(
+      profile,
+      domainEvaluations
+    );
 
 
   const learning =
     generateLearningRecommendations(
       gapAnalysis
     );
+
+
+  if (options?.userId) {
+    emitKnowledgeLearningEvent(
+      options.userId,
+      {
+        ...gapAnalysis,
+        ...learning
+      }
+    );
+  }
 
 
   return {

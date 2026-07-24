@@ -59,7 +59,8 @@ export interface LearningDomainEvent {
     | "RECOMMENDATION"
     | "DECISION"
     | "ORCHESTRATOR"
-    | "USER";
+    | "USER"
+    | "KNOWLEDGE";
 
   confidence?: number;
 
