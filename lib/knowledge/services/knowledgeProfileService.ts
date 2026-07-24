@@ -84,9 +84,10 @@ export function analyzeKnowledgeProfile(
 
 
   const gapAnalysis =
-    analyzeKnowledgeGaps(
-      profile
-    );
+  analyzeKnowledgeGaps(
+    profile,
+    domainEvaluations
+  );
 
 
   const learning =
