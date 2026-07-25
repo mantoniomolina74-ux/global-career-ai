@@ -76,11 +76,24 @@ async function handleLearningEvent(event: LearningDomainEvent): Promise<void> {
     });
 
     /**
-     * =====================================================
-     * 5. INTELLIGENCE LAYER
-     * =====================================================
-     */
-    await runLearningIntelligence([event]);
+ * =====================================================
+ * 5. INTELLIGENCE LAYER
+ * =====================================================
+ */
+const intelligence =
+  runLearningIntelligence([event]);
+
+
+console.log(
+  "[Learning Intelligence Result]",
+  intelligence
+);
+
+
+console.log(
+  "[Learning Policy Adjustments]",
+  intelligence.policyAdjustments
+);
   } catch (error) {
     console.error("[learningEventConsumer]", {
       error,

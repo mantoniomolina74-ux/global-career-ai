@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabaseServer } from "@/lib/supabase-server";
 
 /**
  * Incrementa señales de comportamiento del usuario.
@@ -13,16 +13,23 @@ export async function incrementUserSignals(
     timestamp: number;
   }
 ): Promise<void> {
-  const { error } = await supabase
-    .from("learning_signals")
-    .insert({
-      user_id: userId,
-      signal: payload.action,
-      created_at: new Date().toISOString(),
-    });
+
+  const { error } =
+    await supabaseServer
+      .from("learning_signals")
+      .insert({
+        user_id: userId,
+        signal: payload.action,
+        created_at: new Date().toISOString(),
+      });
+
 
   if (error) {
-    console.error("[incrementUserSignals]", error);
+    console.error(
+      "[incrementUserSignals]",
+      error
+    );
+
     throw error;
   }
 }

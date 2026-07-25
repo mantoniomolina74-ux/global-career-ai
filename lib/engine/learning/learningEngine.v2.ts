@@ -1,5 +1,26 @@
+/**
+ * =========================================================
+ * Global Career AI
+ * Learning Engine V2
+ * ADR-014 Aligned Analytics Layer
+ * =========================================================
+ *
+ * This engine:
+ *
+ * - Receives learning events.
+ * - Computes immediate analytical insights.
+ * - Does not persist data.
+ * - Does not depend on deprecated analytics tables.
+ *
+ * Historical storage:
+ * learning_events
+ *
+ * Intelligence layer:
+ * learningIntelligence.ts
+ *
+ * =========================================================
+ */
 
-import { supabase } from "@/lib/supabase";
 
 /**
  * =========================================================
@@ -13,40 +34,38 @@ export interface LearningEvent {
   organizationId?: string;
 
   applicationId: string;
+
   atsScore: number;
+
   status: string;
 
   matchedSkills: string[];
+
   missingSkills: string[];
 
   createdAt?: string;
 }
 
+
 export interface LearningInsight {
   skill: string;
+
   successRate: number;
+
   weightAdjustment: number;
 }
 
-type SkillLearningStat = {
-  skill: string;
-  total_success: number;
-  success_count: number;
-};
 
 /**
  * =========================================================
- * CORE LEARNING ENGINE V2 (ANALYTICS MODE)
+ * CORE LEARNING ENGINE V2
  * =========================================================
- *
- * IMPORTANT:
- * This engine is now READ-ONLY.
- *
- * It does NOT persist or mutate data.
- * It ONLY computes insights from already stored learning data.
  */
 
-export async function learningEngineV2(event: LearningEvent) {
+export async function learningEngineV2(
+  event: LearningEvent
+) {
+
   /**
    * =====================================================
    * 1. DEFINE OUTCOME SIGNAL
@@ -54,68 +73,62 @@ export async function learningEngineV2(event: LearningEvent) {
    */
 
   const success =
-    event.status === "offer" || event.status === "interview";
+    event.status === "offer" ||
+    event.status === "interview";
+
 
   /**
    * =====================================================
-   * 2. EXTRACT SIGNALS (FOR FUTURE ANALYTICS USE)
+   * 2. COMPUTE SKILL INSIGHTS
    * =====================================================
    */
 
-  /**
-   * =====================================================
-   * 3. LOAD HISTORICAL SKILL DATA
-   * =====================================================
-   */
+  const insights: LearningInsight[] =
+    event.matchedSkills.map(
+      (skill) => {
 
-  const { data: skillStats, error: statsError } = await supabase
-    .from("skill_learning_stats")
-    .select("*");
+        const successRate =
+          success
+            ? 1
+            : 0;
 
-  if (statsError) {
-    console.error("[learningEngineV2] stats error:", statsError);
-  }
 
-  /**
-   * =====================================================
-   * 4. COMPUTE ADAPTIVE INSIGHTS (ANALYTICS LAYER)
-   * =====================================================
-   */
+        return {
+          skill,
 
-  const insights: LearningInsight[] = (
-    skillStats as SkillLearningStat[] | null || []
-  ).map((row: SkillLearningStat) => {
-    const successRate =
-      row.total_success > 0
-        ? row.success_count / row.total_success
-        : 0;
+          successRate,
 
-    return {
-      skill: row.skill,
-      successRate,
-      weightAdjustment:
-        successRate > 0.7
-          ? 1.2
-          : successRate < 0.3
-          ? 0.8
-          : 1.0,
-    };
-  });
+          weightAdjustment:
+            successRate > 0.7
+              ? 1.2
+              : successRate < 0.3
+              ? 0.8
+              : 1.0,
+        };
+      }
+    );
+
 
   /**
    * =====================================================
-   * 5. RETURN LEARNING SIGNALS
+   * 3. RETURN ANALYTICAL RESULT
    * =====================================================
    */
 
   return {
     success,
-    processed: true,
+
+    processed:
+      true,
+
     insights,
 
     meta: {
-      version: "learning-v2-analytics",
-      processedAt: new Date().toISOString(),
+      version:
+        "learning-v2-adr014",
+
+      processedAt:
+        new Date().toISOString(),
     },
   };
 }

@@ -1,5 +1,29 @@
-
 import { LearningDomainEvent } from "./learningTypes";
+
+import {
+  detectLearningPatterns,
+} from "../learning-intelligence/learningPatternEngine";
+
+import {
+  LearningPattern,
+} from "../learning-intelligence/learningPatternTypes";
+
+import {
+  LearningSignal as IntelligenceSignal,
+} from "../learning-intelligence/learningIntelligenceTypes";
+
+import {
+  adaptLearningEventToSignal,
+} from "../learning-intelligence/learningSignalAdapter";
+
+import {
+  evaluateLearningPolicies,
+} from "./policy/learningPolicyEngine";
+
+import {
+  LearningSignal as WeightLearningSignal,
+} from "./weights/learningWeights.engine";
+
 
 /* ============================================================
  * TYPES
@@ -22,11 +46,20 @@ export interface LearningStatistics {
 
 export interface LearningInsight {
   statistics: LearningStatistics;
+
   topSkills: SkillInsight[];
+
   weakestSkills: SkillInsight[];
+
+  patterns: LearningPattern[];
+
+  policyAdjustments: WeightLearningSignal[];
+
   confidence: number;
+
   generatedAt: string;
 }
+
 
 /* ============================================================
  * ENGINE
@@ -36,12 +69,14 @@ export interface LearningInsight {
 export function runLearningIntelligence(
   events: LearningDomainEvent[]
 ): LearningInsight {
+
   const statistics: LearningStatistics = {
     totalEvents: events.length,
     atsEvaluations: 0,
     recommendationsGenerated: 0,
-    rankingsGenerated: 0
+    rankingsGenerated: 0,
   };
+
 
   const skills = new Map<
     string,
@@ -51,8 +86,11 @@ export function runLearningIntelligence(
     }
   >();
 
+
   for (const event of events) {
+
     switch (event.type) {
+
       case "ATS_EVALUATED":
         statistics.atsEvaluations++;
         break;
@@ -66,55 +104,133 @@ export function runLearningIntelligence(
         break;
     }
 
-    const payloadSkills =
+
+    const matchedSkills =
       event.context.matchedSkills ?? [];
 
-    const hiringScore =
+
+    const atsScore =
       Number(event.context.atsScore ?? 0);
 
-    for (const skill of payloadSkills) {
+
+    for (const skill of matchedSkills) {
+
       const current =
-        skills.get(skill) || {
+        skills.get(skill) ?? {
           occurrences: 0,
           successes: 0,
         };
 
+
       current.occurrences++;
 
-      if (hiringScore >= 70) {
+
+      if (atsScore >= 70) {
         current.successes++;
       }
+
 
       skills.set(skill, current);
     }
   }
 
+
   const ranking: SkillInsight[] =
-    Array.from(skills.entries()).map(([skill, value]) => ({
-      skill,
-      occurrences: value.occurrences,
-      successes: value.successes,
-      successRate:
-        value.occurrences === 0
-          ? 0
-          : Number((value.successes / value.occurrences).toFixed(2)),
-    }));
+    Array.from(skills.entries()).map(
+      ([skill, value]) => ({
+        skill,
 
-  ranking.sort((a, b) => b.successRate - a.successRate);
+        occurrences:
+          value.occurrences,
 
-  const topSkills = ranking.slice(0, 10);
+        successes:
+          value.successes,
 
-  const weakestSkills = [...ranking].reverse().slice(0, 10);
+        successRate:
+          value.occurrences === 0
+            ? 0
+            : Number(
+                (
+                  value.successes /
+                  value.occurrences
+                ).toFixed(2)
+              ),
+      })
+    );
+
+
+  ranking.sort(
+    (a, b) =>
+      b.successRate - a.successRate
+  );
+
+
+  const topSkills =
+    ranking.slice(0, 10);
+
+
+  const weakestSkills =
+    [...ranking]
+      .reverse()
+      .slice(0, 10);
+
+
+  /**
+   * ============================================================
+   * ADR-014.2
+   * Pattern Detection Integration
+   * ============================================================
+   */
+
+  const signals: IntelligenceSignal[] =
+    events.map(
+      adaptLearningEventToSignal
+    );
+
+
+  const patterns =
+    detectLearningPatterns(
+      signals
+    );
+
+
+  /**
+   * ============================================================
+   * ADR-014.1
+   * Learning Policy Integration
+   * ============================================================
+   */
+
+  const policyResult =
+    evaluateLearningPolicies(
+      patterns
+    );
+
 
   const confidence = Number(
-    Math.min(0.95, 0.5 + statistics.totalEvents / 5000).toFixed(2)
+    Math.min(
+      0.95,
+      0.5 +
+        statistics.totalEvents / 5000
+    ).toFixed(2)
   );
+
 
   return {
     statistics,
+
     topSkills,
+
     weakestSkills,
+
+    patterns,
+
+    policyAdjustments:
+      policyResult.signals,
+
     confidence,
-    generatedAt: new Date().toISOString(),
+
+    generatedAt:
+      new Date().toISOString(),
   };
 }

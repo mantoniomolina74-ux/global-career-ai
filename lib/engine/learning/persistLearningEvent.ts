@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabaseServer } from "@/lib/supabase-server";
 import { LearningDomainEvent } from "./learningTypes";
 
 /**
@@ -9,7 +9,7 @@ export async function persistLearningEvent(
   userId: string,
   payload: LearningDomainEvent["context"]
 ): Promise<void> {
-  const { error } = await supabase.from("learning_events").insert({
+  const { error } = await supabaseServer.from("learning_events").insert({
     user_id: userId,
     action: payload.action,
     context: payload,

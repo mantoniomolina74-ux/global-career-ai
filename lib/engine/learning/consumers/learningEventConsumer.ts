@@ -1,8 +1,7 @@
-
 import {
   applyLearningStep,
   WeightState,
-  LearningSignal,
+  LearningSignal as WeightLearningSignal,
 } from "../weights/learningWeights.engine";
 
 import {
@@ -16,103 +15,163 @@ import {
   computeMemoryDelta,
 } from "../semanticMemory/semanticMemory.engine";
 
-// ============================================================
-// Knowledge Layer Integration (8C.12B)
-// ============================================================
 import { KnowledgeEngine } from "../knowledge/knowledgeEngine";
 import { LearningToKnowledgeBridge } from "../knowledge/integration/learningToKnowledge.bridge";
 
+import {
+  adaptLearningEventToSignal,
+} from "../../learning-intelligence/learningSignalAdapter";
+
+import {
+  LearningDomainEvent,
+} from "../learningTypes";
+
+
 const knowledgeEngine = new KnowledgeEngine();
-const bridge = new LearningToKnowledgeBridge(knowledgeEngine);
 
-/**
- * Dynamic learning payload structure
- */
-type LearningPayload = Record<string, unknown>;
+const bridge =
+  new LearningToKnowledgeBridge(
+    knowledgeEngine,
+  );
 
-/**
- * Learning event structure
- */
+
+type LearningPayload =
+  Record<string, unknown>;
+
+
 type LearningEvent = {
   type: string;
   payload: LearningPayload;
   timestamp: number;
 };
 
+
 function getBoolean(
   value: unknown,
-  fallback = false
+  fallback = false,
 ): boolean {
-  return typeof value === "boolean" ? value : fallback;
+  return typeof value === "boolean"
+    ? value
+    : fallback;
 }
+
 
 function getNumber(
   value: unknown,
-  fallback = 0
+  fallback = 0,
 ): number {
-  return typeof value === "number" ? value : fallback;
+  return typeof value === "number"
+    ? value
+    : fallback;
 }
 
+
 function getObject(
-  value: unknown
+  value: unknown,
 ): Record<string, unknown> {
-  return typeof value === "object" && value !== null
+  return typeof value === "object" &&
+    value !== null
     ? value as Record<string, unknown>
     : {};
 }
 
+
 /**
- * Convert event → learning signal
- * Structural + Semantic + Memory fusion layer (8C.10)
+ * Existing Adaptive Weight signal mapping
  */
-function mapEventToSignal(event: LearningEvent): LearningSignal {
+function mapEventToSignal(
+  event: LearningEvent,
+): WeightLearningSignal {
   switch (event.type) {
     case "DECISION_CREATED": {
-      const baseSignal: LearningSignal = {
-        decisionDelta: getBoolean(event.payload.success) ? 0.05 : -0.05,
+      const baseSignal: WeightLearningSignal = {
+        decisionDelta:
+          getBoolean(event.payload.success)
+            ? 0.05
+            : -0.05,
+
         weight: 1,
       };
 
-      const semanticCtx = getObject(event.payload.context);
+      const semanticCtx =
+        getObject(event.payload.context);
 
-      const semantic = computeSemanticSignal(semanticCtx);
-      const semanticDelta = semanticToLearningDelta(semantic);
+
+      const semantic =
+        computeSemanticSignal(
+          semanticCtx,
+        );
+
+
+      const semanticDelta =
+        semanticToLearningDelta(
+          semantic,
+        );
+
 
       storeSemanticMemory({
         context: semanticCtx,
-        semanticScore: semantic.semanticRelevance,
-        timestamp: event.timestamp,
+        semanticScore:
+          semantic.semanticRelevance,
+        timestamp:
+          event.timestamp,
       });
 
-      const memory = recallSemanticMemory(semanticCtx);
-      const memoryDelta = computeMemoryDelta(memory);
 
-      /**
-       * ============================================================
-       * Knowledge Bridge Injection (8C.12B)
-       * ============================================================
-       */
+      const memory =
+        recallSemanticMemory(
+          semanticCtx,
+        );
+
+
+      const memoryDelta =
+        computeMemoryDelta(
+          memory,
+        );
+
+
       bridge.ingest({
         applicationId:
           typeof semanticCtx.applicationId === "string"
             ? semanticCtx.applicationId
             : "unknown",
-        skills: Array.isArray(semanticCtx.skills)
-          ? semanticCtx.skills
-          : [],
+
+        skills:
+          Array.isArray(semanticCtx.skills)
+            ? semanticCtx.skills
+            : [],
+
         industry:
           typeof semanticCtx.industry === "string"
             ? semanticCtx.industry
             : undefined,
+
         country:
           typeof semanticCtx.country === "string"
             ? semanticCtx.country
             : undefined,
-        success: getBoolean(event.payload.success),
-        confidence: getNumber(event.payload.confidence),
-        embedding: semanticToVectorFallback(semanticCtx),
-        timestamp: new Date(event.timestamp),
+
+        success:
+          getBoolean(
+            event.payload.success,
+          ),
+
+        confidence:
+          getNumber(
+            event.payload.confidence,
+          ),
+
+        embedding:
+          semanticToVectorFallback(
+            semanticCtx,
+          ),
+
+        timestamp:
+          new Date(
+            event.timestamp,
+          ),
       });
+
 
       return {
         ...baseSignal,
@@ -121,52 +180,150 @@ function mapEventToSignal(event: LearningEvent): LearningSignal {
       };
     }
 
+
     case "ATS_SCORE_CALCULATED":
       return {
-        atsDelta: getNumber(event.payload.impact),
+        atsDelta:
+          getNumber(
+            event.payload.impact,
+          ),
+
         weight: 0.8,
       };
 
+
     case "RANKING_UPDATED":
       return {
-        rankingDelta: getNumber(event.payload.delta),
+        rankingDelta:
+          getNumber(
+            event.payload.delta,
+          ),
+
         weight: 0.7,
       };
+
 
     default:
       return {};
   }
 }
 
+
 /**
- * Deterministic fallback embedding generator
- * (temporary until real embedding model is integrated)
+ * ADR-014 Learning Intelligence bridge
+ */
+function mapEventToLearningSignal(
+  event: LearningEvent,
+) {
+  const domainEvent: LearningDomainEvent = {
+    userId: "system",
+
+    type:
+      event.type as LearningDomainEvent["type"],
+
+    timestamp:
+      new Date(
+        event.timestamp,
+      ).toISOString(),
+
+    context: {
+  action:
+    event.type,
+
+  ...event.payload,
+
+  ...( 
+    typeof event.payload.context === "object" &&
+    event.payload.context !== null
+      ? event.payload.context
+      : {}
+  ),
+},
+
+    payload:
+      event.payload,
+
+      metadata: {
+  source: "USER",
+
+  confidence:
+    getNumber(
+      event.payload.confidence,
+    ),
+},
+  };
+
+
+  return adaptLearningEventToSignal(
+    domainEvent,
+  );
+}
+
+
+/**
+ * Deterministic fallback embedding
  */
 function semanticToVectorFallback(
-  ctx: Record<string, unknown>
+  ctx: Record<string, unknown>,
 ): number[] {
-  const base = JSON.stringify(ctx ?? "");
+  const base =
+    JSON.stringify(ctx ?? "");
 
   let hash = 0;
-  for (let i = 0; i < base.length; i++) {
-    hash = (hash << 5) - hash + base.charCodeAt(i);
+
+  for (
+    let i = 0;
+    i < base.length;
+    i++
+  ) {
+    hash =
+      (hash << 5) -
+      hash +
+      base.charCodeAt(i);
+
     hash |= 0;
   }
 
-  return Array.from({ length: 8 }, (_, i) => {
-    return ((hash >> i) & 255) / 255;
-  });
+
+  return Array.from(
+    { length: 8 },
+    (_, i) =>
+      ((hash >> i) & 255) / 255,
+  );
 }
 
+
 /**
- * Main consumer entry point
+ * Main consumer
  */
 export function processLearningEventBatch(
   events: LearningEvent[],
   currentState: WeightState,
-  history: WeightState[]
+  history: WeightState[],
 ): WeightState {
-  const signals: LearningSignal[] = events.map(mapEventToSignal);
 
-  return applyLearningStep(currentState, signals, history);
+  const weightSignals:
+    WeightLearningSignal[] =
+      events.map(
+        mapEventToSignal,
+      );
+
+
+  const intelligenceSignals =
+    events.map(
+      mapEventToLearningSignal,
+    );
+
+
+  console.log(
+    "Learning Intelligence Signals:",
+    intelligenceSignals,
+  );
+
+
+  return applyLearningStep(
+    currentState,
+    weightSignals,
+    history,
+  );
 }
