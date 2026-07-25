@@ -5,10 +5,6 @@ import {
   LearningPolicyResult,
 } from "./learningPolicyTypes";
 
-import {
-  LearningPatternType,
-} from "../../learning-intelligence/learningPatternTypes";
-
 export function evaluateLearningPolicies(
   patterns: LearningPattern[]
 ): LearningPolicyResult {
