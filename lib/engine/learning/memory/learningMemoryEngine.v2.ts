@@ -1,5 +1,4 @@
 import { supabase } from "@/lib/supabase";
-
 export interface LearningMemory {
   userId: string;
 

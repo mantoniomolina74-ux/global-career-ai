@@ -1,5 +1,6 @@
 import { supabase } from "../supabaseClient";
 import { LearningMemory } from "@/lib/engine/learning/memory/learningMemoryEngine.v2";
+import { LearningMemoryRow, LearningMemoryRecord } from "./learningMemory.types";
 
 /**
  * ============================================================
@@ -8,41 +9,68 @@ import { LearningMemory } from "@/lib/engine/learning/memory/learningMemoryEngin
  * ============================================================
  */
 
+function toDomain(row: LearningMemoryRow): LearningMemoryRecord {
+  return {
+    userId: row.user_id,
+    tenantId: row.tenant_id,
+
+    trends: row.trends,
+    skills: row.skills,
+    metadata: row.metadata,
+
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function toPersistence(memory: LearningMemoryRecord): LearningMemoryRow {
+  return {
+    user_id: memory.userId,
+    tenant_id: memory.tenantId,
+
+    trends: memory.trends,
+    skills: memory.skills,
+    metadata: memory.metadata,
+
+    created_at: memory.createdAt,
+    updated_at: memory.updatedAt,
+  };
+}
+
 export async function getLearningMemory(
   userId: string,
   tenantId?: string
 ): Promise<LearningMemory | null> {
-
   let query = supabase
     .from("learning_memory_v2")
     .select("*")
-    .eq("userId", userId);
+    .eq("user_id", userId);
 
   if (tenantId) {
-    query = query.eq("tenantId", tenantId);
+    query = query.eq("tenant_id", tenantId);
   }
 
   const { data, error } = await query.single();
 
-  if (error) return null;
+  if (error || !data) {
+    return null;
+  }
 
-  return data as LearningMemory;
+  return toDomain(data as LearningMemoryRow);
 }
 
 export async function upsertLearningMemory(
-  memory: LearningMemory,
-  tenantId?: string
-) {
-  const payload = {
+  memory: LearningMemoryRecord
+): Promise<void> {
+  const payload: LearningMemoryRow = toPersistence({
     ...memory,
-    tenantId: tenantId || "default",
     updatedAt: new Date().toISOString(),
-  };
+  });
 
   const { error } = await supabase
     .from("learning_memory_v2")
     .upsert(payload, {
-      onConflict: "userId,tenantId",
+      onConflict: "user_id,tenant_id",
     });
 
   if (error) {
