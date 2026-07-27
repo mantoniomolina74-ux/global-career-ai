@@ -14,5 +14,5 @@
     "**/.next/**": true,
     "**/backups/**": true
   },
-  "typescript.tsserver.maxTsServerMemory": 1024
+  "js/ts.tsserver.maxTsServerMemory": 1024
 }
