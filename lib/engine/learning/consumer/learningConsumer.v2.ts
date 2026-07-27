@@ -3,9 +3,12 @@ import { learningEventBus } from "../learningEventBus";
 import {
   loadUserMemory,
   saveUserMemory,
+} from "../memory/learningMemoryEngine";
+
+import {
   updateSkillEvolution,
   updateTrends,
-} from "../memory/learningMemoryEngine";
+} from "../memory/memoryOperations";
 
 /**
  * ============================================================
