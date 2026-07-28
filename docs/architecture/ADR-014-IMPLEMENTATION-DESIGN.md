@@ -20,17 +20,32 @@ Learning Intelligence
 Decision Intelligence
 
 
-## 3. New Components
+## 3. Implemented Components
 
-Potential components:
+The Learning Intelligence capabilities are implemented by extending
+the existing Learning architecture instead of introducing a separate
+Learning Intelligence module.
 
-lib/engine/learning-intelligence/
+Implemented components:
 
-- learningInsightEngine
-- learningPatternDetector
-- learningSignalInterpreter
-- learningRecommendationAdapter
+- learningEventBus
+- learningEventConsumer
+- learningEventRepository
+- learningMemoryRepository
+- learningMemory.store
+- learningWeights.engine
+- Knowledge Learning Adapter
+- tenant-aware Learning Events
+- tenant-aware Learning Memory persistence
 
+### Design Note
+
+Rather than introducing a standalone Learning Intelligence Engine,
+ADR-014 extends the existing Learning pipeline with additional
+intelligence capabilities, preserving backward compatibility and
+minimizing architectural complexity.
+
+---
 
 ## 4. Domain Types
 
@@ -92,4 +107,21 @@ Tests:
 
 ## 9. Implementation Status
 
-PLANNED
+IMPLEMENTED
+
+Runtime Validated
+
+Production Ready
+
+## 10. Related ADRs
+
+This ADR builds upon:
+
+- ADR-009 Evidence Intelligence
+- ADR-010 Evidence Layer
+- ADR-011 Competency Intelligence
+- ADR-012 Professional Intelligence
+- ADR-013 Knowledge Intelligence
+
+ADR-014 establishes the Learning Intelligence foundation
+for future platform evolution.

@@ -2,7 +2,9 @@
 
 ## Status
 
-PROPOSED
+ACCEPTED
+IMPLEMENTED
+RUNTIME VALIDATED
 
 ## Date
 
@@ -66,8 +68,13 @@ Existing:
 - learningEventBus
 - learningEventConsumer
 - learningMemory
+- learningMemoryRepository
+- learningEventRepository
 - learningWeights.engine
 - Knowledge Learning Adapter
+- Career Orchestrator
+- SaaS Engine
+- tenantId propagation
 
 ## Consequences
 
@@ -84,4 +91,6 @@ Tradeoffs:
 
 ## Status
 
-PROPOSED
+ACCEPTED
+IMPLEMENTED
+RUNTIME VALIDATED

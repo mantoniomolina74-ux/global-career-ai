@@ -90,6 +90,13 @@ Scope:
 
 ## 8. Decision
 
-Status:
+Discovery completed.
 
-DISCOVERY PHASE
+The findings of this review resulted in ADR-014
+being accepted for implementation.
+
+Current ADR Status:
+
+Accepted
+Implemented
+Runtime Validated
