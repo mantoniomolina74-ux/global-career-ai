@@ -6,13 +6,13 @@ import { LearningDomainEvent } from "./learningTypes";
  * Guarda todos los learning events para auditoría + replay futuro
  */
 export async function persistLearningEvent(
-  userId: string,
-  payload: LearningDomainEvent["context"]
+  event: LearningDomainEvent
 ): Promise<void> {
   const { error } = await supabaseServer.from("learning_events").insert({
-    user_id: userId,
-    action: payload.action,
-    context: payload,
+    tenant_id: event.tenantId,
+    user_id: event.userId,
+    action: event.context.action,
+    context: event.context,
     created_at: new Date().toISOString(),
   });
 

@@ -14,12 +14,14 @@ const supabase = createClient(
 );
 
 export async function saveLearningEventToDB(event: {
+  tenantId: string;
   userId: string;
   signalType: string;
   weight: number;
   metadata: Record<string, unknown>;
 }) {
   const { error } = await supabase.from("learning_events").insert({
+    tenant_id: event.tenantId,
     user_id: event.userId,
     signal_type: event.signalType,
     weight: event.weight,

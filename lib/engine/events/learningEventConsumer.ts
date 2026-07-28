@@ -28,14 +28,18 @@ export function initLearningEventConsumer(): void {
 
 async function handleLearningEvent(event: LearningDomainEvent): Promise<void> {
   try {
-    const { userId, context } = event;
+    const {
+  userId,
+  tenantId,
+  context,
+} = event;
 
     /**
      * =====================================================
      * 1. PERSISTENCE LAYER
      * =====================================================
      */
-    await persistLearningEvent(userId, context);
+    await persistLearningEvent(event);
 
     /**
      * =====================================================

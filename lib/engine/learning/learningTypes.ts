@@ -18,6 +18,8 @@ export interface LearningDomainEvent {
 
   userId: string;
 
+  tenantId?: string;
+
   type:
     | LearningEventType
     | "LEARNING_EVENT";
