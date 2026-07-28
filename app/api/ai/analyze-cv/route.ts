@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+
 import { extractCVText } from "@/lib/extract-cv";
 import { supabaseServer } from "@/lib/supabase-server";
+import { resolveRuntimeTenant } from "@/lib/saas/runtimeTenant";
 
 export const runtime = "nodejs";
 
@@ -139,6 +141,13 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+
+    const runtimeTenant = resolveRuntimeTenant(user_id);
+
+    console.log(
+      "[Runtime Tenant Context]",
+      runtimeTenant
+    );
 
     console.log("Procesando CV:", user_id);
 

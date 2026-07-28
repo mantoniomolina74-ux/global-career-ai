@@ -15,6 +15,7 @@ export type LearningSignalStrength =
 
 export interface LearningContext {
   userId?: string;
+  tenantId?: string;
   careerGoal?: string;
   industry?: string;
   country?: string;

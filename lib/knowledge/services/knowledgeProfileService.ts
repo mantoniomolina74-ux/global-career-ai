@@ -34,8 +34,9 @@ import {
 export function analyzeKnowledgeProfile(
   professionalText: string,
   options?: {
-    userId?: string;
-  }
+  userId?: string;
+  tenantId?: string;
+}
 ) {
 
   const competencyResults =
@@ -103,15 +104,16 @@ export function analyzeKnowledgeProfile(
     );
 
 
-  if (options?.userId) {
-    emitKnowledgeLearningEvent(
-      options.userId,
-      {
-        ...gapAnalysis,
-        ...learning
-      }
-    );
-  }
+  if (options?.userId && options?.tenantId) {
+  emitKnowledgeLearningEvent(
+    options.userId,
+    options.tenantId,
+    {
+      ...gapAnalysis,
+      ...learning
+    }
+  );
+}
 
 
   return {

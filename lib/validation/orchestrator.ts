@@ -59,22 +59,27 @@ export const LearningMemorySchema: z.ZodType<LearningMemory> = z.object({
 export const CareerOrchestratorInputSchema = z.object({
   userId: z.string(),
 
+  tenantId: z.string(),
+
   applications: z.array(ApplicationReferenceSchema),
 
   candidateSkills: z.array(z.string()),
-requiredSkills: z.array(z.string()),
-jobDescription: z.string(),
 
-cvStrengthScore: z.number().min(0).max(100),
+  requiredSkills: z.array(z.string()),
 
-industry: z.string().optional(),
-country: z.string().optional(),
+  jobDescription: z.string(),
 
-rankingStrategy: z.enum(["default", "ats", "hybrid"]).optional(),
+  cvStrengthScore: z.number().min(0).max(100),
 
-topK: z.number().int().positive().optional(),
+  industry: z.string().optional(),
 
-memory: LearningMemorySchema.optional(),
+  country: z.string().optional(),
+
+  rankingStrategy: z.enum(["default", "ats", "hybrid"]).optional(),
+
+  topK: z.number().int().positive().optional(),
+
+  memory: LearningMemorySchema.optional(),
 });
 
 /**

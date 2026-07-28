@@ -14,10 +14,13 @@ import type { LearningDomainEvent } from "@/lib/engine/learning/learningTypes";
 
 export function emitKnowledgeLearningEvent(
   userId: string,
+  tenantId: string,
   analysis: KnowledgeGapResult
 ): void {
   const event: LearningDomainEvent = {
     userId,
+
+    tenantId,
 
     type: "LEARNING_EVENT",
 

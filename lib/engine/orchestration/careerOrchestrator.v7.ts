@@ -117,6 +117,7 @@ export async function runCareerOrchestratorV7(
   emitLearning({
   id: `ats-${Date.now()}`,
   userId: input.userId,
+  tenantId: input.tenantId,
   type: "ATS_EVALUATED",
   timestamp: new Date().toISOString(),
   context: {
@@ -158,6 +159,7 @@ export async function runCareerOrchestratorV7(
   emitLearning({
   id: `ranking-${Date.now()}`,
   userId: input.userId,
+  tenantId: input.tenantId,
   type: "RANKING_GENERATED",
   timestamp: new Date().toISOString(),
   context: {
@@ -213,6 +215,7 @@ export async function runCareerOrchestratorV7(
   emitLearning({
   id: `decision-${Date.now()}`,
   userId: input.userId,
+  tenantId: input.tenantId,
   type: "DECISION_CREATED",
   timestamp: new Date().toISOString(),
   context: {

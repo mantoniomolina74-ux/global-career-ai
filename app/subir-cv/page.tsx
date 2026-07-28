@@ -85,10 +85,15 @@ export default function SubirCVPage() {
         });
 
       if (error) {
-        throw error;
-      }
+  if (error.code === "23505") {
+    alert("ℹ️ Este empleo ya estaba guardado.");
+    return;
+  }
 
-      alert("✅ Empleo guardado correctamente");
+  throw error;
+}
+
+alert("✅ Empleo guardado correctamente");
     } catch (error: unknown) {
     console.error(error);
     alert("❌ Error al guardar empleo");

@@ -7,6 +7,8 @@ const rejectionEvent: LearningDomainEvent = {
 
   userId: "test-user",
 
+  tenantId: "test-tenant",
+
   type: "REJECTION_RECEIVED",
 
   timestamp: new Date().toISOString(),

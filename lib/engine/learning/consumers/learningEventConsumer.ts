@@ -39,11 +39,7 @@ type LearningPayload =
   Record<string, unknown>;
 
 
-type LearningEvent = {
-  type: string;
-  payload: LearningPayload;
-  timestamp: number;
-};
+type LearningEvent = LearningDomainEvent;
 
 
 function getBoolean(
@@ -79,22 +75,25 @@ function getObject(
 /**
  * Existing Adaptive Weight signal mapping
  */
+
 function mapEventToSignal(
   event: LearningEvent,
 ): WeightLearningSignal {
+
+  const payload = event.payload ?? {};
+
   switch (event.type) {
     case "DECISION_CREATED": {
       const baseSignal: WeightLearningSignal = {
         decisionDelta:
-          getBoolean(event.payload.success)
+          getBoolean(payload.success)
             ? 0.05
             : -0.05,
 
         weight: 1,
       };
-
       const semanticCtx =
-        getObject(event.payload.context);
+        getObject(payload.context);
 
 
       const semantic =
@@ -113,8 +112,8 @@ function mapEventToSignal(
         context: semanticCtx,
         semanticScore:
           semantic.semanticRelevance,
-        timestamp:
-          event.timestamp,
+         timestamp:
+  new Date(event.timestamp).getTime(),
       });
 
 
@@ -153,12 +152,12 @@ function mapEventToSignal(
 
         success:
           getBoolean(
-            event.payload.success,
+            payload.success,
           ),
 
         confidence:
           getNumber(
-            event.payload.confidence,
+            payload.confidence,
           ),
 
         embedding:
@@ -181,22 +180,22 @@ function mapEventToSignal(
     }
 
 
-    case "ATS_SCORE_CALCULATED":
+    case "ATS_EVALUATED":
       return {
         atsDelta:
           getNumber(
-            event.payload.impact,
+            payload.impact,
           ),
 
         weight: 0.8,
       };
 
 
-    case "RANKING_UPDATED":
+    case "RANKING_GENERATED":
       return {
         rankingDelta:
           getNumber(
-            event.payload.delta,
+            payload.delta,
           ),
 
         weight: 0.7,
@@ -215,11 +214,15 @@ function mapEventToSignal(
 function mapEventToLearningSignal(
   event: LearningEvent,
 ) {
-  const domainEvent: LearningDomainEvent = {
-    userId: "system",
 
-    type:
-      event.type as LearningDomainEvent["type"],
+  const payload = event.payload ?? {};
+
+  const domainEvent: LearningDomainEvent = {
+  userId: event.userId,
+  tenantId: event.tenantId,
+
+  type:
+    event.type as LearningDomainEvent["type"],
 
     timestamp:
       new Date(
@@ -233,9 +236,9 @@ function mapEventToLearningSignal(
   ...event.payload,
 
   ...( 
-    typeof event.payload.context === "object" &&
-    event.payload.context !== null
-      ? event.payload.context
+    typeof payload.context === "object" &&
+payload.context !== null
+  ? payload.context
       : {}
   ),
 },
@@ -248,7 +251,7 @@ function mapEventToLearningSignal(
 
   confidence:
     getNumber(
-      event.payload.confidence,
+      payload.confidence,
     ),
 },
   };

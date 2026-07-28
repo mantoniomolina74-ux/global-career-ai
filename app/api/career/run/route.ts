@@ -6,6 +6,7 @@ import {
   validateCareerOrchestratorInput,
 } from "@/lib/validation/orchestrator";
 import { runCareerOrchestratorV7 } from "@/lib/engine/orchestration/careerOrchestrator.v7";
+import { buildSaaSRequestContext } from "@/lib/api/middleware/saasGuard";
 
 /**
  * ============================================================
@@ -24,6 +25,7 @@ type ApplicationInput = {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+    const saasContext = buildSaaSRequestContext(req);
 
     /**
      * ============================================================
@@ -52,6 +54,9 @@ export async function POST(req: Request) {
 
     const normalizedInput = {
       userId: parsed.data.userId,
+
+      tenantId:
+        saasContext.tenant?.tenantId ?? "default-tenant",
 
       candidateSkills:
         parsed.data.candidateSkills ?? [],

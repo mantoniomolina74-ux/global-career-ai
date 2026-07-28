@@ -189,6 +189,8 @@ export interface CareerOrchestratorInput {
 
   userId: string;
 
+  tenantId: string;
+
   applications: CareerApplication[];
 
   candidateSkills: string[];

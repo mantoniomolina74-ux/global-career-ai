@@ -71,6 +71,9 @@ export function adaptLearningEventToSignal(
 
     context: {
       userId: event.userId,
+
+       tenantId: event.tenantId,
+
       industry:
         typeof event.context.industry === "string"
           ? event.context.industry

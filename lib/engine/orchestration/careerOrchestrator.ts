@@ -17,6 +17,7 @@ import type {
  * ============================================================
  * Orchestrator V5
  * Knowledge Layer Integration (Phase 1)
+ * ADR-014 Tenant Context Propagation
  * ============================================================
  */
 
@@ -59,21 +60,25 @@ export async function runCareerOrchestrator(
     learningEventBus.emitLearning({
       id: `ats-${app.applicationId || Math.random()}`,
       userId: input.userId,
+      tenantId: input.tenantId,
       type: "ATS_EVALUATED",
       timestamp: new Date().toISOString(),
+
       context: {
-        action: "ATS_EVALUATED",
+        action: "ats_evaluated",
         applicationId: app.applicationId,
         atsScore: ats.atsScore,
       },
+
       payload: {
         applicationId: app.applicationId,
         atsScore: ats.atsScore,
         hiringScore: ats.hiringScore,
       },
+
       metadata: {
         source: "ATS",
-        confidence: 0.8,
+        confidence: 0.9,
       },
     });
   }
@@ -86,11 +91,13 @@ export async function runCareerOrchestrator(
 
   const rankingInput = {
     items: atsResults.map((r, idx) => ({
-      applicationId: input.applications[idx]?.applicationId ?? `app-${idx}`,
+      applicationId:
+        input.applications[idx]?.applicationId ?? `app-${idx}`,
       score: r.atsScore,
       breakdown: {},
       signals: [],
     })),
+
     metadata: {
       processedAt: new Date().toISOString(),
       modelVersion: "v1",
@@ -100,28 +107,36 @@ export async function runCareerOrchestrator(
   const ranking = runRankingEngine(rankingInput);
 
   const avgRanking =
-    ranking.items.reduce((acc, r) => acc + r.finalScore, 0) /
-    (ranking.items.length || 1);
+    ranking.items.reduce(
+      (acc, r) => acc + r.finalScore,
+      0
+    ) / (ranking.items.length || 1);
+
 
   learningEventBus.emitLearning({
     id: `ranking-${input.userId}-${Date.now()}`,
     userId: input.userId,
+    tenantId: input.tenantId,
     type: "RANKING_GENERATED",
     timestamp: new Date().toISOString(),
+
     context: {
       action: "RANKING_GENERATED",
       avgScore: avgRanking,
       total: ranking.items.length,
     },
+
     payload: {
       avgScore: avgRanking,
       total: ranking.items.length,
     },
+
     metadata: {
       source: "RANKING",
       confidence: 0.85,
     },
   });
+
 
   /**
    * ============================================================
@@ -132,13 +147,22 @@ export async function runCareerOrchestrator(
   const averageATS =
     atsResults.length === 0
       ? 0
-      : atsResults.reduce((acc, r) => acc + r.atsScore, 0) /
-        atsResults.length;
+      :
+        atsResults.reduce(
+          (acc, r) => acc + r.atsScore,
+          0
+        ) / atsResults.length;
+
 
   const topScore =
     atsResults.length === 0
       ? 0
-      : Math.max(...atsResults.map((r) => r.atsScore));
+      : Math.max(
+          ...atsResults.map(
+            (r) => r.atsScore
+          )
+        );
+
 
   /**
    * ============================================================
@@ -153,19 +177,29 @@ export async function runCareerOrchestrator(
     learningScore: 70,
   });
 
+
   /**
    * ============================================================
    * STEP 4.5 — KNOWLEDGE SERVICE
    * ============================================================
    */
 
-  const knowledgeInsights = knowledgeService.getCareerInsights({
-    candidateSkills: input.candidateSkills ?? [],
-    industry: input.industry,
-    country: input.country,
-    minimumConfidence: 0.6,
-    limit: 10,
-  });
+  const knowledgeInsights =
+    knowledgeService.getCareerInsights({
+      candidateSkills:
+        input.candidateSkills ?? [],
+
+      industry:
+        input.industry,
+
+      country:
+        input.country,
+
+      minimumConfidence: 0.6,
+
+      limit: 10,
+    });
+
 
   /**
    * ============================================================
@@ -175,12 +209,15 @@ export async function runCareerOrchestrator(
 
   const enrichedContext = {
     ...context,
+
     signals: {
       atsScore: averageATS,
       rankingScore: avgRanking,
-      recommendationScore: recommendationResult.overallScore,
+      recommendationScore:
+        recommendationResult.overallScore,
     },
   };
+
 
   /**
    * ============================================================
@@ -193,23 +230,29 @@ export async function runCareerOrchestrator(
     recommendationResult.overallScore
   );
 
+
   learningEventBus.emitLearning({
     id: `decision-${input.userId}-${Date.now()}`,
     userId: input.userId,
+    tenantId: input.tenantId,
     type: "DECISION_CREATED",
     timestamp: new Date().toISOString(),
+
     context: {
       action: "DECISION_CREATED",
       decision,
     },
+
     payload: {
-  decision: JSON.stringify(decision),
-},
+      decision: JSON.stringify(decision),
+    },
+
     metadata: {
       source: "DECISION",
       confidence: decision.confidence,
     },
   });
+
 
   /**
    * ============================================================
@@ -222,20 +265,39 @@ export async function runCareerOrchestrator(
     (averageATS + avgRanking) / 200
   );
 
+
   return {
     userId: input.userId,
+
     ats: atsResults,
+
     ranking,
-    recommendations: recommendationResult,
-    knowledge: knowledgeInsights,
+
+    recommendations:
+      recommendationResult,
+
+    knowledge:
+      knowledgeInsights,
+
     decision,
-    context: enrichedContext,
+
+    context:
+      enrichedContext,
+
     summary: {
-      totalApplications: input.applications.length,
-      averageATS: Math.round(averageATS),
+      totalApplications:
+        input.applications.length,
+
+      averageATS:
+        Math.round(averageATS),
+
       topScore,
-      systemConfidence: Number(systemConfidence.toFixed(2)),
+
+      systemConfidence:
+        Number(systemConfidence.toFixed(2)),
     },
-    generatedAt: new Date().toISOString(),
+
+    generatedAt:
+      new Date().toISOString(),
   };
 }
