@@ -1,43 +1,31 @@
-import {
-  scoreCompetencies
-} from "../scoring/competencyScorer";
 
-import {
-  evaluateKnowledgeDomain
-} from "../evaluation/knowledgeDomainEvaluator";
+import { scoreCompetencies } from "../scoring/competencyScorer";
 
-import {
-  aggregateKnowledgeDomains
-} from "../aggregation/domainAggregator";
+import { evaluateKnowledgeDomain } from "../evaluation/knowledgeDomainEvaluator";
 
-import {
-  knowledgeDomainCatalog
-} from "../knowledgeDomainCatalog";
+import { aggregateKnowledgeDomains } from "../aggregation/domainAggregator";
 
-import type {
-  KnowledgeProfile
-} from "../knowledgeTypes";
+import { knowledgeDomainCatalog } from "../knowledgeDomainCatalog";
 
-import {
-  analyzeKnowledgeGaps
-} from "../knowledgeGapAnalyzer";
+import type { KnowledgeProfile } from "../knowledgeTypes";
 
-import {
-  generateLearningRecommendations
-} from "../learningRecommendationEngine";
+import { analyzeKnowledgeGaps } from "../knowledgeGapAnalyzer";
 
-import {
-  emitKnowledgeLearningEvent
-} from "../adapters/knowledgeLearningAdapter";
+import { generateLearningRecommendations } from "../learningRecommendationEngine";
+
+import { emitKnowledgeLearningEvent } from "../adapters/knowledgeLearningAdapter";
 
 
 export function analyzeKnowledgeProfile(
   professionalText: string,
   options?: {
-  userId?: string;
-  tenantId?: string;
-}
-) {
+    userId?: string;
+    tenantId?: string;
+  }
+): {
+  profile: KnowledgeProfile;
+  analysis: ReturnType<typeof generateLearningRecommendations>;
+} {
 
   const competencyResults =
     scoreCompetencies(
@@ -66,27 +54,30 @@ export function analyzeKnowledgeProfile(
     dominantDomainId:
       aggregation.dominantDomainId,
 
+
     averageScore:
       aggregation.averageScore,
 
+
     averageConfidence:
       aggregation.averageConfidence,
+
 
     domains:
       aggregation.domains.map(
         domain => ({
           domain: {
             id: domain.domain.id,
-            name: domain.domain.name
+            name: domain.domain.name,
           },
 
           score:
             domain.score,
 
           confidence:
-            domain.confidence
+            domain.confidence,
         })
-      )
+      ),
 
   };
 
@@ -104,25 +95,29 @@ export function analyzeKnowledgeProfile(
     );
 
 
-  if (options?.userId && options?.tenantId) {
-  emitKnowledgeLearningEvent(
-    options.userId,
-    options.tenantId,
-    {
-      ...gapAnalysis,
-      ...learning
-    }
-  );
-}
+  if (
+    options?.userId &&
+    options?.tenantId
+  ) {
+
+    emitKnowledgeLearningEvent(
+      options.userId,
+      options.tenantId,
+      {
+        ...gapAnalysis,
+        ...learning,
+      }
+    );
+
+  }
 
 
   return {
-
     profile,
 
     analysis:
-      learning
-
+      learning,
   };
 
 }
+

@@ -16,6 +16,8 @@
  * ============================================================
  */
 
+import { analyzeCompetencyProfile } from "@/lib/knowledge/services/competencyProfileService";
+
 import type { CompetencyInsight } from "../contracts/dashboardContract";
 
 
@@ -23,6 +25,8 @@ export interface CompetencyDashboardContext {
   userId: string;
 
   tenantId: string;
+
+  professionalText: string;
 }
 
 
@@ -30,11 +34,39 @@ export async function getCompetencyDashboardInsight(
   context: CompetencyDashboardContext
 ): Promise<CompetencyInsight> {
 
+  const competency =
+    analyzeCompetencyProfile(
+      context.professionalText
+    );
+
+  const strongestCompetencies =
+    [...competency.competencies]
+      .sort(
+        (a, b) =>
+          b.score - a.score
+      )
+      .slice(0, 5)
+      .map(
+        item => item.id
+      );
+
+  const competencyGaps =
+    [...competency.competencies]
+      .sort(
+        (a, b) =>
+          a.score - b.score
+      )
+      .slice(0, 5)
+      .map(
+        item => item.id
+      );
+
   return {
-    overallScore: 0,
+    overallScore:
+      competency.averageScore,
 
-    strongestCompetencies: [],
+    strongestCompetencies,
 
-    competencyGaps: [],
+    competencyGaps,
   };
 }

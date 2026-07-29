@@ -8,13 +8,15 @@
  * and Dashboard Experience.
  *
  * Responsibilities:
- * - Read knowledge intelligence results
- * - Transform domain output
- * - Return Dashboard-compatible structure
+ * - Consume knowledge intelligence output
+ * - Transform domain data
+ * - Return Dashboard-compatible insight
  *
- * Does not modify knowledge evaluation behavior.
+ * Does not execute knowledge evaluation logic.
  * ============================================================
  */
+
+import { analyzeKnowledgeProfile } from "@/lib/knowledge/services/knowledgeProfileService";
 
 import type { KnowledgeInsight } from "../contracts/dashboardContract";
 
@@ -23,6 +25,65 @@ export interface KnowledgeDashboardContext {
   userId: string;
 
   tenantId: string;
+
+  professionalText: string;
+}
+
+
+export interface KnowledgeDashboardSource {
+  dominantDomains: string[];
+
+  averageScore: number;
+
+  knowledgeGaps: string[];
+}
+
+
+/**
+ * ADR-013 Knowledge Intelligence adapter boundary.
+ *
+ * Dashboard consumes Knowledge Intelligence
+ * through the official service layer.
+ */
+async function getKnowledgeSource(
+  context: KnowledgeDashboardContext
+): Promise<KnowledgeDashboardSource> {
+
+  const result =
+    analyzeKnowledgeProfile(
+      context.professionalText,
+      {
+        userId: context.userId,
+        tenantId: context.tenantId,
+      }
+    );
+
+
+  return {
+    dominantDomains:
+      result.profile.domains
+        .sort(
+          (a, b) =>
+            b.score - a.score
+        )
+        .map(
+          domain =>
+            domain.domain.name
+        ),
+
+
+    averageScore:
+      result.profile.averageScore,
+
+
+    knowledgeGaps:
+  result.analysis.gaps
+    ? result.analysis.gaps.map(
+        gap =>
+          gap.competencyName
+      )
+    : [],
+  };
 }
 
 
@@ -30,11 +91,18 @@ export async function getKnowledgeDashboardInsight(
   context: KnowledgeDashboardContext
 ): Promise<KnowledgeInsight> {
 
+  const knowledge =
+    await getKnowledgeSource(context);
+
+
   return {
-    dominantDomains: [],
+    dominantDomains:
+      knowledge.dominantDomains,
 
-    averageScore: 0,
+    averageScore:
+      knowledge.averageScore,
 
-    knowledgeGaps: [],
+    knowledgeGaps:
+      knowledge.knowledgeGaps,
   };
 }
