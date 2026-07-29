@@ -6,18 +6,12 @@
  *
  * Adapter between Matching Intelligence
  * and Dashboard Experience.
- *
- * Responsibilities:
- * - Read matching intelligence results
- * - Transform domain output
- * - Return Dashboard-compatible structure
- *
- * Does not modify matching behavior.
  * ============================================================
  */
 
-import type { MatchingInsight } from "../contracts/dashboardContract";
+import { analyzeMatchingProfile } from "@/lib/engine/services/matchingProfileService";
 
+import type { MatchingInsight } from "../contracts/dashboardContract";
 
 export interface MatchingDashboardContext {
   userId: string;
@@ -25,15 +19,41 @@ export interface MatchingDashboardContext {
   tenantId: string;
 }
 
+async function getMatchingSource(
+  _context: MatchingDashboardContext
+) {
+  /**
+   * TODO (V1.1)
+   * Replace this placeholder with:
+   *
+   * - Candidate profile repository
+   * - Recommended jobs repository
+   *
+   * Then invoke analyzeMatchingProfile()
+   * using real data.
+   */
+
+  return analyzeMatchingProfile([], {
+    skills: [],
+    industries: [],
+  });
+}
 
 export async function getMatchingDashboardInsight(
   context: MatchingDashboardContext
 ): Promise<MatchingInsight> {
 
-  return {
-    matchScore: 0,
+  const matching =
+    await getMatchingSource(context);
 
-    targetRoles: [],
+  return {
+    matchScore:
+      matching.averageMatchScore,
+
+    targetRoles:
+      matching.bestMatches
+        .slice(0, 5)
+        .map(job => job.title ?? ""),
 
     alignmentFactors: [],
   };
