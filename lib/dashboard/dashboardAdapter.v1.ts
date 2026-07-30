@@ -1,3 +1,4 @@
+
 /**
  * ============================================================
  * Global Career AI
@@ -21,13 +22,18 @@ import { aggregateDashboard } from "./aggregation/dashboardAggregator";
 export async function getDashboardData(
   userId: string,
   tenantId: string = "default",
+  applicationId?: string,
   professionalText?: string
 ) {
 
   const dashboard =
     await aggregateDashboard({
       userId,
+
       tenantId,
+
+      applicationId,
+
       professionalText,
     });
 

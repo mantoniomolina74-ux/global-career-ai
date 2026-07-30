@@ -29,9 +29,8 @@ import { buildDashboardContract } from "../builders/dashboardContractBuilder";
 
 export interface DashboardContext {
   userId: string;
-
   tenantId: string;
-
+  applicationId?: string;
   professionalText?: string;
 }
 
@@ -48,16 +47,19 @@ export async function aggregateDashboard(
     learningInsight,
   ] = await Promise.all([
     getATSDashboardInsight(context),
-    getMatchingDashboardInsight(context),
-    getCompetencyDashboardInsight({
-  ...context,
-  professionalText: context.professionalText ?? "",
-}),
 
-getKnowledgeDashboardInsight({
-  ...context,
-  professionalText: context.professionalText ?? "",
-}),
+    getMatchingDashboardInsight(context),
+
+    getCompetencyDashboardInsight({
+      ...context,
+      professionalText: context.professionalText ?? "",
+    }),
+
+    getKnowledgeDashboardInsight({
+      ...context,
+      professionalText: context.professionalText ?? "",
+    }),
+
     getLearningDashboardInsight(context),
   ]);
 
@@ -153,4 +155,3 @@ getKnowledgeDashboardInsight({
   });
 
 }
-
