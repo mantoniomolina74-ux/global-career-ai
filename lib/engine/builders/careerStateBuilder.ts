@@ -1,91 +1,98 @@
 /**
- * ============================================================
- * Global Career AI
- * Career State Builder V1.1
- * ============================================================
- *
- * Domain adapter between OrchestratorResult and CareerState.
- *
- * No business logic.
- * No persistence.
- * No engine execution.
- *
- * Responsibility:
- * Compose the Career Intelligence domain state.
- * ============================================================
- */
+
+* ============================================================
+* Global Career AI
+* Career State Builder V1.1
+* ============================================================
+*
+* Domain adapter between OrchestratorResult and CareerState.
+*
+* No business logic.
+* No persistence.
+* No engine execution.
+*
+* Responsibility:
+* Compose the Career Intelligence domain state.
+* ============================================================
+  */
 
 import {
-  OrchestratorResult,
+OrchestratorResult,
 } from "@/lib/engine/contracts/engineContracts";
 
 import {
-  CareerState,
+CareerState,
 } from "@/lib/engine/contracts/careerState";
 
+import {
+buildATSState,
+} from "@/lib/engine/adapters/intelligence/atsStateAdapter";
 
 export function buildCareerState(
-  result: OrchestratorResult
+result: OrchestratorResult
 ): CareerState {
 
-  return {
-    readiness: {
-      score: result.summary.averageATS,
+return {
+readiness: {
+score: result.summary.averageATS,
 
-      level:
-        result.summary.averageATS >= 80
-          ? "HIGH"
-          : result.summary.averageATS >= 60
-          ? "MEDIUM"
-          : "LOW",
 
-      atsScore: result.summary.averageATS,
+  level:
+    result.summary.averageATS >= 80
+      ? "HIGH"
+      : result.summary.averageATS >= 60
+      ? "MEDIUM"
+      : "LOW",
 
-      skillCount: 0,
+  atsScore: result.summary.averageATS,
 
-      certificationCount: 0,
+  skillCount: 0,
 
-      recommendations: [],
-    },
+  certificationCount: 0,
 
-    metrics: {
-      averageMatch: result.summary.averageATS,
+  recommendations: [],
+},
 
-      topMatches: result.summary.topScore,
+metrics: {
+  averageMatch: result.summary.averageATS,
 
-      skillsCount: 0,
+  topMatches: result.summary.topScore,
 
-      atsScore: result.summary.averageATS,
-    },
+  skillsCount: 0,
 
-    gapAnalysis: {
-      readiness: "UNKNOWN",
+  atsScore: result.summary.averageATS,
+},
 
-      nextCareerStep: "UNKNOWN",
+gapAnalysis: {
+  readiness: "UNKNOWN",
 
-      missingSkills: [],
+  nextCareerStep: "UNKNOWN",
 
-      recommendedCertifications: [],
-    },
+  missingSkills: [],
 
-    profileIntelligence: {
-      careerLevel: "UNKNOWN",
+  recommendedCertifications: [],
+},
 
-      marketFit: 0,
+profileIntelligence: {
+  careerLevel: "UNKNOWN",
 
-      improvementAreas: [],
-    },
+  marketFit: 0,
 
-    intelligence: {
-      ats: result.ats,
+  improvementAreas: [],
+},
 
-      matching: result.ranking,
+intelligence: {
+  ats: buildATSState(result.ats),
 
-      knowledge: result.knowledge,
+  matching: result.ranking,
 
-      decision: result.decision,
+  knowledge: result.knowledge,
 
-      learning: result.context,
-    },
-  };
+  decision: result.decision,
+
+  learning: result.context,
+},
+
+
+};
 }
