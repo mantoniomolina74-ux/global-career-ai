@@ -1,84 +1,87 @@
 /**
- * ============================================================
- * Global Career AI
- * Career State Contract V1.1
- * ============================================================
- *
- * Single Source of Truth for Career Intelligence.
- *
- * This contract represents the complete professional state
- * of a candidate after all intelligence engines have been
- * composed.
- *
- * This is a Domain Contract.
- * No business logic belongs here.
- * ============================================================
- */
+
+* ============================================================
+* Global Career AI
+* Career State Contract V1.1
+* ============================================================
+*
+* Single Source of Truth for Career Intelligence.
+*
+* This contract represents the complete professional state
+* of a candidate after all intelligence engines have been
+* composed.
+*
+* This is a Domain Contract.
+* No business logic belongs here.
+* ============================================================
+  */
+
+import type { ATSState } from "./intelligence/atsState";
 
 export interface CareerState {
-  readiness: CareerReadiness;
+readiness: CareerReadiness;
 
-  metrics: CareerMetrics;
+metrics: CareerMetrics;
 
-  gapAnalysis: CareerGapAnalysis;
+gapAnalysis: CareerGapAnalysis;
 
-  profileIntelligence: CareerProfileIntelligence;
+profileIntelligence: CareerProfileIntelligence;
 
-  intelligence: CareerIntelligence;
+intelligence: CareerIntelligence;
 }
 
 export interface CareerReadiness {
-  score: number;
+score: number;
 
-  level: string;
+level: string;
 
-  atsScore: number;
+atsScore: number;
 
-  skillCount: number;
+skillCount: number;
 
-  certificationCount: number;
+certificationCount: number;
 
-  recommendations: string[];
+recommendations: string[];
 }
 
 export interface CareerMetrics {
-  averageMatch: number;
+averageMatch: number;
 
-  topMatches: number;
+topMatches: number;
 
-  skillsCount: number;
+skillsCount: number;
 
-  atsScore: number;
+atsScore: number;
 }
 
 export interface CareerGapAnalysis {
-  readiness: string;
+readiness: string;
 
-  nextCareerStep: string;
+nextCareerStep: string;
 
-  missingSkills: string[];
+missingSkills: string[];
 
-  recommendedCertifications: string[];
+recommendedCertifications: string[];
 }
 
 export interface CareerProfileIntelligence {
-  careerLevel: string;
+careerLevel: string;
 
-  marketFit: number;
+marketFit: number;
 
-  improvementAreas: string[];
+improvementAreas: string[];
 }
 
 export interface CareerIntelligence {
-  ats?: unknown;
+ats?: ATSState;
 
-  matching?: unknown;
+matching?: unknown;
 
-  competency?: unknown;
+competency?: unknown;
 
-  knowledge?: unknown;
+knowledge?: unknown;
 
-  learning?: unknown;
+learning?: unknown;
 
-  decision?: unknown;
+decision?: unknown;
 }
