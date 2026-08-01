@@ -341,16 +341,17 @@ export async function runCareerOrchestratorV7(
    */
 
   return {
+  userId:
+    input.userId,
 
-    userId:
-      input.userId,
+  profile:
+    input.profile,
 
-
-    ats:
-      enrichedApplications.map(
-        (app) =>
-          app.atsResult
-      ),
+  ats:
+    enrichedApplications.map(
+      (app) =>
+        app.atsResult
+    ),
 
 
     ranking,

@@ -32,9 +32,23 @@ import {
   buildMatchingState,
 } from "@/lib/engine/adapters/intelligence/matchingStateAdapter";
 
+import {
+  buildCompetencyState,
+} from "@/lib/engine/adapters/intelligence/competencyStateAdapter";
+
+import {
+  analyzeCompetencyProfile,
+} from "@/lib/knowledge/services/competencyProfileService";
+
 export function buildCareerState(
 result: OrchestratorResult
 ): CareerState {
+const competencyProfile =
+  result.profile?.professionalText
+    ? analyzeCompetencyProfile(
+        result.profile.professionalText
+      )
+    : undefined;
 
 return {
 readiness: {
@@ -91,6 +105,13 @@ intelligence: {
   matching: buildMatchingState(
     result.matching.items
   ),
+
+  competency:
+    competencyProfile
+      ? buildCompetencyState(
+          competencyProfile
+        )
+      : undefined,
 
   knowledge: result.knowledge,
 

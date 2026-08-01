@@ -53,45 +53,50 @@ export async function POST(req: Request) {
      */
 
     const normalizedInput = {
-      userId: parsed.data.userId,
+  userId: parsed.data.userId,
 
-      tenantId:
-        saasContext.tenant?.tenantId ?? "default-tenant",
+  tenantId:
+    saasContext.tenant?.tenantId ?? "default-tenant",
+
+  profile: {
+    professionalText:
+      parsed.data.profile?.professionalText,
+  },
+
+  candidateSkills:
+    parsed.data.candidateSkills ?? [],
+
+  requiredSkills:
+    parsed.data.requiredSkills ?? [],
+
+  jobDescription:
+    parsed.data.jobDescription ?? "",
+
+  cvStrengthScore:
+    parsed.data.cvStrengthScore ?? 0,
+
+  applications: parsed.data.applications.map(
+    (app: ApplicationInput) => ({
+      applicationId:
+        app.applicationId ?? `app-${Date.now()}`,
 
       candidateSkills:
-        parsed.data.candidateSkills ?? [],
-
-      requiredSkills:
-        parsed.data.requiredSkills ?? [],
+        app.candidateSkills ?? [],
 
       jobDescription:
-        parsed.data.jobDescription ?? "",
+        app.jobDescription ?? "",
 
       cvStrengthScore:
-        parsed.data.cvStrengthScore ?? 0,
+        app.cvStrengthScore ?? 0,
+    })
+  ),
 
-      applications: parsed.data.applications.map(
-        (app: ApplicationInput) => ({
-          applicationId:
-            app.applicationId ?? `app-${Date.now()}`,
+  rankingStrategy:
+    parsed.data.rankingStrategy,
 
-          candidateSkills:
-            app.candidateSkills ?? [],
-
-          jobDescription:
-            app.jobDescription ?? "",
-
-          cvStrengthScore:
-            app.cvStrengthScore ?? 0,
-        })
-      ),
-
-      rankingStrategy:
-        parsed.data.rankingStrategy,
-
-      topK:
-        parsed.data.topK,
-    };
+  topK:
+    parsed.data.topK,
+};
 
     /**
      * ============================================================

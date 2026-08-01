@@ -1,3 +1,4 @@
+
 import { z } from "zod";
 import type { LearningMemory } from "@/lib/engine/learning/memory/learningMemoryEngine.v2";
 
@@ -60,6 +61,10 @@ export const CareerOrchestratorInputSchema = z.object({
   userId: z.string(),
 
   tenantId: z.string(),
+
+  profile: z.object({
+    professionalText: z.string().optional(),
+  }).optional(),
 
   applications: z.array(ApplicationReferenceSchema),
 

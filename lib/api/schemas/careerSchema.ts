@@ -10,6 +10,10 @@ import { z } from "zod";
 export const CareerRunSchema = z.object({
   userId: z.string(),
 
+  profile: z.object({
+    professionalText: z.string().optional(),
+  }).optional(),
+
   applications: z.array(
     z.object({
       applicationId: z.string().optional(),

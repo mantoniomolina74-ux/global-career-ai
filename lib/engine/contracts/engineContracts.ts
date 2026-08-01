@@ -194,6 +194,10 @@ export interface CareerOrchestratorInput {
 
   tenantId: string;
 
+  profile?: {
+    professionalText?: string;
+  };
+
   applications: CareerApplication[];
 
   candidateSkills: string[];
@@ -229,6 +233,10 @@ export interface OrchestratorSummary {
 
 export interface OrchestratorResult {
   userId: string;
+
+  profile?: {
+    professionalText?: string;
+  };
 
   ats: ATSResult[];
 
