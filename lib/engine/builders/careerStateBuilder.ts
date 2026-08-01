@@ -25,8 +25,12 @@ CareerState,
 } from "@/lib/engine/contracts/careerState";
 
 import {
-buildATSState,
+  buildATSState,
 } from "@/lib/engine/adapters/intelligence/atsStateAdapter";
+
+import {
+  buildMatchingState,
+} from "@/lib/engine/adapters/intelligence/matchingStateAdapter";
 
 export function buildCareerState(
 result: OrchestratorResult
@@ -84,7 +88,9 @@ profileIntelligence: {
 intelligence: {
   ats: buildATSState(result.ats),
 
-  matching: result.ranking,
+  matching: buildMatchingState(
+    result.matching.items
+  ),
 
   knowledge: result.knowledge,
 

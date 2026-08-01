@@ -1,3 +1,6 @@
+import type {
+  MatchingResult,
+} from "./matchingContracts";
 
 /**
  * ============================================================
@@ -230,6 +233,8 @@ export interface OrchestratorResult {
   ats: ATSResult[];
 
   ranking: RankingResult;
+
+  matching: MatchingResult;
 
   recommendations: unknown;
 

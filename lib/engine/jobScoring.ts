@@ -1,7 +1,13 @@
+
 import { SCORING_WEIGHTS, SCORE_LIMITS } from "./weights";
 import { buildMatchReasons } from "./matchReasons";
 import { buildCandidateEvidence } from "./evidenceAdapter";
 import { accumulateEvidence } from "./evidenceAccumulator";
+
+import type {
+  MatchingResultItem,
+} from "@/lib/engine/contracts/matchingContracts";
+
 
 type JobScoreInput = {
   id: string;
@@ -17,10 +23,12 @@ type JobScoreInput = {
   requires_first_aid?: boolean;
 };
 
+
 type CvScoreInput = {
   skills?: string[];
   industries?: string[];
 };
+
 
 const MATCH_GROUPS = [
   {
@@ -100,12 +108,14 @@ const MATCH_GROUPS = [
   },
 ];
 
+
 function normalizeText(value: string = "") {
   return value
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
 }
+
 
 function matchesConcept(
   text: string,
@@ -126,10 +136,12 @@ function matchesConcept(
   );
 }
 
+
 export function scoreJobs(
   jobs: JobScoreInput[],
   cv: CvScoreInput
-) {
+): MatchingResultItem[] {
+
   const skills = Array.isArray(cv.skills)
     ? cv.skills
     : [];
@@ -138,8 +150,10 @@ export function scoreJobs(
     ? cv.industries
     : [];
 
+
   const candidateEvidences =
     buildCandidateEvidence(cv);
+
 
   const evidenceAnalysis =
     candidateEvidences.length > 0
@@ -149,9 +163,12 @@ export function scoreJobs(
         )
       : null;
 
+
   return jobs
     .map((job) => {
+
       let score = 0;
+
 
       const fields = {
         title: normalizeText(job.title ?? ""),
@@ -161,7 +178,9 @@ export function scoreJobs(
         tags: normalizeText(job.tags ?? ""),
       };
 
+
       const text = Object.values(fields).join(" ");
+
 
       skills.forEach((skill) => {
         if (matchesConcept(text, skill)) {
@@ -169,27 +188,33 @@ export function scoreJobs(
         }
       });
 
+
       industries.forEach((industry) => {
         if (matchesConcept(text, industry)) {
           score += SCORING_WEIGHTS.industryMatch;
         }
       });
 
+
       if (job.requires_whmis) {
         score += SCORING_WEIGHTS.certifications.whmis;
       }
+
 
       if (job.requires_csts) {
         score += SCORING_WEIGHTS.certifications.csts;
       }
 
+
       if (job.requires_first_aid) {
         score += SCORING_WEIGHTS.certifications.firstAid;
       }
 
+
       if (job.country) {
         score += SCORING_WEIGHTS.geography.countryMatch;
       }
+
 
       return {
         ...job,
@@ -201,7 +226,10 @@ export function scoreJobs(
 
         evidence_analysis: evidenceAnalysis,
 
-        match_reasons: buildMatchReasons(job, cv),
+        match_reasons: buildMatchReasons(
+          job,
+          cv
+        ),
 
         match_explanation: {
           matched_skills: skills.filter((skill) =>
@@ -219,6 +247,10 @@ export function scoreJobs(
           },
         },
       };
+
     })
-    .sort((a, b) => b.match_score - a.match_score);
+    .sort(
+      (a, b) =>
+        b.match_score - a.match_score
+    );
 }
