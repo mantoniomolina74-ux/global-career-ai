@@ -87,6 +87,8 @@ export interface CareerIntelligence {
 
   knowledge?: KnowledgeState;
 
+  application?: ApplicationState;
+
   learning?: unknown;
 
   decision?: unknown;
