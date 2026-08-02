@@ -40,6 +40,14 @@ import {
   analyzeCompetencyProfile,
 } from "@/lib/knowledge/services/competencyProfileService";
 
+import {
+  buildKnowledgeState,
+} from "@/lib/engine/adapters/intelligence/knowledgeStateAdapter";
+
+import {
+  analyzeKnowledgeProfile,
+} from "@/lib/knowledge/services/knowledgeProfileService";
+
 export function buildCareerState(
 result: OrchestratorResult
 ): CareerState {
@@ -48,6 +56,13 @@ const competencyProfile =
     ? analyzeCompetencyProfile(
         result.profile.professionalText
       )
+    : undefined;
+
+    const knowledgeProfile =
+  result.profile?.professionalText
+    ? analyzeKnowledgeProfile(
+        result.profile.professionalText
+      ).profile
     : undefined;
 
 return {
@@ -113,7 +128,12 @@ intelligence: {
         )
       : undefined,
 
-  knowledge: result.knowledge,
+  knowledge:
+  knowledgeProfile
+    ? buildKnowledgeState(
+        knowledgeProfile
+      )
+    : undefined,
 
   decision: result.decision,
 
