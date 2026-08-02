@@ -7,13 +7,14 @@ import {
 } from "../contracts/intelligence/careerInsights";
 
 import { calculateCareerOverallHealth } from "../intelligence/calculators/career/careerOverallHealthCalculator";
+import { calculateMarketReadiness } from "../intelligence/calculators/market/marketReadinessCalculator";
 
 export function buildCareerInsights(
   state: CareerState
 ): CareerInsights {
   return {
     overallHealth: calculateCareerOverallHealth(state),
-    marketReadiness: buildMarketReadiness(state),
+    marketReadiness: calculateMarketReadiness(state),
     applicationReadiness: buildApplicationReadiness(state),
     careerMomentum: buildCareerMomentum(state),
     riskLevel: buildRiskLevel(state),
@@ -21,11 +22,6 @@ export function buildCareerInsights(
     priorityGaps: buildPriorityGaps(state),
     recommendedActions: buildRecommendedActions(state),
   };
-}
-
-function buildMarketReadiness(state: CareerState): number {
-  void state;
-  return 0;
 }
 
 function buildApplicationReadiness(state: CareerState): number {
