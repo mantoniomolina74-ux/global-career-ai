@@ -20,6 +20,7 @@ import type { ATSState } from "./intelligence/atsState";
 import type { MatchingState } from "./intelligence/matchingState";
 import type { CompetencyState } from "./intelligence/competencyState";
 import type { KnowledgeState } from "./intelligence/knowledgeState";
+import type { ApplicationState } from "./intelligence/applicationState";
 
 export interface CareerState {
 readiness: CareerReadiness;
@@ -73,6 +74,8 @@ careerLevel: string;
 marketFit: number;
 
 improvementAreas: string[];
+
+application?: ApplicationState;
 }
 
 export interface CareerIntelligence {
