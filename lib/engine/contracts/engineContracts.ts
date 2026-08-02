@@ -2,6 +2,10 @@ import type {
   MatchingResult,
 } from "./matchingContracts";
 
+import type {
+  EnrichedApplication,
+} from "./enrichedApplication";
+
 /**
  * ============================================================
  * Global Career AI
@@ -239,6 +243,8 @@ export interface OrchestratorResult {
   };
 
   ats: ATSResult[];
+
+  applications: EnrichedApplication[];
 
   ranking: RankingResult;
 

@@ -26,6 +26,8 @@ import {
 const mockResult: OrchestratorResult = {
   userId: "test-user",
 
+  applications: [],
+
   ats: [
     {
       atsScore: 85,

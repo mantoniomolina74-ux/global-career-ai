@@ -353,6 +353,8 @@ export async function runCareerOrchestratorV7(
         app.atsResult
     ),
 
+    applications: enrichedApplications,
+
 
     ranking,
 
