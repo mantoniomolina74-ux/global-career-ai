@@ -235,6 +235,31 @@ export interface OrchestratorSummary {
 }
 
 
+export interface ApplicationInsightsResult {
+
+  funnel: {
+
+    conversionRate: number;
+
+    offerRate: number;
+
+    successRate: number;
+  };
+
+
+  performance: {
+
+    totalApplications: number;
+
+    activePipeline: number;
+
+    responseRate: number;
+
+    rejectionRate: number;
+  };
+}
+
+
 export interface OrchestratorResult {
   userId: string;
 
@@ -249,6 +274,8 @@ export interface OrchestratorResult {
   ranking: RankingResult;
 
   matching: MatchingResult;
+
+  applicationInsights?: ApplicationInsightsResult;
 
   recommendations: unknown;
 
