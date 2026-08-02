@@ -17,6 +17,8 @@
   */
 
 import type { ATSState } from "./intelligence/atsState";
+import type { MatchingState } from "./intelligence/matchingState";
+import type { CompetencyState } from "./intelligence/competencyState";
 import type { KnowledgeState } from "./intelligence/knowledgeState";
 
 export interface CareerState {
@@ -74,15 +76,15 @@ improvementAreas: string[];
 }
 
 export interface CareerIntelligence {
-ats?: ATSState;
+  ats?: ATSState;
 
-matching?: unknown;
+  matching?: MatchingState;
 
-competency?: unknown;
+  competency?: CompetencyState;
 
-knowledge?: KnowledgeState;
+  knowledge?: KnowledgeState;
 
-learning?: unknown;
+  learning?: unknown;
 
-decision?: unknown;
+  decision?: unknown;
 }
