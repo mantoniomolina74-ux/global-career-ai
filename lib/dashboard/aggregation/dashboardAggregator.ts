@@ -1,157 +1,266 @@
-
 /**
- * ============================================================
- * Global Career AI
- * Dashboard Aggregator V1.1
- * ============================================================
- *
- * Responsible for coordinating Dashboard data generation.
- *
- * Responsibilities:
- * - Coordinate Dashboard services
- * - Build Dashboard response flow
- * - Preserve tenant context
- *
- * This layer does not contain intelligence logic.
- * ============================================================
- */
 
-import type { DashboardContract } from "../contracts/dashboardContract";
+* ============================================================
+* Global Career AI
+* Dashboard Aggregator V1.1
+* ============================================================
+*
+* Responsible for coordinating Dashboard data generation.
+*
+* Responsibilities:
+* * Coordinate Dashboard services
+* * Build Dashboard response flow
+* * Preserve tenant context
+* * Integrate CareerState intelligence
+*
+* This layer does not contain intelligence logic.
+* ============================================================
+  */
 
-import { getATSDashboardInsight } from "../services/atsDashboardService";
-import { getMatchingDashboardInsight } from "../services/matchingDashboardService";
-import { getCompetencyDashboardInsight } from "../services/competencyDashboardService";
-import { getKnowledgeDashboardInsight } from "../services/knowledgeDashboardService";
-import { getLearningDashboardInsight } from "../services/learningDashboardService";
+import type {
+DashboardContract,
+} from "../contracts/dashboardContract";
 
-import { buildDashboardContract } from "../builders/dashboardContractBuilder";
+import type {
+CareerState,
+} from "@/lib/engine/contracts/careerState";
 
+import {
+getATSDashboardInsight,
+} from "../services/atsDashboardService";
+
+import {
+getMatchingDashboardInsight,
+} from "../services/matchingDashboardService";
+
+import {
+getCompetencyDashboardInsight,
+} from "../services/competencyDashboardService";
+
+import {
+getKnowledgeDashboardInsight,
+} from "../services/knowledgeDashboardService";
+
+import {
+getLearningDashboardInsight,
+} from "../services/learningDashboardService";
+
+import {
+adaptCareerStateToDashboard,
+} from "../adapters/careerState/careerStateDashboardAdapter";
+
+import {
+buildDashboardContract,
+} from "../builders/dashboardContractBuilder";
 
 export interface DashboardContext {
-  userId: string;
-  tenantId: string;
-  applicationId?: string;
-  professionalText?: string;
+
+userId: string;
+
+tenantId: string;
+
+applicationId?: string;
+
+professionalText?: string;
+
+careerState?: CareerState;
 }
 
-
 export async function aggregateDashboard(
-  context: DashboardContext
+context: DashboardContext
 ): Promise<DashboardContract> {
 
-  const [
-    atsInsight,
-    matchingInsight,
-    competencyInsight,
-    knowledgeInsight,
-    learningInsight,
-  ] = await Promise.all([
-    getATSDashboardInsight(context),
-
-    getMatchingDashboardInsight(context),
-
-    getCompetencyDashboardInsight({
-      ...context,
-      professionalText: context.professionalText ?? "",
-    }),
-
-    getKnowledgeDashboardInsight({
-      ...context,
-      professionalText: context.professionalText ?? "",
-    }),
-
-    getLearningDashboardInsight(context),
-  ]);
+const [
+atsInsight,
 
 
-  return buildDashboardContract({
+matchingInsight,
 
-    metadata: {
-      version: "1.1",
-      userId: context.userId,
-      tenantId: context.tenantId,
-      generatedAt: new Date().toISOString(),
-    },
+competencyInsight,
 
+knowledgeInsight,
 
-    executiveSummary: {
-      overallScore: 0,
-
-      careerPosition: "INITIALIZING",
-
-      mainStrengths: [],
-
-      improvementAreas: [],
-    },
+learningInsight,
 
 
-    intelligence: {
+] = await Promise.all([
 
-      ats: atsInsight,
 
-      matching: matchingInsight,
+getATSDashboardInsight(
+  context
+),
 
-      competency: competencyInsight,
 
-      knowledge: knowledgeInsight,
+getMatchingDashboardInsight(
+  context
+),
 
-      learning: learningInsight,
+
+getCompetencyDashboardInsight({
+
+  ...context,
+
+  professionalText:
+    context.professionalText ?? "",
+
+}),
+
+
+getKnowledgeDashboardInsight({
+
+  ...context,
+
+  professionalText:
+    context.professionalText ?? "",
+
+}),
+
+
+getLearningDashboardInsight(
+  context
+),
+
+
+]);
+
+const dashboardIntelligence =
+context.careerState
+
+
+  ? adaptCareerStateToDashboard(
+      context.careerState
+    )
+
+  : {
+
+      ats:
+        atsInsight,
+
+
+      matching:
+        matchingInsight,
+
+
+      competency:
+        competencyInsight,
+
+
+      knowledge:
+        knowledgeInsight,
+
+
+      learning:
+        learningInsight,
+
 
       decision: {
+
         confidence: 0,
 
         recommendations: [],
+
       },
-    },
+
+    };
 
 
-    recommendations: {
-      priorityActions: [],
+return buildDashboardContract({
 
-      quickWins: [],
+metadata: {
 
-      longTermGoals: [],
-    },
+  version: "1.1",
 
+  userId:
+    context.userId,
 
-    evidence: {
-      items: [],
+  tenantId:
+    context.tenantId,
 
-      overallConfidence: 0,
-    },
+  generatedAt:
+    new Date().toISOString(),
 
-
-    timeline: {
-      snapshots: [],
-
-      milestones: [],
-
-      improvements: [],
-
-      evolutionTrend: "STARTING",
-    },
+},
 
 
-    diagnostics: {
-      traceId: crypto.randomUUID(),
+executiveSummary: {
 
-      processingTime: 0,
+  overallScore: 0,
 
-      executionStatus: "SUCCESS",
+  careerPosition:
+    "INITIALIZING",
 
-      engineVersions: {},
+  mainStrengths: [],
 
-      warnings: [],
+  improvementAreas: [],
 
-      dataQuality: {
-        completeness: 0,
+},
 
-        confidence: 0,
 
-        partialData: true,
-      },
-    },
+intelligence:
+  dashboardIntelligence,
 
-  });
+
+recommendations: {
+
+  priorityActions: [],
+
+  quickWins: [],
+
+  longTermGoals: [],
+
+},
+
+
+evidence: {
+
+  items: [],
+
+  overallConfidence: 0,
+
+},
+
+
+timeline: {
+
+  snapshots: [],
+
+  milestones: [],
+
+  improvements: [],
+
+  evolutionTrend:
+    "STARTING",
+
+},
+
+
+diagnostics: {
+
+  traceId:
+    crypto.randomUUID(),
+
+  processingTime: 0,
+
+  executionStatus:
+    "SUCCESS",
+
+  engineVersions: {},
+
+  warnings: [],
+
+  dataQuality: {
+
+    completeness: 0,
+
+    confidence: 0,
+
+    partialData: true,
+
+  },
+
+},
+
+
+});
 
 }
