@@ -1,27 +1,26 @@
 /**
-
-* ============================================================
-* Global Career AI
-* Career State Builder V1.1
-* ============================================================
-*
-* Domain adapter between OrchestratorResult and CareerState.
-*
-* No business logic.
-* No persistence.
-* No engine execution.
-*
-* Responsibility:
-* Compose the Career Intelligence domain state.
-* ============================================================
-  */
+ * ============================================================
+ * Global Career AI
+ * Career State Builder V1.1
+ * ============================================================
+ *
+ * Domain adapter between OrchestratorResult and CareerState.
+ *
+ * No business logic.
+ * No persistence.
+ * No engine execution.
+ *
+ * Responsibility:
+ * Compose the Career Intelligence domain state.
+ * ============================================================
+ */
 
 import {
-OrchestratorResult,
+  OrchestratorResult,
 } from "@/lib/engine/contracts/engineContracts";
 
 import {
-CareerState,
+  CareerState,
 } from "@/lib/engine/contracts/careerState";
 
 import {
@@ -48,98 +47,112 @@ import {
   analyzeKnowledgeProfile,
 } from "@/lib/knowledge/services/knowledgeProfileService";
 
+import {
+  buildApplicationState,
+} from "@/lib/engine/adapters/intelligence/applicationStateAdapter";
+
 export function buildCareerState(
-result: OrchestratorResult
+  result: OrchestratorResult
 ): CareerState {
-const competencyProfile =
-  result.profile?.professionalText
-    ? analyzeCompetencyProfile(
-        result.profile.professionalText
-      )
-    : undefined;
 
-    const knowledgeProfile =
-  result.profile?.professionalText
-    ? analyzeKnowledgeProfile(
-        result.profile.professionalText
-      ).profile
-    : undefined;
-
-return {
-readiness: {
-score: result.summary.averageATS,
-
-
-  level:
-    result.summary.averageATS >= 80
-      ? "HIGH"
-      : result.summary.averageATS >= 60
-      ? "MEDIUM"
-      : "LOW",
-
-  atsScore: result.summary.averageATS,
-
-  skillCount: 0,
-
-  certificationCount: 0,
-
-  recommendations: [],
-},
-
-metrics: {
-  averageMatch: result.summary.averageATS,
-
-  topMatches: result.summary.topScore,
-
-  skillsCount: 0,
-
-  atsScore: result.summary.averageATS,
-},
-
-gapAnalysis: {
-  readiness: "UNKNOWN",
-
-  nextCareerStep: "UNKNOWN",
-
-  missingSkills: [],
-
-  recommendedCertifications: [],
-},
-
-profileIntelligence: {
-  careerLevel: "UNKNOWN",
-
-  marketFit: 0,
-
-  improvementAreas: [],
-},
-
-intelligence: {
-  ats: buildATSState(result.ats),
-
-  matching: buildMatchingState(
-    result.matching.items
-  ),
-
-  competency:
-    competencyProfile
-      ? buildCompetencyState(
-          competencyProfile
+  const competencyProfile =
+    result.profile?.professionalText
+      ? analyzeCompetencyProfile(
+          result.profile.professionalText
         )
-      : undefined,
+      : undefined;
 
-  knowledge:
-  knowledgeProfile
-    ? buildKnowledgeState(
+  const knowledgeProfile =
+    result.profile?.professionalText
+      ? analyzeKnowledgeProfile(
+          result.profile.professionalText
+        ).profile
+      : undefined;
+
+  return {
+
+    readiness: {
+      score: result.summary.averageATS,
+
+      level:
+        result.summary.averageATS >= 80
+          ? "HIGH"
+          : result.summary.averageATS >= 60
+          ? "MEDIUM"
+          : "LOW",
+
+      atsScore: result.summary.averageATS,
+
+      skillCount: 0,
+
+      certificationCount: 0,
+
+      recommendations: [],
+    },
+
+    metrics: {
+      averageMatch: result.summary.averageATS,
+
+      topMatches: result.summary.topScore,
+
+      skillsCount: 0,
+
+      atsScore: result.summary.averageATS,
+    },
+
+    gapAnalysis: {
+      readiness: "UNKNOWN",
+
+      nextCareerStep: "UNKNOWN",
+
+      missingSkills: [],
+
+      recommendedCertifications: [],
+    },
+
+    profileIntelligence: {
+      careerLevel: "UNKNOWN",
+
+      marketFit: 0,
+
+      improvementAreas: [],
+    },
+
+    intelligence: {
+
+      ats: buildATSState(
+        result.ats
+      ),
+
+      matching: buildMatchingState(
+        result.matching.items
+      ),
+
+      competency:
+        competencyProfile
+          ? buildCompetencyState(
+              competencyProfile
+            )
+          : undefined,
+
+      knowledge:
         knowledgeProfile
-      )
-    : undefined,
+          ? buildKnowledgeState(
+              knowledgeProfile
+            )
+          : undefined,
 
-  decision: result.decision,
+      application:
+        result.applicationInsights
+          ? buildApplicationState(
+              result.applicationInsights
+            )
+          : undefined,
 
-  learning: result.context,
-},
+      decision: result.decision,
 
+      learning: result.context,
+    },
 
-};
+  };
 }
