@@ -382,10 +382,7 @@ export async function runCareerOrchestratorV7(
       decisions[0],
 
 
-    context: {
-      semanticContext,
-      knowledgeContext,
-    },
+    context: learningContext,
 
 
     summary: {

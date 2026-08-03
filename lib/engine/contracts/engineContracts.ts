@@ -6,6 +6,10 @@ import type {
   EnrichedApplication,
 } from "./enrichedApplication";
 
+import type {
+  LearningContext,
+} from "@/lib/engine/learning/learningIntegration.v1";
+
 /**
  * ============================================================
  * Global Career AI
@@ -283,7 +287,7 @@ export interface OrchestratorResult {
 
   decision: unknown;
 
-  context: unknown;
+  context: LearningContext;
 
   summary: OrchestratorSummary;
 
