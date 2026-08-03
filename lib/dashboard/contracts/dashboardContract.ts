@@ -17,7 +17,9 @@
  * ============================================================
  */
 
+
 export interface DashboardContract {
+
   metadata: DashboardMetadata;
 
   executiveSummary: DashboardExecutiveSummary;
@@ -31,8 +33,13 @@ export interface DashboardContract {
   timeline: DashboardTimeline;
 
   diagnostics: DashboardDiagnostics;
+
 }
+
+
+
 export interface DashboardMetadata {
+
   userId: string;
 
   tenantId: string;
@@ -40,10 +47,13 @@ export interface DashboardMetadata {
   generatedAt: string;
 
   version: string;
+
 }
 
 
+
 export interface DashboardExecutiveSummary {
+
   overallScore: number;
 
   careerPosition: string;
@@ -51,8 +61,13 @@ export interface DashboardExecutiveSummary {
   mainStrengths: string[];
 
   improvementAreas: string[];
+
 }
+
+
+
 export interface DashboardIntelligence {
+
   ats: ATSInsight;
 
   matching: MatchingInsight;
@@ -61,101 +76,172 @@ export interface DashboardIntelligence {
 
   knowledge: KnowledgeInsight;
 
+  application: ApplicationInsight;
+
   learning: LearningInsight;
 
   decision: DecisionInsight;
+
 }
 
 
+
 export interface ATSInsight {
+
   score: number;
 
   strengths: string[];
 
   improvements: string[];
+
 }
 
 
+
 export interface MatchingInsight {
+
   matchScore: number;
 
   targetRoles: string[];
 
   alignmentFactors: string[];
+
 }
 
 
+
 export interface CompetencyInsight {
+
   overallScore: number;
 
   strongestCompetencies: string[];
 
   competencyGaps: string[];
+
 }
 
 
+
 export interface KnowledgeInsight {
+
   dominantDomains: string[];
 
   averageScore: number;
 
   knowledgeGaps: string[];
+
 }
 
 
+
+/**
+ * Application Intelligence
+ *
+ * Represents application funnel
+ * and career process performance.
+ */
+export interface ApplicationInsight {
+
+  totalApplications: number;
+
+  activePipeline: number;
+
+  responseRate: number;
+
+  rejectionRate: number;
+
+  conversionRate: number;
+
+  offerRate: number;
+
+  successRate: number;
+
+}
+
+
+
 export interface LearningInsight {
+
   activePatterns: string[];
 
   learningSignals: string[];
 
   recommendedActions: string[];
+
 }
+
 
 
 export interface DecisionInsight {
+
   recommendations: string[];
 
   confidence: number;
+
 }
+
+
+
 export interface DashboardRecommendations {
+
   priorityActions: Recommendation[];
 
   quickWins: Recommendation[];
 
   longTermGoals: Recommendation[];
+
 }
 
 
+
 export interface Recommendation {
+
   title: string;
 
   description: string;
 
   category: string;
 
-  priority: "high" | "medium" | "low";
+  priority:
+    | "high"
+    | "medium"
+    | "low";
 
   expectedImpact: string;
+
 }
+
 
 
 export interface DashboardEvidence {
+
   items: EvidenceItem[];
 
   overallConfidence: number;
+
 }
 
 
+
 export interface EvidenceItem {
+
   source: string;
 
   description: string;
 
   confidence: number;
 
-  relevance: "direct" | "related" | "transferable";
+  relevance:
+    | "direct"
+    | "related"
+    | "transferable";
+
 }
+
+
+
 export interface DashboardTimeline {
+
   snapshots: TimelineSnapshot[];
 
   milestones: Milestone[];
@@ -163,10 +249,13 @@ export interface DashboardTimeline {
   improvements: string[];
 
   evolutionTrend: string;
+
 }
 
 
+
 export interface TimelineSnapshot {
+
   date: string;
 
   overallScore: number;
@@ -176,10 +265,13 @@ export interface TimelineSnapshot {
   knowledgeAreas: string[];
 
   achievements: string[];
+
 }
 
 
+
 export interface Milestone {
+
   title: string;
 
   description: string;
@@ -187,26 +279,38 @@ export interface Milestone {
   date: string;
 
   impact: string;
+
 }
+
+
+
 export interface DashboardDiagnostics {
+
   traceId: string;
 
   processingTime: number;
 
-  executionStatus: "SUCCESS" | "PARTIAL" | "FAILED";
+  executionStatus:
+    | "SUCCESS"
+    | "PARTIAL"
+    | "FAILED";
 
   engineVersions: Record<string, string>;
 
   warnings: string[];
 
   dataQuality: DataQualityStatus;
+
 }
 
 
+
 export interface DataQualityStatus {
+
   completeness: number;
 
   confidence: number;
 
   partialData: boolean;
+
 }

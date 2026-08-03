@@ -46,6 +46,10 @@ export function adaptCareerStateToDashboard(
     careerState.intelligence.knowledge;
 
 
+  const application =
+    careerState.intelligence.application;
+
+
   const learning =
     careerState.intelligence.learning;
 
@@ -55,6 +59,7 @@ export function adaptCareerStateToDashboard(
 
 
   return {
+
 
     ats: {
 
@@ -123,6 +128,32 @@ export function adaptCareerStateToDashboard(
     },
 
 
+    application: {
+
+  totalApplications:
+    application?.totalApplications ?? 0,
+
+  activePipeline:
+    application?.activePipeline ?? 0,
+
+  responseRate:
+    application?.responseRate ?? 0,
+
+  rejectionRate:
+    application?.rejectionRate ?? 0,
+
+  conversionRate:
+    application?.conversionRate ?? 0,
+
+  offerRate:
+    application?.offerRate ?? 0,
+
+  successRate:
+    application?.successRate ?? 0,
+
+},
+
+
     learning: {
 
       activePatterns:
@@ -148,6 +179,7 @@ export function adaptCareerStateToDashboard(
         0,
 
     },
+
 
   };
 

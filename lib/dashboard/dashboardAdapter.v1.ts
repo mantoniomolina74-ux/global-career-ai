@@ -1,144 +1,188 @@
 /**
-
-* ============================================================
-* Global Career AI
-* Dashboard Adapter V1.1 (Product Read Layer)
-* ============================================================
-*
-* Compatibility adapter between:
-*
-* Dashboard Experience
-* ```
-       ↓
-  ```
-* Dashboard Aggregation Layer
-*
-* Maintains backward compatibility
-* with previous dashboard consumers.
-*
-* Supports CareerState intelligence injection.
-* ============================================================
-  */
+ * ============================================================
+ * Global Career AI
+ * Dashboard Adapter V1.1 (Product Read Layer)
+ * ============================================================
+ *
+ * Compatibility adapter between:
+ *
+ * Dashboard Experience
+ *        ↓
+ * Dashboard Aggregation Layer
+ *
+ * Maintains backward compatibility
+ * with previous dashboard consumers.
+ *
+ * Supports CareerState intelligence injection.
+ * ============================================================
+ */
 
 import type {
-CareerState,
+  CareerState,
 } from "@/lib/engine/contracts/careerState";
 
 import {
-aggregateDashboard,
+  aggregateDashboard,
 } from "./aggregation/dashboardAggregator";
 
+
 export async function getDashboardData(
-userId: string,
 
-tenantId: string = "default",
+  userId: string,
 
-applicationId?: string,
+  tenantId: string = "default",
 
-professionalText?: string,
+  applicationId?: string,
 
-careerState?: CareerState
+  professionalText?: string,
+
+  careerState?: CareerState
+
 ) {
 
-const dashboard =
-await aggregateDashboard({
+
+  const dashboard =
+    await aggregateDashboard({
+
+      userId,
+
+      tenantId,
+
+      applicationId,
+
+      professionalText,
+
+      careerState,
+
+    });
 
 
-  userId,
 
-  tenantId,
-
-  applicationId,
-
-  professionalText,
-
-  careerState,
-
-});
+  const ats =
+    dashboard.intelligence.ats;
 
 
-return {
+  const matching =
+    dashboard.intelligence.matching;
 
 
-userId,
+  const decision =
+    dashboard.intelligence.decision;
 
 
-/**
- * V1.1 CONTRACT
- */
-dashboard,
+  const learning =
+    dashboard.intelligence.learning;
 
 
-/**
- * LEGACY COMPATIBILITY
- */
-empty: false,
+  const application =
+    dashboard.intelligence.application;
 
 
-analytics: {
+
+  return {
 
 
-  performance: {
-
-    avgATS:
-      dashboard.intelligence.ats.score,
+    userId,
 
 
-    avgRanking:
-      dashboard.intelligence.matching.matchScore,
-
-  },
-
-
-  funnel: {
-
-    estimatedHireProbability:
-      dashboard.intelligence.decision.confidence,
+    /**
+     * V1.1 CONTRACT
+     */
+    dashboard,
 
 
-    applications: 0,
 
-  },
-
-
-  ats:
-    dashboard.intelligence.ats,
+    /**
+     * LEGACY COMPATIBILITY
+     */
+    empty: false,
 
 
-  matching:
-    dashboard.intelligence.matching,
+
+    analytics: {
 
 
-  insights: [
-
-    ...dashboard.intelligence.ats.improvements,
+      performance: {
 
 
-    ...dashboard.intelligence.matching.alignmentFactors,
+        avgATS:
+          ats.score,
 
 
-    ...dashboard.intelligence.learning.recommendedActions,
+        avgRanking:
+          matching.matchScore,
 
-  ],
-
-},
+      },
 
 
-/**
- * UI STATUS
- */
-ui: {
 
-  status:
+      funnel: {
 
-    dashboard.diagnostics.executionStatus === "SUCCESS"
 
-      ? "READY"
+        estimatedHireProbability:
+          decision.confidence,
 
-      : "PARTIAL",
 
-},
 
-};
+        applications:
+          application.totalApplications,
+
+      },
+
+
+
+      ats:
+        ats,
+
+
+
+      matching:
+        matching,
+
+
+
+      application:
+        application,
+
+
+
+      insights: [
+
+
+        ...ats.improvements,
+
+
+        ...matching.alignmentFactors,
+
+
+        ...learning.recommendedActions,
+
+
+      ],
+
+
+    },
+
+
+
+    /**
+     * UI STATUS
+     */
+    ui: {
+
+
+      status:
+
+        dashboard.diagnostics.executionStatus === "SUCCESS"
+
+          ? "READY"
+
+          : "PARTIAL",
+
+
+    },
+
+
+  };
 
 }

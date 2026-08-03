@@ -1,266 +1,301 @@
 /**
-
-* ============================================================
-* Global Career AI
-* Dashboard Aggregator V1.1
-* ============================================================
-*
-* Responsible for coordinating Dashboard data generation.
-*
-* Responsibilities:
-* * Coordinate Dashboard services
-* * Build Dashboard response flow
-* * Preserve tenant context
-* * Integrate CareerState intelligence
-*
-* This layer does not contain intelligence logic.
-* ============================================================
-  */
+ * ============================================================
+ * Global Career AI
+ * Dashboard Aggregator V1.1
+ * ============================================================
+ *
+ * Responsible for coordinating Dashboard data generation.
+ *
+ * Responsibilities:
+ * - Coordinate Dashboard services
+ * - Build Dashboard response flow
+ * - Preserve tenant context
+ * - Integrate CareerState intelligence
+ *
+ * This layer does not contain intelligence logic.
+ * ============================================================
+ */
 
 import type {
-DashboardContract,
+  DashboardContract,
 } from "../contracts/dashboardContract";
 
 import type {
-CareerState,
+  CareerState,
 } from "@/lib/engine/contracts/careerState";
 
 import {
-getATSDashboardInsight,
+  getATSDashboardInsight,
 } from "../services/atsDashboardService";
 
 import {
-getMatchingDashboardInsight,
+  getMatchingDashboardInsight,
 } from "../services/matchingDashboardService";
 
 import {
-getCompetencyDashboardInsight,
+  getCompetencyDashboardInsight,
 } from "../services/competencyDashboardService";
 
 import {
-getKnowledgeDashboardInsight,
+  getKnowledgeDashboardInsight,
 } from "../services/knowledgeDashboardService";
 
 import {
-getLearningDashboardInsight,
+  getLearningDashboardInsight,
 } from "../services/learningDashboardService";
 
 import {
-adaptCareerStateToDashboard,
+  adaptCareerStateToDashboard,
 } from "../adapters/careerState/careerStateDashboardAdapter";
 
 import {
-buildDashboardContract,
+  buildDashboardContract,
 } from "../builders/dashboardContractBuilder";
+
 
 export interface DashboardContext {
 
-userId: string;
+  userId: string;
 
-tenantId: string;
+  tenantId: string;
 
-applicationId?: string;
+  applicationId?: string;
 
-professionalText?: string;
+  professionalText?: string;
 
-careerState?: CareerState;
+  careerState?: CareerState;
+
 }
 
+
 export async function aggregateDashboard(
-context: DashboardContext
+  context: DashboardContext
 ): Promise<DashboardContract> {
 
-const [
-atsInsight,
+
+  const [
+
+    atsInsight,
+
+    matchingInsight,
+
+    competencyInsight,
+
+    knowledgeInsight,
+
+    learningInsight,
+
+  ] = await Promise.all([
 
 
-matchingInsight,
-
-competencyInsight,
-
-knowledgeInsight,
-
-learningInsight,
+    getATSDashboardInsight(
+      context
+    ),
 
 
-] = await Promise.all([
+    getMatchingDashboardInsight(
+      context
+    ),
 
 
-getATSDashboardInsight(
-  context
-),
+    getCompetencyDashboardInsight({
+
+      ...context,
+
+      professionalText:
+        context.professionalText ?? "",
+
+    }),
 
 
-getMatchingDashboardInsight(
-  context
-),
+    getKnowledgeDashboardInsight({
+
+      ...context,
+
+      professionalText:
+        context.professionalText ?? "",
+
+    }),
 
 
-getCompetencyDashboardInsight({
-
-  ...context,
-
-  professionalText:
-    context.professionalText ?? "",
-
-}),
+    getLearningDashboardInsight(
+      context
+    ),
 
 
-getKnowledgeDashboardInsight({
-
-  ...context,
-
-  professionalText:
-    context.professionalText ?? "",
-
-}),
+  ]);
 
 
-getLearningDashboardInsight(
-  context
-),
+
+  const dashboardIntelligence =
+
+    context.careerState
 
 
-]);
-
-const dashboardIntelligence =
-context.careerState
-
-
-  ? adaptCareerStateToDashboard(
-      context.careerState
-    )
-
-  : {
-
-      ats:
-        atsInsight,
+      ? adaptCareerStateToDashboard(
+          context.careerState
+        )
 
 
-      matching:
-        matchingInsight,
+      : {
 
 
-      competency:
-        competencyInsight,
+          ats:
+            atsInsight,
 
 
-      knowledge:
-        knowledgeInsight,
+          matching:
+            matchingInsight,
 
 
-      learning:
-        learningInsight,
+          competency:
+            competencyInsight,
 
 
-      decision: {
+          knowledge:
+            knowledgeInsight,
+
+
+          application: {
+
+            totalApplications: 0,
+
+            activePipeline: 0,
+
+            responseRate: 0,
+
+            rejectionRate: 0,
+
+            conversionRate: 0,
+
+            offerRate: 0,
+
+            successRate: 0,
+
+          },
+
+
+          learning:
+            learningInsight,
+
+
+          decision: {
+
+            confidence: 0,
+
+            recommendations: [],
+
+          },
+
+
+        };
+
+
+
+  return buildDashboardContract({
+
+
+    metadata: {
+
+      version: "1.1",
+
+      userId:
+        context.userId,
+
+      tenantId:
+        context.tenantId,
+
+      generatedAt:
+        new Date().toISOString(),
+
+    },
+
+
+
+    executiveSummary: {
+
+      overallScore: 0,
+
+      careerPosition:
+        "INITIALIZING",
+
+      mainStrengths: [],
+
+      improvementAreas: [],
+
+    },
+
+
+
+    intelligence:
+      dashboardIntelligence,
+
+
+
+    recommendations: {
+
+      priorityActions: [],
+
+      quickWins: [],
+
+      longTermGoals: [],
+
+    },
+
+
+
+    evidence: {
+
+      items: [],
+
+      overallConfidence: 0,
+
+    },
+
+
+
+    timeline: {
+
+      snapshots: [],
+
+      milestones: [],
+
+      improvements: [],
+
+      evolutionTrend:
+        "STARTING",
+
+    },
+
+
+
+    diagnostics: {
+
+      traceId:
+        crypto.randomUUID(),
+
+      processingTime: 0,
+
+      executionStatus:
+        "SUCCESS",
+
+      engineVersions: {},
+
+      warnings: [],
+
+      dataQuality: {
+
+        completeness: 0,
 
         confidence: 0,
 
-        recommendations: [],
+        partialData: true,
 
       },
 
-    };
+    },
 
 
-return buildDashboardContract({
-
-metadata: {
-
-  version: "1.1",
-
-  userId:
-    context.userId,
-
-  tenantId:
-    context.tenantId,
-
-  generatedAt:
-    new Date().toISOString(),
-
-},
-
-
-executiveSummary: {
-
-  overallScore: 0,
-
-  careerPosition:
-    "INITIALIZING",
-
-  mainStrengths: [],
-
-  improvementAreas: [],
-
-},
-
-
-intelligence:
-  dashboardIntelligence,
-
-
-recommendations: {
-
-  priorityActions: [],
-
-  quickWins: [],
-
-  longTermGoals: [],
-
-},
-
-
-evidence: {
-
-  items: [],
-
-  overallConfidence: 0,
-
-},
-
-
-timeline: {
-
-  snapshots: [],
-
-  milestones: [],
-
-  improvements: [],
-
-  evolutionTrend:
-    "STARTING",
-
-},
-
-
-diagnostics: {
-
-  traceId:
-    crypto.randomUUID(),
-
-  processingTime: 0,
-
-  executionStatus:
-    "SUCCESS",
-
-  engineVersions: {},
-
-  warnings: [],
-
-  dataQuality: {
-
-    completeness: 0,
-
-    confidence: 0,
-
-    partialData: true,
-
-  },
-
-},
-
-
-});
+  });
 
 }
