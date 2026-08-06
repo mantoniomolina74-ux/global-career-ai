@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createSupabaseServerAuth } from "@/lib/supabase-server-auth";
 
 /**
  * =========================================================
@@ -25,6 +26,7 @@ type EngineResponse = {
   [key: string]: unknown;
 };
 
+
 /**
  * =========================================================
  * DASHBOARD PRO — GLOBAL CAREER AI
@@ -32,20 +34,30 @@ type EngineResponse = {
  */
 
 export default function DashboardPage() {
+
   const [mode, setMode] =
     useState<Mode>("score");
+
 
   const [loading, setLoading] =
     useState(false);
 
+
   const [response, setResponse] =
     useState<EngineResponse | null>(null);
 
+
   const [form, setForm] = useState({
-    userId: "demo-user",
+
+    userId: "",
+
     jobId: "job-1",
+
     jobDescription: "",
+
   });
+
+
 
   /**
    * =====================================================
@@ -54,34 +66,107 @@ export default function DashboardPage() {
    */
 
   async function runEngine() {
+
     setLoading(true);
+
     setResponse(null);
 
+
     try {
-      const res = await fetch(`/api/saas/${mode}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+
+      const supabase =
+        await createSupabaseServerAuth();
+
+
+
+      const {
+        data: {
+          user,
         },
-        body: JSON.stringify(form),
-      });
+      } =
+        await supabase.auth.getUser();
+
+
+
+      if (!user) {
+
+        setResponse({
+
+          success: false,
+
+          error:
+            "User session required",
+
+        });
+
+        return;
+
+      }
+
+
+
+      const res =
+        await fetch(`/api/saas/${mode}`, {
+
+          method: "POST",
+
+          headers: {
+
+            "Content-Type":
+              "application/json",
+
+          },
+
+
+          body: JSON.stringify({
+
+            ...form,
+
+            userId:
+              user.id,
+
+          }),
+
+        });
+
+
 
       const json =
         await res.json();
 
+
+
       setResponse(json);
+
+
+
     } catch (err: unknown) {
+
+
       setResponse({
+
         success: false,
+
         error:
+
           err instanceof Error
+
             ? err.message
+
             : "Request failed",
+
       });
+
+
     } finally {
+
       setLoading(false);
+
     }
+
   }
+
+
 
   /**
    * =====================================================
@@ -89,185 +174,418 @@ export default function DashboardPage() {
    * =====================================================
    */
 
-  const isScore = mode === "score";
-  const isRank = mode === "rank";
+  const isScore =
+    mode === "score";
+
+
+  const isRank =
+    mode === "rank";
+
+
 
   return (
+
     <div
+
       style={{
+
         padding: 24,
+
         fontFamily: "Arial",
+
         background: "#0b0b0b",
+
         color: "#fff",
+
         minHeight: "100vh",
+
       }}
+
     >
+
+
       <h1 style={{ marginBottom: 10 }}>
-        🧠 Global Career AI — Control Center
+
+        🌎 Global Career AI — Control Center
+
       </h1>
 
+
+
       <p style={{ opacity: 0.7 }}>
+
         AI-powered ATS • Scoring • Ranking • Recruitment Engine
+
       </p>
 
-      <div style={{ marginTop: 20, marginBottom: 20 }}>
-        <button onClick={() => setMode("score")}>
+
+
+      <div
+
+        style={{
+
+          marginTop: 20,
+
+          marginBottom: 20,
+
+        }}
+
+      >
+
+        <button
+          onClick={() => setMode("score")}
+        >
           Score
         </button>
 
-        <button onClick={() => setMode("rank")}>
+
+        <button
+          onClick={() => setMode("rank")}
+        >
           Rank
         </button>
 
-        <button onClick={() => setMode("recruit")}>
+
+        <button
+          onClick={() => setMode("recruit")}
+        >
           Recruit
         </button>
+
       </div>
 
+
+
       <div
+
         style={{
+
           display: "grid",
+
           gap: 10,
+
           maxWidth: 600,
+
         }}
+
       >
-        <input
-          placeholder="User ID"
-          value={form.userId}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              userId: e.target.value,
-            })
-          }
-        />
+
 
         <input
-          placeholder="Job ID"
-          value={form.jobId}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              jobId: e.target.value,
-            })
+
+          placeholder="Authenticated User"
+
+          value={
+            form.userId
           }
+
+          disabled
+
         />
+
+
+
+        <input
+
+          placeholder="Job ID"
+
+          value={
+            form.jobId
+          }
+
+          onChange={(e) =>
+
+            setForm({
+
+              ...form,
+
+              jobId:
+                e.target.value,
+
+            })
+
+          }
+
+        />
+
+
 
         <textarea
+
           placeholder={
+
             isScore
+
               ? "Paste job description for scoring..."
+
               : isRank
+
               ? "Rank mode: optional job context..."
+
               : "Recruit mode: job description for hiring decision..."
+
           }
-          value={form.jobDescription}
+
+
+          value={
+            form.jobDescription
+          }
+
+
           onChange={(e) =>
+
             setForm({
+
               ...form,
+
               jobDescription:
                 e.target.value,
+
             })
+
           }
+
+
           rows={5}
+
         />
+
+
       </div>
 
-      <div style={{ marginTop: 15 }}>
-        <button
-          onClick={runEngine}
-          disabled={loading}
-        >
-          {loading
-            ? "Processing AI..."
-            : `Run ${mode.toUpperCase()} Engine`}
-        </button>
-      </div>
+
 
       <div
+
         style={{
-          marginTop: 30,
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 20,
+
+          marginTop: 15,
+
         }}
+
       >
+
+
+        <button
+
+          onClick={runEngine}
+
+          disabled={loading}
+
+        >
+
+          {
+            loading
+
+              ? "Processing AI..."
+
+              : `Run ${mode.toUpperCase()} Engine`
+          }
+
+
+        </button>
+
+
+      </div>
+
+
+
+      <div
+
+        style={{
+
+          marginTop: 30,
+
+          display: "grid",
+
+          gridTemplateColumns:
+            "1fr 1fr",
+
+          gap: 20,
+
+        }}
+
+      >
+
+
         <div>
-          <h3>Raw Output</h3>
+
+
+          <h3>
+            Raw Output
+          </h3>
+
 
           <pre
+
             style={{
+
               background: "#111",
+
               padding: 12,
+
               overflow: "auto",
+
               height: 400,
+
             }}
+
           >
-            {response
-              ? JSON.stringify(
-                  response,
-                  null,
-                  2
-                )
-              : "No data"}
+
+            {
+              response
+
+                ? JSON.stringify(
+                    response,
+                    null,
+                    2
+                  )
+
+                : "No data"
+            }
+
+
           </pre>
+
+
         </div>
+
+
 
         <div>
-          <h3>Insights</h3>
 
-          {response?.data?.insights && (
-            <div
-              style={{
-                background: "#111",
-                padding: 12,
-                height: 400,
-              }}
-            >
-              <p>
-                <b>Mode:</b> {mode}
-              </p>
 
-              {response.data.insights.avgScore && (
+          <h3>
+            Insights
+          </h3>
+
+
+
+          {
+            response?.data?.insights && (
+
+              <div
+
+                style={{
+
+                  background: "#111",
+
+                  padding: 12,
+
+                  height: 400,
+
+                }}
+
+              >
+
+
                 <p>
-                  Avg Score:{" "}
-                  {
-                    response.data.insights.avgScore
-                  }
-                </p>
-              )}
 
-              {response.data.insights.marketFitScore && (
-                <p>
-                  Market Fit:{" "}
-                  {
-                    response.data.insights.marketFitScore
-                  }
-                </p>
-              )}
+                  <b>
+                    Mode:
+                  </b>
 
-              {response.data.insights.totalProcessed && (
-                <p>
-                  Candidates:{" "}
-                  {
-                    response.data.insights.totalProcessed
-                  }
-                </p>
-              )}
+                  {" "}
 
-              {response.data.insights.distribution && (
-  <pre>
-    {JSON.stringify(
-      response.data.insights.distribution,
-      null,
-      2
-    )}
-  </pre>
-)}
-            </div>
-          )}
+                  {mode}
+
+                </p>
+
+
+
+                {
+                  response.data.insights.avgScore && (
+
+                    <p>
+
+                      Avg Score:
+
+                      {" "}
+
+                      {
+                        response.data.insights.avgScore
+                      }
+
+                    </p>
+
+                  )
+                }
+
+
+
+                {
+                  response.data.insights.marketFitScore && (
+
+                    <p>
+
+                      Market Fit:
+
+                      {" "}
+
+                      {
+                        response.data.insights.marketFitScore
+                      }
+
+                    </p>
+
+                  )
+                }
+
+
+
+                {
+                  response.data.insights.totalProcessed && (
+
+                    <p>
+
+                      Candidates:
+
+                      {" "}
+
+                      {
+                        response.data.insights.totalProcessed
+                      }
+
+                    </p>
+
+                  )
+                }
+
+
+
+                {
+                  response.data.insights.distribution && (
+
+                    <pre>
+
+                      {
+                        JSON.stringify(
+                          response.data.insights.distribution,
+                          null,
+                          2
+                        )
+                      }
+
+                    </pre>
+
+                  )
+                }
+
+
+              </div>
+
+            )
+          }
+
+
         </div>
+
+
       </div>
+
+
     </div>
+
   );
+
 }
