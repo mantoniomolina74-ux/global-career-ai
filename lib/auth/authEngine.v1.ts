@@ -16,55 +16,21 @@ import {
  *
  * Identity abstraction layer.
  *
- * Production:
+ * Provider:
  * Supabase Auth
  *
- * Testing:
- * createMockSession()
+ * Flow:
+ *
+ * Request
+ *   ↓
+ * Supabase Identity
+ *   ↓
+ * AuthSession
+ *   ↓
+ * AuthContext
  *
  * ============================================================
  */
-
-
-/**
- * ============================================================
- * MOCK SESSION
- * ============================================================
- *
- * Used only for tests/local development.
- */
-
-export function createMockSession(
-  userId: string
-): AuthSession {
-
-  return {
-
-    sessionId:
-      crypto.randomUUID(),
-
-    user: {
-
-      userId,
-
-      email:
-        `${userId}@career.ai`,
-
-      name:
-        "Demo User",
-
-    },
-
-    expiresAt:
-      new Date(
-        Date.now() +
-        1000 * 60 * 60
-      ).toISOString(),
-
-  };
-
-}
-
 
 
 /**
@@ -90,7 +56,6 @@ export function buildAuthContext(
   };
 
 }
-
 
 
 /**
