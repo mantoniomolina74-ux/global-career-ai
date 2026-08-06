@@ -130,28 +130,28 @@ export function adaptCareerStateToDashboard(
 
     application: {
 
-  totalApplications:
-    application?.totalApplications ?? 0,
+      totalApplications:
+        application?.totalApplications ?? 0,
 
-  activePipeline:
-    application?.activePipeline ?? 0,
+      activePipeline:
+        application?.activePipeline ?? 0,
 
-  responseRate:
-    application?.responseRate ?? 0,
+      responseRate:
+        application?.responseRate ?? 0,
 
-  rejectionRate:
-    application?.rejectionRate ?? 0,
+      rejectionRate:
+        application?.rejectionRate ?? 0,
 
-  conversionRate:
-    application?.conversionRate ?? 0,
+      conversionRate:
+        application?.conversionRate ?? 0,
 
-  offerRate:
-    application?.offerRate ?? 0,
+      offerRate:
+        application?.offerRate ?? 0,
 
-  successRate:
-    application?.successRate ?? 0,
+      successRate:
+        application?.successRate ?? 0,
 
-},
+    },
 
 
     learning: {
@@ -172,11 +172,40 @@ export function adaptCareerStateToDashboard(
 
       recommendations:
         Array.isArray(decision)
+
           ? decision
-          : [],
+
+          : Array.isArray(
+              (
+                decision as {
+                  recommendations?: unknown;
+                }
+              )?.recommendations
+            )
+
+            ? (
+                decision as {
+                  recommendations: string[];
+                }
+              ).recommendations
+
+            : [],
+
 
       confidence:
-        0,
+        typeof (
+          decision as {
+            confidence?: unknown;
+          }
+        )?.confidence === "number"
+
+          ? (
+              decision as {
+                confidence: number;
+              }
+            ).confidence
+
+          : 0,
 
     },
 
