@@ -157,13 +157,22 @@ export function adaptCareerStateToDashboard(
     learning: {
 
       activePatterns:
-        [],
+        extractLearningArray(
+          learning,
+          "activePatterns"
+        ),
 
       learningSignals:
-        [],
+        extractLearningArray(
+          learning,
+          "learningSignals"
+        ),
 
       recommendedActions:
-        [],
+        extractLearningArray(
+          learning,
+          "recommendedActions"
+        ),
 
     },
 
@@ -171,45 +180,79 @@ export function adaptCareerStateToDashboard(
     decision: {
 
       recommendations:
-        Array.isArray(decision)
-
-          ? decision
-
-          : Array.isArray(
-              (
-                decision as {
-                  recommendations?: unknown;
-                }
-              )?.recommendations
-            )
-
-            ? (
-                decision as {
-                  recommendations: string[];
-                }
-              ).recommendations
-
-            : [],
-
+        extractLearningArray(
+          decision,
+          "recommendations"
+        ),
 
       confidence:
-        typeof (
-          decision as {
-            confidence?: unknown;
-          }
-        )?.confidence === "number"
-
-          ? (
-              decision as {
-                confidence: number;
-              }
-            ).confidence
-
-          : 0,
+        extractConfidence(
+          decision
+        ),
 
     },
 
 
   };
+
+}
+
+
+/**
+ * Safe extraction helpers
+ *
+ * CareerState keeps learning and decision
+ * contracts flexible during V1.1 evolution.
+ */
+
+
+function extractLearningArray(
+  source: unknown,
+  key: string
+): string[] {
+
+  if (
+    typeof source !== "object" ||
+    source === null
+  ) {
+    return [];
+  }
+
+
+  const value =
+    (source as Record<string, unknown>)[key];
+
+
+  return Array.isArray(value)
+    ? value.filter(
+        (item): item is string =>
+          typeof item === "string"
+      )
+    : [];
+
+}
+
+
+
+function extractConfidence(
+  source: unknown
+): number {
+
+  if (
+    typeof source !== "object" ||
+    source === null
+  ) {
+    return 0;
+  }
+
+
+  const value =
+    (source as Record<string, unknown>)
+      .confidence;
+
+
+  return typeof value === "number"
+    ? value
+    : 0;
 
 }
