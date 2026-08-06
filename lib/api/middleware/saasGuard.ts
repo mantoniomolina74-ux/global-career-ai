@@ -4,7 +4,20 @@ import { buildSaaSContext } from "@/lib/saas/saasContext";
 /**
  * ============================================================
  * Global Career AI
- * SaaS Guard V3 (Supabase Auth + Tenant Enforcement Layer)
+ * SaaS Guard V4
+ * Supabase Auth + Tenant Enforcement Layer
+ * ============================================================
+ *
+ * Identity flow:
+ *
+ * Supabase User
+ *        ↓
+ * Request Context
+ *        ↓
+ * Tenant Context
+ *        ↓
+ * SaaS Engine
+ *
  * ============================================================
  */
 
@@ -16,7 +29,7 @@ export interface RequestContext {
 
   name?: string;
 
-  tenantId?: string;
+  tenantId: string;
 
   tenantName?: string;
 
@@ -27,15 +40,6 @@ export interface RequestContext {
  * ============================================================
  * AUTHENTICATED REQUEST CONTEXT
  * ============================================================
- *
- * Production flow:
- *
- * Supabase Session
- *        ↓
- * User Identity
- *        ↓
- * SaaS Context
- *
  */
 
 export async function buildRequestContext(
@@ -67,6 +71,25 @@ export async function buildRequestContext(
 
 
 
+  /**
+   * ============================================================
+   * Tenant Resolution V1.1
+   *
+   * Until Organization module exists:
+   *
+   * User identity = Tenant boundary
+   *
+   * Future:
+   * user → organization → tenant
+   *
+   * ============================================================
+   */
+
+  const tenantId =
+    user.id;
+
+
+
   return {
 
     userId:
@@ -79,24 +102,20 @@ export async function buildRequestContext(
 
     name:
       user.user_metadata?.name ??
-      user.email,
+      user.email ??
+      "User",
 
 
-    /**
-     * Future multi-tenant resolution
-     *
-     * Current default tenant
-     */
-    tenantId:
-      "default-tenant",
+    tenantId,
 
 
     tenantName:
-      "Default Org",
+      "Personal Workspace",
 
   };
 
 }
+
 
 
 /**

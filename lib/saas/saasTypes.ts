@@ -11,7 +11,7 @@ export interface Tenant {
 
 export interface SaaSContext {
   user: User;
-  tenant?: Tenant;
+  tenant: Tenant;
 
   requestId: string;
   timestamp: string;

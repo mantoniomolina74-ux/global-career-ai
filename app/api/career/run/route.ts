@@ -67,14 +67,13 @@ if (!parsed.success) {
  * ============================================================
  */
 
-const normalizedInput = {
+  const normalizedInput = {
 
   userId:
     parsed.data.userId,
 
   tenantId:
-    saasContext.tenant?.tenantId ??
-    "default-tenant",
+    saasContext.tenant.tenantId,
 
 
   profile: {

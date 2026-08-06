@@ -22,12 +22,16 @@ export function buildSaaSContext(input: {
     name: input.name,
   };
 
-  const tenant: Tenant | undefined = input.tenantId
-    ? {
-        tenantId: input.tenantId,
-        name: input.tenantName,
-      }
-    : undefined;
+  if (!input.tenantId) {
+  throw new Error(
+    "Missing tenant context"
+  );
+}
+
+const tenant: Tenant = {
+  tenantId: input.tenantId,
+  name: input.tenantName,
+};
 
   return {
     user,
