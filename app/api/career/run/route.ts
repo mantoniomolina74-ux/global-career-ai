@@ -34,7 +34,7 @@ const body = await req.json();
 
 
 const saasContext =
-  buildSaaSRequestContext(req);
+  await buildSaaSRequestContext(req);
 
 
 /**
