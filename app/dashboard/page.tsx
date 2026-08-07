@@ -1,5 +1,5 @@
 import { getDashboardData } from "@/lib/dashboard/dashboardAdapter.v1";
-import { createSupabaseServerAuth } from "@/lib/supabase-server-auth";
+import { createSupabaseServerAuth } from "@/lib/supabase/server";
 
 export default async function DashboardPage() {
 
