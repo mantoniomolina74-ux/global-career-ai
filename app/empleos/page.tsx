@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type Empleo = {
   region: string;
@@ -13,6 +13,7 @@ type Empleo = {
 
 export default function EmpleosPage() {
   const router = useRouter();
+  const supabase = createSupabaseBrowserClient();
 
   const empleos: Empleo[] = [
     {
