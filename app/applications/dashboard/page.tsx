@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createSupabaseServerAuth } from "@/lib/supabase-server-auth";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 /**
  * =========================================================
@@ -75,7 +75,7 @@ export default function DashboardPage() {
     try {
 
       const supabase =
-        await createSupabaseServerAuth();
+        createSupabaseBrowserClient();
 
 
 
