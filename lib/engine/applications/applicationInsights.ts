@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabaseServer } from "@/lib/supabase-server";
 
 /**
  * ============================
@@ -41,7 +41,7 @@ interface AtsResult {
  */
 
 async function fetchApplications(userId: string): Promise<ApplicationRecord[]> {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseServer
     .from("applications")
     .select("*")
     .eq("user_id", userId);
