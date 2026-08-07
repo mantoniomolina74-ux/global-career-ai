@@ -1,23 +1,19 @@
 import { NextResponse } from "next/server";
 import { getApplicationInsights } from "@/lib/engine/applications/applicationInsights";
+import { buildRequestContext } from "@/lib/api/middleware/saasGuard";
 
 export async function GET(req: Request) {
   try {
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId");
+    const context = await buildRequestContext(req);
 
-    if (!userId) {
-      return NextResponse.json(
-        { error: "Missing userId" },
-        { status: 400 }
-      );
-    }
-
-    const insights = await getApplicationInsights(userId);
+    const insights = await getApplicationInsights(
+      context.userId
+    );
 
     return NextResponse.json({
       applicationScores: insights.applicationScores,
-      applicationIntelligence: insights.applicationIntelligence,
+      applicationIntelligence:
+        insights.applicationIntelligence,
       statusBreakdown: insights.statusBreakdown,
     });
   } catch (error: unknown) {
