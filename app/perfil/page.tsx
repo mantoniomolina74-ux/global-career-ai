@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function PerfilPage() {
+  const supabase = createSupabaseBrowserClient();
   const [loading, setLoading] = useState(true);
   const [mensaje, setMensaje] = useState("");
 
