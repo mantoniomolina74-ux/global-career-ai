@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function TestPage() {
+  const supabase = createSupabaseBrowserClient();
   const [estado, setEstado] = useState("Probando conexión...");
   const [error, setError] = useState<unknown>(null);
   const [data, setData] = useState<unknown>(null);
