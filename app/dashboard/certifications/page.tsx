@@ -2,7 +2,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type Certification = {
   id: string;
@@ -17,6 +17,7 @@ type Certification = {
 };
 
 export default function CertificationsPage() {
+  const supabase = createSupabaseBrowserClient();
   const [userId, setUserId] = useState<string | null>(null);
   const [certifications, setCertifications] = useState<Certification[]>([]);
   const [loading, setLoading] = useState(true);
