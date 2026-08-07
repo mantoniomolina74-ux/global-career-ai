@@ -1,5 +1,5 @@
 
-import { supabase } from "@/lib/supabase";
+import { supabaseServer } from "@/lib/supabase-server";
 
 /**
  * =========================================================
@@ -45,7 +45,7 @@ export async function saveATSResult(
   ats: ATSResult
 ) {
 
-  const { error } = await supabase
+  const { error } = await supabaseServer
     .from("ats_results")
     .upsert({
 
@@ -86,7 +86,7 @@ export async function getATSResult(
   applicationId: string
 ) {
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseServer
     .from("ats_results")
     .select("*")
     .eq("application_id", applicationId)
@@ -111,7 +111,7 @@ export async function getLatestATSResult(
   userId: string
 ) {
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseServer
     .from("ats_results")
     .select("*")
     .eq("user_id", userId)
