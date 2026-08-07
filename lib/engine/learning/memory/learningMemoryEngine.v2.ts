@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabaseServer } from "@/lib/supabase-server";
 export interface LearningMemory {
   userId: string;
 
@@ -32,7 +32,7 @@ export interface LearningMemory {
 export async function loadUserMemory(
   userId: string
 ): Promise<LearningMemory | null> {
-  const { data } = await supabase
+  const { data } = await supabaseServer
     .from("learning_memory_v2")
     .select("*")
     .eq("userId", userId)
@@ -62,7 +62,7 @@ export function createEmptyMemory(userId: string): LearningMemory {
 export async function saveUserMemory(memory: LearningMemory) {
   memory.metadata.lastUpdated = new Date().toISOString();
 
-  await supabase
+  await supabaseServer
     .from("learning_memory_v2")
     .upsert(memory, { onConflict: "userId" });
 }
