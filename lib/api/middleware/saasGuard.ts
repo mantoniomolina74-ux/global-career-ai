@@ -1,4 +1,4 @@
-import { createSupabaseServerAuth } from "@/lib/supabase-server-auth";
+import { createSupabaseServerAuth } from "@/lib/supabase/server";
 import { buildSaaSContext } from "@/lib/saas/saasContext";
 
 /**

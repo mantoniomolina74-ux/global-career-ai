@@ -5,7 +5,7 @@ import {
 
 import {
   createSupabaseServerAuth,
-} from "@/lib/supabase-server-auth";
+} from "@/lib/supabase/server";
 
 
 /**
