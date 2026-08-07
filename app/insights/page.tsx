@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import Sidebar from "@/components/Sidebar";
 
 type Application = {
@@ -23,6 +23,7 @@ topPosition: string;
 };
 
 export default function InsightsPage() {
+const supabase = createSupabaseBrowserClient();
 const [loading, setLoading] = useState(true);
 
 const [stats, setStats] = useState<Stats>({
