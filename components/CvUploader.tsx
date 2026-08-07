@@ -1,7 +1,7 @@
 "use client";
 
 import { ChangeEvent, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export interface CvUploaderUser {
   id: string;
@@ -12,6 +12,7 @@ interface CvUploaderProps {
 }
 
 export default function CvUploader({ user }: CvUploaderProps) {
+  const supabase = createSupabaseBrowserClient();
   const [uploading, setUploading] = useState(false);
   const [cvName, setCvName] = useState("");
 
