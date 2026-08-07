@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { User } from "@supabase/supabase-js";
 
-import { supabase } from "@/lib/supabase";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import Sidebar from "@/components/Sidebar";
 
 type Application = {
@@ -42,6 +42,8 @@ type ApplicationInsights = {
 
 export default function ApplicationsPage() {
   const router = useRouter();
+
+  const supabase = createSupabaseBrowserClient();
 
   const [user, setUser] = useState<User | null>(null);
 
