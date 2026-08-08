@@ -1,5 +1,4 @@
-
-import { createClient } from "@supabase/supabase-js";
+﻿import { supabaseServer } from "@/lib/supabase-server";
 
 /**
  * ============================================================
@@ -8,11 +7,6 @@ import { createClient } from "@supabase/supabase-js";
  * ============================================================
  */
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 export async function saveLearningEventToDB(event: {
   tenantId: string;
   userId: string;
@@ -20,7 +14,7 @@ export async function saveLearningEventToDB(event: {
   weight: number;
   metadata: Record<string, unknown>;
 }) {
-  const { error } = await supabase.from("learning_events").insert({
+  const { error } = await supabaseServer.from("learning_events").insert({
     tenant_id: event.tenantId,
     user_id: event.userId,
     signal_type: event.signalType,
@@ -34,7 +28,7 @@ export async function saveLearningEventToDB(event: {
 }
 
 export async function getLearningEventsByUser(userId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseServer
     .from("learning_events")
     .select("*")
     .eq("user_id", userId);
