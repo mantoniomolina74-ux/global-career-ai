@@ -1,10 +1,6 @@
-import { createClient } from "@supabase/supabase-js";
+import { supabaseServer } from "@/lib/supabase-server";
 import { scoreJobs } from "@/lib/engine/jobScoring";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -18,7 +14,7 @@ export async function GET(req: Request) {
   }
 
   // Obtener empleos
-  const { data: jobs, error: jobsError } = await supabase
+  const { data: jobs, error: jobsError } = await supabaseServer
     .from("jobs")
     .select("*");
 
@@ -30,7 +26,7 @@ export async function GET(req: Request) {
   }
 
   // Obtener último análisis de CV del usuario
-  const { data: cvData, error: cvError } = await supabase
+  const { data: cvData, error: cvError } = await supabaseServer
     .from("cv_analyses")
     .select("*")
     .eq("user_id", userId)
