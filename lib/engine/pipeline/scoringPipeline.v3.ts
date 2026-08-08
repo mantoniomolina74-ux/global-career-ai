@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabaseServer } from "@/lib/supabase-server";
 import { calculateATS } from "../applications/atsEngine";
 
 /**
@@ -35,7 +35,7 @@ export interface AdaptiveWeights {
  */
 
 async function loadAdaptiveWeights(): Promise<Record<string, number>> {
-  const { data } = await supabase
+  const { data } = await supabaseServer
     .from("skill_learning_stats")
     .select("*");
 
