@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { supabaseServer } from "@/lib/supabase-server";
 
 /**
  * =========================================================
@@ -6,10 +6,6 @@ import { createClient } from "@supabase/supabase-js";
  * =========================================================
  */
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 /**
  * =========================================================
@@ -82,7 +78,7 @@ function cosineSimilarity(a: number[], b: number[]): number {
 export async function storeEmbedding(input: EmbeddingInput) {
   const vector = await generateEmbedding(input.text);
 
-  const { error } = await supabase.from("embeddings").insert({
+  const { error } = await supabaseServer.from("embeddings").insert({
     entity_id: input.id,
     content: input.text,
     type: input.type,
@@ -109,7 +105,7 @@ export async function searchSimilar(
 ): Promise<VectorMatch[]> {
   const queryVector = await generateEmbedding(query);
 
-  let dbQuery = supabase.from("embeddings").select("*");
+  let dbQuery =  supabaseServer.from("embeddings").select("*");
 
   if (type) {
     dbQuery = dbQuery.eq("type", type);
