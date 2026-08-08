@@ -1,10 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
+﻿import { supabaseServer } from "@/lib/supabase-server";
 import { scoreJobs } from "@/lib/engine/jobScoring";
-
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 type JobRecord = {
   id: string;
@@ -23,7 +18,7 @@ export async function POST(req: Request) {
   try {
     const { cv_id } = await req.json();
 
-    const { data: cv, error: cvError } = await supabase
+    const { data: cv, error: cvError } = await supabaseServer
       .from("cv_analyses")
       .select("*")
       .eq("id", cv_id)
@@ -39,7 +34,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { data: jobs, error: jobsError } = await supabase
+    const { data: jobs, error: jobsError } = await supabaseServer
       .from("jobs")
       .select("*");
 
@@ -76,12 +71,12 @@ export async function POST(req: Request) {
         job.match_explanation?.matched_skills ?? [],
     }));
 
-    await supabase
+    await supabaseServer
       .from("job_matches")
       .delete()
       .eq("cv_id", cv_id);
 
-    const { error: insertError } = await supabase
+    const { error: insertError } = await supabaseServer
       .from("job_matches")
       .insert(matches);
 
@@ -102,9 +97,7 @@ export async function POST(req: Request) {
 
       top_matches: scoredJobs.slice(0, 10),
     });
-
   } catch (error: unknown) {
-
     const message =
       error instanceof Error
         ? error.message
