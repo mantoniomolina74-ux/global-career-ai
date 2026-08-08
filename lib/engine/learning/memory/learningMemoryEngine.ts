@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabaseServer } from "@/lib/supabase-server";
 import { UserLearningMemory } from "./learningMemoryTypes";
 import { updateSkillEvolution, updateTrends } from "./memoryOperations";
 
@@ -9,7 +9,7 @@ import { updateSkillEvolution, updateTrends } from "./memoryOperations";
  */
 
 export async function loadUserMemory(userId: string) {
-  const { data } = await supabase
+  const { data } = await supabaseServer
     .from("learning_memory")
     .select("*")
     .eq("user_id", userId)
@@ -25,7 +25,7 @@ export async function loadUserMemory(userId: string) {
  */
 
 export async function saveUserMemory(memory: UserLearningMemory) {
-  const { error } = await supabase
+  const { error } = await supabaseServer
     .from("learning_memory")
     .upsert({
       user_id: memory.userId,
