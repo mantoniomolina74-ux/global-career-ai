@@ -2,14 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { KnowledgeProfile } from "@/lib/knowledge/knowledgeTypes";
 
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 /**
  * =========================================================
@@ -45,6 +41,7 @@ type Certification = {
 
 export default function ProfilePage() {
   const router = useRouter();
+  const supabase = createSupabaseBrowserClient();
 
   const [user, setUser] =
     useState<UserProfile | null>(null);
