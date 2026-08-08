@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type Job = {
   id: string;
@@ -21,13 +21,8 @@ type AnalysisResult = {
   matchResults: JobMatch[];
 };
 
-// ⚠️ cliente (ok aquí, pero estable)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
 export default function SubirCVPage() {
+  const supabase = createSupabaseBrowserClient();
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
