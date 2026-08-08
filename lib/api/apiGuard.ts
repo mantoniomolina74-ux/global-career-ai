@@ -1,16 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
-
-/**
- * =========================================================
- * SUPABASE CLIENT (AUTH VALIDATION)
- * =========================================================
- */
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { supabaseServer } from "@/lib/supabase-server";
 
 /**
  * =========================================================
@@ -43,7 +32,7 @@ export async function validateRequest(
   const {
     data: { user },
     error,
-  } = await supabase.auth.getUser(token);
+  } = await supabaseServer.auth.getUser(token);
 
   if (error || !user) {
     throw new Error("Invalid or expired token");
