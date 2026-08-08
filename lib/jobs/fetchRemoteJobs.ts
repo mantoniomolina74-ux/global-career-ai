@@ -1,10 +1,5 @@
 
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { supabaseServer } from "@/lib/supabase-server";
 
 type RemoteJob = {
   title: string;
@@ -38,7 +33,7 @@ export async function fetchRemoteJobs() {
       created_at: new Date(),
     }));
 
-    const { error } = await supabase
+    const { error } = await supabaseServer
       .from("jobs")
       .upsert(formattedJobs, {
         onConflict: "url",
