@@ -1,21 +1,42 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function Home() {
-  const [session, setSession] = useState<string | null>(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("session");
-    }
+  const [session, setSession] = useState(false);
 
-    return null;
+useEffect(() => {
+  const supabase = createSupabaseBrowserClient();
+
+  const loadSession = async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    setSession(Boolean(session));
+  };
+
+  void loadSession();
+
+  const {
+    data: { subscription },
+  } = supabase.auth.onAuthStateChange((_event, session) => {
+    setSession(Boolean(session));
   });
 
-  const logout = () => {
-    localStorage.removeItem("session");
-    setSession(null);
+  return () => {
+    subscription.unsubscribe();
   };
+}, []);
+
+const logout = async () => {
+  const supabase = createSupabaseBrowserClient();
+
+  await supabase.auth.signOut();
+  setSession(false);
+};
 
   return (
     <main className="min-h-screen bg-slate-50">
