@@ -1,4 +1,4 @@
-import { supabase } from "../supabaseClient";
+import { supabaseServer } from "@/lib/supabase-server";
 import { LearningMemory } from "@/lib/engine/learning/memory/learningMemoryEngine.v2";
 import { LearningMemoryRow, LearningMemoryRecord } from "./learningMemory.types";
 
@@ -41,7 +41,7 @@ export async function getLearningMemory(
   userId: string,
   tenantId?: string
 ): Promise<LearningMemory | null> {
-  let query = supabase
+  let query = supabaseServer
     .from("learning_memory_v2")
     .select("*")
     .eq("user_id", userId);
@@ -67,7 +67,7 @@ export async function upsertLearningMemory(
     updatedAt: new Date().toISOString(),
   });
 
-  const { error } = await supabase
+  const { error } = await supabaseServer
     .from("learning_memory_v2")
     .upsert(payload, {
       onConflict: "user_id,tenant_id",
