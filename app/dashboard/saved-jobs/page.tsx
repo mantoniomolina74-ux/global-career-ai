@@ -1,12 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type SavedJob = {
   id: string;
@@ -18,6 +13,7 @@ type SavedJob = {
 };
 
 export default function SavedJobsPage() {
+  const supabase = createSupabaseBrowserClient();
   const [jobs, setJobs] = useState<SavedJob[]>([]);
   const [loading, setLoading] = useState(true);
 
