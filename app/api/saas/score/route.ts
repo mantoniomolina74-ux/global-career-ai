@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { z } from "zod";
 import { saasEngine } from "@/lib/infra/saasEngine";
+import { buildSaaSRequestContext } from "@/lib/api/middleware/saasGuard";
 
 /**
  * =========================================================
@@ -41,19 +42,30 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const validated = ScoreRequestSchema.parse(body);
+    const validated =
+      ScoreRequestSchema.parse(body);
 
-    const result = await saasEngine({
-      mode: "score",
-      userId: validated.userId,
-      payload: validated,
-    });
+    const requestContext =
+      await buildSaaSRequestContext(req);
+
+    const result =
+      await saasEngine({
+        mode: "score",
+        userId:
+          requestContext.user.userId,
+        tenantId:
+          requestContext.tenant.tenantId,
+        payload:
+          validated,
+      });
 
     return NextResponse.json({
       success: true,
       data: result,
     });
+
   } catch (error: unknown) {
+
     return NextResponse.json(
       {
         success: false,

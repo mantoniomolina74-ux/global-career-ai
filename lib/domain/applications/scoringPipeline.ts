@@ -1,4 +1,4 @@
-import { calculateATS } from "@/lib/engine/applications/atsEngine";
+﻿import { calculateATS } from "@/lib/engine/applications/atsEngine";
 
 /**
  * =========================================================
@@ -65,7 +65,12 @@ export async function scoringPipelineV2(
     input.requiredSkills || [],
     input.candidateSkills || [],
     input.jobDescription || "",
-    input.cvStrengthScore || 50
+    input.cvStrengthScore || 50,
+    undefined,
+    {
+      userId: input.userId,
+      applicationId: input.applicationId,
+    }
   );
 
   const ats = atsResult.data;

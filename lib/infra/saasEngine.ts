@@ -1,4 +1,4 @@
-import { scoringPipelineV2 } from "../domain/applications/scoringPipeline";
+﻿import { scoringPipelineV2 } from "../domain/applications/scoringPipeline";
 import { runRankingEngine } from "../engine/applications/rankingEngine";
 import {
   runRecruiterAgent,
@@ -266,15 +266,15 @@ export async function saasEngine(
 
 
 
-  if (!organizationId) {
+  const effectiveOrganizationId =
+    organizationId ?? tenantId;
+
+  if (!effectiveOrganizationId) {
 
     throw new Error(
-      "Missing organizationId - organization context required"
+      "Missing organization context"
     );
   }
-
-
-
   let result: unknown;
 
 
@@ -292,7 +292,7 @@ export async function saasEngine(
 
         userId,
 
-        organizationId,
+        organizationId: effectiveOrganizationId,
 
         applicationId:
           p.applicationId,
@@ -328,7 +328,7 @@ export async function saasEngine(
 
           tenantId,
 
-          organizationId,
+          organizationId: effectiveOrganizationId,
 
           applicationId:
             p.applicationId!,
@@ -473,7 +473,7 @@ export async function saasEngine(
 
         userId,
 
-        organizationId,
+        organizationId: effectiveOrganizationId,
 
         jobId,
 
