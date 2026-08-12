@@ -46,9 +46,9 @@ export async function saveATSResult(
 ) {
 
   const { error } = await supabaseServer
-    .from("ats_results")
-    .upsert({
-
+  .from("ats_results")
+  .upsert(
+    {
       user_id: userId,
 
       application_id: applicationId,
@@ -66,9 +66,11 @@ export async function saveATSResult(
       missing_skills: ats.missingSkills,
 
       updated_at: new Date().toISOString(),
-
-    });
-
+    },
+    {
+      onConflict: "application_id",
+    }
+  );
 
   if (error) {
     throw new Error(error.message);
