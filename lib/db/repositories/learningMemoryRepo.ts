@@ -1,5 +1,5 @@
 import { supabaseServer } from "@/lib/supabase-server";
-import { LearningMemory } from "@/lib/engine/learning/memory/learningMemoryEngine.v2";
+import { LearningMemory } from "@/lib/engine/learning/memory/learningMemory.contract";
 import { LearningMemoryRow, LearningMemoryRecord } from "./learningMemory.types";
 
 /**

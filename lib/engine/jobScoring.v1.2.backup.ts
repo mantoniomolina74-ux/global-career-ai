@@ -35,21 +35,25 @@ const MATCH_GROUPS = [
     name: "Mining",
     keywords: [
       "mining",
+      "mine",
       "mina",
       "mineria",
+      "minería",
       "minero",
       "miner",
       "underground",
       "subterranea",
+      "subterránea",
     ],
   },
   {
     name: "Heavy Equipment",
     keywords: [
-      "heavy equipment",
-      "equipo pesado",
       "machinery",
       "maquinaria",
+      "equipment",
+      "heavy equipment",
+      "equipo pesado",
       "operator",
       "operador",
       "forklift",
@@ -62,11 +66,12 @@ const MATCH_GROUPS = [
     keywords: [
       "agriculture",
       "agricultura",
-      "farming",
-      "agricultural",
-      "farmer",
-      "cultivo",
+      "farm",
+      "granja",
+      "harvest",
       "cosecha",
+      "campo",
+      "cultivo",
     ],
   },
   {
@@ -74,9 +79,9 @@ const MATCH_GROUPS = [
     keywords: [
       "construction",
       "construccion",
-      "building construction",
+      "construcción",
+      "building",
       "obra",
-      "edificacion",
     ],
   },
   {
@@ -86,8 +91,10 @@ const MATCH_GROUPS = [
       "mantenimiento",
       "repair",
       "reparacion",
+      "reparación",
       "mechanic",
       "mecanico",
+      "mecánico",
     ],
   },
   {
@@ -106,10 +113,7 @@ function normalizeText(value: string = "") {
   return value
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^\p{L}\p{N}\s]/gu, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+    .replace(/[\u0300-\u036f]/g, "");
 }
 
 
@@ -117,37 +121,19 @@ function matchesConcept(
   text: string,
   value: string
 ) {
-  const normalizedText = normalizeText(text);
   const normalizedValue = normalizeText(value);
 
   const group = MATCH_GROUPS.find((item) =>
-    item.keywords.some(
-      (keyword) =>
-        normalizeText(keyword) === normalizedValue
-    )
+    item.keywords.includes(normalizedValue)
   );
 
   if (!group) {
-    return normalizedText
-      .split(/\s+/)
-      .includes(normalizedValue);
+    return text.includes(normalizedValue);
   }
 
-  return group.keywords.some((keyword) => {
-    const normalizedKeyword = normalizeText(keyword);
-
-    if (
-      normalizedText
-        .split(/\s+/)
-        .includes(normalizedKeyword)
-    ) {
-      return true;
-    }
-
-    return normalizedText.includes(
-      ` ${normalizedKeyword} `
-    );
-  });
+  return group.keywords.some((keyword) =>
+    text.includes(normalizeText(keyword))
+  );
 }
 
 
@@ -210,16 +196,24 @@ export function scoreJobs(
       });
 
 
-      /**
- * Certifications and geography are intentionally excluded
- * until candidate-side evidence is available.
- *
- * We must never award points merely because a job:
- * - requires a certification, or
- * - has a country.
- *
- * Matching scores must be based on verified candidate evidence.
- */
+      if (job.requires_whmis) {
+        score += SCORING_WEIGHTS.certifications.whmis;
+      }
+
+
+      if (job.requires_csts) {
+        score += SCORING_WEIGHTS.certifications.csts;
+      }
+
+
+      if (job.requires_first_aid) {
+        score += SCORING_WEIGHTS.certifications.firstAid;
+      }
+
+
+      if (job.country) {
+        score += SCORING_WEIGHTS.geography.countryMatch;
+      }
 
 
       return {

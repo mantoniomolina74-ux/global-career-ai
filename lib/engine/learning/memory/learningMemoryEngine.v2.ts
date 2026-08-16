@@ -1,33 +1,7 @@
 import { supabaseServer } from "@/lib/supabase-server";
-export interface LearningMemory {
-  userId: string;
+import type { LearningMemory } from "./learningMemory.contract";
 
-  trends: {
-    atsHistory: number[];
-    rankingHistory: number[];
-    recommendationHistory: number[];
-    decisionHistory: {
-      decisionId: string;
-      score: number;
-      priority: string;
-      timestamp: string;
-    }[];
-  };
-
-  skills: {
-    evolution: Record<
-      string,
-      {
-        successRate: number;
-        occurrences: number;
-      }
-    >;
-  };
-
-  metadata: {
-    lastUpdated: string;
-  };
-}
+export type { LearningMemory } from "./learningMemory.contract";
 
 export async function loadUserMemory(
   userId: string
@@ -73,10 +47,17 @@ export function updateTrends(
   ranking?: number,
   recommendation?: number
 ): LearningMemory {
-  if (ats !== undefined) memory.trends.atsHistory.push(ats);
-  if (ranking !== undefined) memory.trends.rankingHistory.push(ranking);
-  if (recommendation !== undefined)
+  if (ats !== undefined) {
+    memory.trends.atsHistory.push(ats);
+  }
+
+  if (ranking !== undefined) {
+    memory.trends.rankingHistory.push(ranking);
+  }
+
+  if (recommendation !== undefined) {
     memory.trends.recommendationHistory.push(recommendation);
+  }
 
   return memory;
 }

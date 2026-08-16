@@ -1,22 +1,19 @@
-﻿import { supabaseServer } from "@/lib/supabase-server";
-import { scoreJobs } from "@/lib/engine/jobScoring";
-
-type JobRecord = {
-  id: string;
-  title?: string;
-  description?: string;
-  industry?: string;
-  country?: string;
-  category?: string;
-  tags?: string;
-  requires_whmis?: boolean;
-  requires_csts?: boolean;
-  requires_first_aid?: boolean;
-};
+import { supabaseServer } from "@/lib/supabase-server";
+import { runJobMatchEngine } from "@/lib/engine/jobs/jobMatchEngine";
 
 export async function POST(req: Request) {
   try {
     const { cv_id } = await req.json();
+
+    if (!cv_id) {
+      return Response.json(
+        {
+          success: false,
+          error: "cv_id es requerido",
+        },
+        { status: 400 }
+      );
+    }
 
     const { data: cv, error: cvError } = await supabaseServer
       .from("cv_analyses")
@@ -27,8 +24,8 @@ export async function POST(req: Request) {
     if (cvError || !cv) {
       return Response.json(
         {
+          success: false,
           error: "CV no encontrado",
-          details: cvError,
         },
         { status: 404 }
       );
@@ -38,35 +35,31 @@ export async function POST(req: Request) {
       .from("jobs")
       .select("*");
 
-    if (jobsError || !jobs) {
+    if (jobsError) {
       return Response.json(
         {
-          error: "No se encontraron empleos",
-          details: jobsError,
+          success: false,
+          error: jobsError.message,
         },
-        { status: 404 }
+        { status: 500 }
       );
     }
 
-    const scoredJobs = scoreJobs(
-      jobs as JobRecord[],
+    const result = runJobMatchEngine(
+      jobs ?? [],
       {
-        skills: Array.isArray(cv.skills)
-          ? cv.skills
-          : [],
-
+        skills: Array.isArray(cv.skills) ? cv.skills : [],
         industries: Array.isArray(cv.industries)
           ? cv.industries
           : [],
       }
     );
 
-    const matches = scoredJobs.map((job) => ({
+    const matches = result.items.map((job) => ({
       user_id: cv.user_id ?? null,
       cv_id,
       job_id: job.id,
       match_score: job.match_score,
-
       matched_skills:
         job.match_explanation?.matched_skills ?? [],
     }));
@@ -76,37 +69,37 @@ export async function POST(req: Request) {
       .delete()
       .eq("cv_id", cv_id);
 
-    const { error: insertError } = await supabaseServer
-      .from("job_matches")
-      .insert(matches);
+    if (matches.length > 0) {
+      const { error: insertError } = await supabaseServer
+        .from("job_matches")
+        .insert(matches);
 
-    if (insertError) {
-      return Response.json(
-        {
-          error: "Error guardando matches",
-          details: insertError,
-        },
-        { status: 500 }
-      );
+      if (insertError) {
+        return Response.json(
+          {
+            success: false,
+            error: insertError.message,
+          },
+          { status: 500 }
+        );
+      }
     }
 
     return Response.json({
       success: true,
-
-      total_matches: scoredJobs.length,
-
-      top_matches: scoredJobs.slice(0, 10),
+      total_matches: result.items.length,
+      top_matches: result.items.slice(0, 10),
     });
   } catch (error: unknown) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Server error";
+    console.error("MATCH JOBS ERROR:", error);
 
     return Response.json(
       {
-        error: "Server error",
-        details: message,
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Error ejecutando Matching Engine",
       },
       { status: 500 }
     );

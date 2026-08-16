@@ -52,6 +52,10 @@ import {
   buildDashboardContract,
 } from "../builders/dashboardContractBuilder";
 
+import {
+  getApplicationInsights,
+} from "@/lib/engine/applications/applicationInsights";
+
 
 export interface DashboardContext {
 
@@ -74,10 +78,9 @@ export async function aggregateDashboard(
 
 
   const [
-
-    atsInsight,
-
-    matchingInsight,
+  applicationInsights,
+  atsInsight,
+matchingInsight,
 
     competencyInsight,
 
@@ -86,9 +89,8 @@ export async function aggregateDashboard(
     learningInsight,
 
   ] = await Promise.all([
-
-
-    getATSDashboardInsight(
+  getApplicationInsights(context.userId),
+getATSDashboardInsight(
       context
     ),
 
@@ -157,22 +159,28 @@ export async function aggregateDashboard(
 
 
           application: {
+        totalApplications:
+          applicationInsights.performance.totalApplications,
 
-            totalApplications: 0,
+        activePipeline:
+          applicationInsights.performance.activePipeline,
 
-            activePipeline: 0,
+        responseRate:
+          applicationInsights.performance.responseRate,
 
-            responseRate: 0,
+        rejectionRate:
+          applicationInsights.performance.rejectionRate,
 
-            rejectionRate: 0,
+        conversionRate:
+          applicationInsights.funnel.conversionRate,
 
-            conversionRate: 0,
+        offerRate:
+          applicationInsights.funnel.offerRate,
 
-            offerRate: 0,
+        successRate:
+          applicationInsights.funnel.successRate,
 
-            successRate: 0,
-
-          },
+      },
 
 
           learning:
@@ -189,8 +197,6 @@ export async function aggregateDashboard(
 
 
         };
-
-
 
   return buildDashboardContract({
 

@@ -1,4 +1,4 @@
-import { learningEventBus } from "../learningEventBus";
+﻿import { learningEventBus } from "../learningEventBus";
 
 import {
   loadUserMemory,
@@ -6,8 +6,11 @@ import {
   updateSkillEvolution,
   updateTrends,
   createEmptyMemory,
-  LearningMemory,
 } from "../memory/learningMemoryEngine.v2";
+
+import type {
+  LearningMemory,
+} from "../memory/learningMemory.contract";
 
 /**
  * ============================================================
@@ -38,7 +41,7 @@ export function startLearningConsumerV3() {
   learningEventBus.on("DECISION_CREATED", handleEvent);
   learningEventBus.on("RECOMMENDATION_CREATED", handleEvent);
 
-  console.log("🧠 Learning Consumer V3 ACTIVE");
+  console.log("ðŸ§  Learning Consumer V3 ACTIVE");
 }
 
 /**
@@ -119,7 +122,7 @@ async function handleEvent(event: LearningConsumerEvent) {
       case "RECOMMENDATION_CREATED": {
         const score = payload?.overallScore ?? 0;
 
-        // guard clause para evitar contaminación de memory
+        // guard clause para evitar contaminaciÃ³n de memory
         if (!memory?.trends) return;
 
         memory.trends.recommendationHistory ||= [];

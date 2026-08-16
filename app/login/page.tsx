@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mensaje, setMensaje] = useState("");
+  const searchParams = useSearchParams();
+  const jobId = searchParams.get("jobId");
 
   const login = async () => {
 
@@ -31,8 +34,10 @@ export default function LoginPage() {
     setMensaje("Inicio de sesión exitoso");
 
     setTimeout(() => {
-      window.location.href = "/dashboard";
-    }, 1000);
+  window.location.href = jobId
+  ? `/applications?jobId=${encodeURIComponent(jobId)}`
+  : "/dashboard";
+}, 1000);
   };
 
   return (

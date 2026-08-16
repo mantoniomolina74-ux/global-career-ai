@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -49,13 +49,15 @@ export default function DashboardPage() {
 
   const [form, setForm] = useState({
 
-    userId: "",
+  userId: "",
 
-    jobId: "job-1",
+  applicationId: "10",
 
-    jobDescription: "",
+  jobId: "job-1",
 
-  });
+  jobDescription: "Inside Sales Contractor",
+
+});
 
 
 
@@ -80,15 +82,22 @@ export default function DashboardPage() {
 
 
       const {
-        data: {
-          user,
-        },
-      } =
-        await supabase.auth.getUser();
+  data: {
+    user,
+  },
+} =
+  await supabase.auth.getUser();
+
+const {
+  data: {
+    session,
+  },
+} =
+  await supabase.auth.getSession();
 
 
 
-      if (!user) {
+      if (!user || !session?.access_token) {
 
         setResponse({
 
@@ -103,7 +112,10 @@ export default function DashboardPage() {
 
       }
 
-
+       console.log("CONTROL CENTER PAYLOAD", {
+  ...form,
+  userId: user.id,
+});
 
       const res =
         await fetch(`/api/saas/${mode}`, {
@@ -112,10 +124,13 @@ export default function DashboardPage() {
 
           headers: {
 
-            "Content-Type":
-              "application/json",
+  "Content-Type":
+    "application/json",
 
-          },
+  Authorization:
+    `Bearer ${session.access_token}`,
+
+},
 
 
           body: JSON.stringify({

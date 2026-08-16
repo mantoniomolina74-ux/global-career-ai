@@ -1,10 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function RegistroPage() {
 const supabase = createSupabaseBrowserClient();
+const searchParams = useSearchParams();
+const jobId = searchParams.get("jobId");
+
 const [nombre, setNombre] = useState("");
 const [email, setEmail] = useState("");
 const [password, setPassword] = useState("");
@@ -37,14 +41,30 @@ try {
   });
 
   if (error) {
-    setMensaje(error.message);
+  if (error.message.toLowerCase().includes("already registered")) {
+    setMensaje(
+      "Esta cuenta ya está registrada. Redirigiendo al inicio de sesión..."
+    );
+
+    setTimeout(() => {
+      window.location.href = jobId
+        ? `/login?jobId=${encodeURIComponent(jobId)}`
+        : "/login";
+    }, 1500);
+
     return;
   }
+
+  setMensaje(error.message);
+  return;
+}
 
   setMensaje("Cuenta creada correctamente");
 
   setTimeout(() => {
-    window.location.href = "/login";
+    window.location.href = jobId
+  ? `/login?jobId=${encodeURIComponent(jobId)}`
+  : "/login";
   }, 2000);
 } catch (err) {
   console.error(err);

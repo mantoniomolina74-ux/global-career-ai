@@ -1,6 +1,6 @@
-
+﻿
 import { z } from "zod";
-import type { LearningMemory } from "@/lib/engine/learning/memory/learningMemoryEngine.v2";
+import type { LearningMemory } from "@/lib/engine/learning/memory/learningMemory.contract";
 
 /**
  * =========================================================

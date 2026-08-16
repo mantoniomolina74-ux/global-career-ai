@@ -1,6 +1,7 @@
 import { calculateATS } from "@/lib/engine/applications/atsEngine";
 import { runScoringPipeline } from "@/lib/engine/applications/scoringPipeline";
 import { runRankingEngine } from "@/lib/engine/applications/rankingEngine";
+import { getApplicationInsights } from "@/lib/engine/applications/applicationInsights";
 
 import {
   resolveDecision,
@@ -333,6 +334,9 @@ export async function runCareerOrchestratorV7(
     },
   });
 
+  const applicationInsights =
+  await getApplicationInsights(input.userId);
+
 
   /**
    * ============================================================
@@ -355,8 +359,9 @@ export async function runCareerOrchestratorV7(
 
     applications: enrichedApplications,
 
+       applicationInsights,
 
-    ranking,
+        ranking,
 
 
     matching: {

@@ -1,593 +1,767 @@
-"use client";
+import { getDashboardData } from "@/lib/dashboard/dashboardAdapter.v1";
+import { createSupabaseServerAuth } from "@/lib/supabase/server";
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+export default async function DashboardPage() {
+  /**
+   * ============================================================
+   * CAREER INTELLIGENCE DASHBOARD V1.1
+   * ============================================================
+   *
+   * Page layer only.
+   *
+   * Business intelligence is composed below this layer through
+   * the Dashboard Adapter / Product Contract.
+   *
+   * Sources:
+   *
+   * - Real CV analysis
+   * - Real Hirebase job matches
+   * - Real application history
+   * - Real persisted ATS results
+   *
+   * No demo data.
+   * No fake scores.
+   * No business logic in the page.
+   * ============================================================
+   */
 
-import { User } from "@supabase/supabase-js";
+  const supabase =
+    await createSupabaseServerAuth();
 
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import Sidebar from "@/components/Sidebar";
+  const {
+    data: {
+      user,
+    },
+  } =
+    await supabase.auth.getUser();
 
-type Application = {
-  id: string;
-  company: string;
-  position: string;
-  country: string;
-  application_date: string;
-  status: string;
-  notes: string;
+  /**
+   * ============================================================
+   * AUTHENTICATION
+   * ============================================================
+   */
 
-  job_description?: string;
-  required_skills?: string[];
-  matched_skills?: string[];
-  cv_strength_score?: number;
+  if (!user) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6">
+        <div className="w-full max-w-xl rounded-2xl border border-slate-800 bg-slate-900 p-8 shadow-2xl">
+          <div className="mb-4 text-sm font-medium text-cyan-400">
+            GLOBAL CAREER AI
+          </div>
 
-  created_at: string;
-};
+          <h1 className="text-3xl font-bold">
+            Career Intelligence
+          </h1>
 
-type ApplicationIntelligence = {
-  atsScore?: number;
-  atsPassProbability?: number;
-  riskLevel?: string;
-};
-
-type ApplicationInsights = {
-  applicationScores: Record<string, number>;
-  applicationIntelligence: Record<
-    string,
-    ApplicationIntelligence
-  >;
-  statusBreakdown: Record<string, number>;
-};
-
-export default function ApplicationsPage() {
-  const router = useRouter();
-
-  const supabase = createSupabaseBrowserClient();
-
-  const [user, setUser] = useState<User | null>(null);
-
-  const [applications, setApplications] = useState<
-    Application[]
-  >([]);
-
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-
-  const [mensaje, setMensaje] = useState("");
-  const [errorMsg, setErrorMsg] = useState("");
-
-  const [insights, setInsights] =
-    useState<ApplicationInsights | null>(null);
-
-  const [form, setForm] = useState({
-    company: "",
-    position: "",
-    country: "",
-    application_date: "",
-    status: "Applied",
-    notes: "",
-
-    job_description: "",
-    required_skills: "",
-    cv_strength_score: "50",
-  });
-
-  /* =========================================================
-     ENGINE
-  ========================================================= */
-
-  const rankedApplications = useMemo(() => {
-    if (!insights?.applicationScores) return [];
-
-    return applications
-      .map((app) => ({
-        ...app,
-        score:
-          insights.applicationScores[app.id] ?? 0,
-      }))
-      .sort((a, b) => b.score - a.score);
-  }, [
-    applications,
-    insights?.applicationScores,
-  ]);
-
-  /* =========================================================
-     INIT
-  ========================================================= */
-
-  useEffect(() => {
-    async function initialize() {
-      setLoading(true);
-
-      const { data } =
-        await supabase.auth.getUser();
-
-      if (!data.user) {
-        router.push("/login");
-        return;
-      }
-
-      setUser(data.user);
-
-      await loadApplications(data.user.id);
-
-      setLoading(false);
-    }
-
-    initialize();
-  }, [router]);
-
-  useEffect(() => {
-  const userId = user?.id;
-
-  if (!userId) return;
-
-  const loadInsights = async () => {
-    const res = await fetch(
-      `/api/applications/insights?userId=${userId}`
-    );
-
-    const data = await res.json();
-
-    setInsights(data);
-  };
-
-  void loadInsights();
-}, [user?.id]);
-
-  async function loadApplications(userId: string) {
-    const { data } = await supabase
-      .from("applications")
-      .select("*")
-      .eq("user_id", userId)
-      .order("application_date", {
-        ascending: false,
-      });
-
-    if (!data) return;
-
-    setApplications(
-      data.map((app) => ({
-        ...app,
-        required_skills:
-          app.required_skills ?? [],
-
-        matched_skills:
-          app.matched_skills ?? [],
-      }))
+          <p className="mt-3 text-slate-400">
+            User session required. Please login to access
+            your career intelligence.
+          </p>
+        </div>
+      </main>
     );
   }
 
-  /* =========================================================
-     SAVE APPLICATION (ENHANCED)
-  ========================================================= */
+  /**
+   * ============================================================
+   * DASHBOARD CONTRACT
+   * ============================================================
+   */
 
-  async function saveApplication() {
-    setMensaje("");
-    setErrorMsg("");
-
-    if (
-      !form.company ||
-      !form.position ||
-      !form.country ||
-      !form.application_date
-    ) {
-      setErrorMsg(
-        "Completa todos los campos obligatorios."
-      );
-      return;
-    }
-
-    if (!user) return;
-
-    setSaving(true);
-
-    const requiredSkillsArray =
-      form.required_skills
-        .split(",")
-        .map((s) =>
-          s.trim().toLowerCase()
-        )
-        .filter(Boolean);
-
-    const { error } =
-      await supabase
-        .from("applications")
-        .insert({
-          user_id: user.id,
-          company: form.company,
-          position: form.position,
-          country: form.country,
-          application_date:
-            form.application_date,
-          status: form.status,
-          notes: form.notes,
-
-          job_description:
-            form.job_description,
-
-          required_skills:
-            requiredSkillsArray,
-
-          matched_skills: [],
-
-          cv_strength_score:
-            Number(form.cv_strength_score),
-        });
-
-    setSaving(false);
-
-    if (error) {
-      setErrorMsg(error.message);
-      return;
-    }
-
-    setMensaje(
-      "Postulación guardada correctamente."
+  const data =
+    await getDashboardData(
+      user.id
     );
-    setForm({
-      company: "",
-      position: "",
-      country: "",
-      application_date: "",
-      status: "Applied",
-      notes: "",
-      job_description: "",
-      required_skills: "",
-      cv_strength_score: "50",
-    });
 
-    await loadApplications(user.id);
-  }
+  /**
+   * ============================================================
+   * DEBUG
+   * ============================================================
+   */
 
-  /* =========================================================
-     UI HELPERS
-  ========================================================= */
+  console.log(
+    "[DASHBOARD PAGE DEBUG]",
+    {
+      userId: user.id,
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Applied":
-        return "bg-blue-100 text-blue-700";
+      avgATS:
+        data?.analytics?.performance?.avgATS,
 
-      case "Under Review":
-      case "Interview Scheduled":
-      case "Final Interview":
-        return "bg-yellow-100 text-yellow-700";
+      performance:
+        data?.analytics?.performance,
 
-      case "Offer Received":
-      case "Hired":
-        return "bg-green-100 text-green-700";
+      funnel:
+        data?.analytics?.funnel,
 
-      case "Rejected":
-        return "bg-red-100 text-red-700";
-
-      default:
-        return "bg-gray-100 text-gray-700";
+      insights:
+        data?.analytics?.insights,
     }
-  };
+  );
+
+  /**
+   * ============================================================
+   * EMPTY STATE
+   * ============================================================
+   */
 
   if (
-  loading ||
-  !user ||
-  applications.length === 0 ||
-  !insights
-) {
+    !data ||
+    data.empty ||
+    !data.analytics
+  ) {
     return (
-      <div className="flex min-h-screen">
-        <Sidebar />
+      <main className="min-h-screen bg-slate-950 text-white p-6 md:p-10">
+        <div className="mx-auto max-w-7xl">
 
-        <main className="flex-1 p-6">
-          <div className="animate-pulse text-gray-500">
-            Preparando tu dashboard inteligente...
-          </div>
-        </main>
-      </div>
-    );
-  }
+          <div className="mb-10">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-400">
+              Global Career AI
+            </p>
 
-  return (
-    <div className="flex min-h-screen">
-      <Sidebar />
+            <h1 className="mt-3 text-4xl font-bold tracking-tight">
+              Career Intelligence
+            </h1>
 
-      <main className="flex-1 p-6 bg-slate-50">
-        <h1 className="text-3xl font-bold mb-6">
-          Application Tracker
-        </h1>
-
-        {/* METRICS */}
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-
-          <div className="bg-white p-4 rounded-xl shadow">
-            Total: {applications.length}
+            <p className="mt-3 max-w-2xl text-slate-400">
+              Your professional intelligence will appear here
+              once the system has real career data to analyze.
+            </p>
           </div>
 
-          <div className="bg-blue-50 p-4 rounded-xl">
-            Applied:{" "}
-            {insights.statusBreakdown["Applied"] || 0}
-          </div>
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-8">
+            <h2 className="text-xl font-semibold">
+              Intelligence not available yet
+            </h2>
 
-          <div className="bg-yellow-50 p-4 rounded-xl">
-            In Process:{" "}
-            {(insights.statusBreakdown["Under Review"] || 0) +
-              (insights.statusBreakdown[
-                "Interview Scheduled"
-              ] || 0) +
-              (insights.statusBreakdown[
-                "Final Interview"
-              ] || 0)}
-          </div>
-
-          <div className="bg-green-50 p-4 rounded-xl">
-            Offers:{" "}
-            {insights.statusBreakdown[
-              "Offer Received"
-            ] || 0}
+            <p className="mt-2 text-slate-400">
+              Upload your CV and interact with real
+              opportunities to generate career intelligence.
+            </p>
           </div>
 
         </div>
+      </main>
+    );
+  }
+
+  const analytics =
+    data.analytics;
+
+  const performance =
+    analytics.performance;
+
+  const funnel =
+    analytics.funnel;
+
+  const insights =
+    analytics.insights ?? [];
+
+  /**
+   * ============================================================
+   * SAFE PRESENTATION VALUES
+   * ============================================================
+   *
+   * These are presentation fallbacks only.
+   *
+   * They do NOT create intelligence.
+   */
+
+  const atsScore =
+    performance?.avgATS ?? 0;
+
+  const rankingScore =
+    performance?.avgRanking ?? 0;
+
+  const applications =
+    funnel?.applications ?? 0;
+
+  const hireProbability =
+    funnel?.estimatedHireProbability ?? 0;
+
+  const status =
+    data.ui?.status ?? "UNKNOWN";
+
+  /**
+   * ============================================================
+   * SCORE HELPERS
+   * ============================================================
+   */
+
+  const scoreLabel =
+    (score: number) => {
+      if (score >= 80) return "Strong";
+      if (score >= 60) return "Good";
+      if (score >= 40) return "Developing";
+      return "Needs attention";
+    };
+
+  const scoreBar =
+    (score: number) => {
+      const safeScore =
+        Math.max(
+          0,
+          Math.min(
+            100,
+            score
+          )
+        );
+
+      return `${safeScore}%`;
+    };
+
+  /**
+   * ============================================================
+   * UI
+   * ============================================================
+   */
+
+  return (
+    <main className="min-h-screen bg-slate-950 text-white">
+
+      <div className="mx-auto max-w-7xl px-6 py-8 md:px-10 md:py-10">
+
+        {/* =====================================================
+            HEADER
+        ===================================================== */}
+
+        <header className="mb-10">
+
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+
+            <div>
+
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-400">
+                Global Career AI
+              </p>
+
+              <h1 className="mt-3 text-4xl font-bold tracking-tight md:text-5xl">
+                Career Intelligence
+              </h1>
+
+              <p className="mt-4 max-w-2xl text-base leading-7 text-slate-400">
+                A real-time view of your CV strength,
+                opportunity alignment, and application activity.
+              </p>
+
+            </div>
+
+            <div className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-400">
+              Intelligence Status: {status}
+            </div>
+
+          </div>
+
+        </header>
 
 
-        {/* TOP OPPORTUNITIES */}
+        {/* =====================================================
+            PERFORMANCE
+        ===================================================== */}
 
-        <div className="bg-white p-6 rounded-xl shadow mb-8">
+        <section className="mb-8">
 
-          <h2 className="text-xl font-semibold mb-4">
-            Top Opportunities
-          </h2>
+          <div className="mb-4">
 
+            <p className="text-sm font-semibold uppercase tracking-wider text-slate-500">
+              Performance
+            </p>
 
-          {rankedApplications
-            .slice(0, 5)
-            .map((app) => {
+            <h2 className="mt-1 text-2xl font-semibold">
+              Your professional intelligence
+            </h2>
 
-              const intel =
-                insights.applicationIntelligence[
-                  app.id
-                ];
+            <p className="mt-1 text-sm text-slate-400">
+              Current intelligence from your latest CV and
+              real job matches.
+            </p>
 
-              return (
-                <div
-                  key={app.id}
-                  className="p-4 border rounded-lg mb-3"
-                >
-
-                  <div className="flex justify-between">
-
-                    <div>
-                      <p className="font-bold">
-                        {app.position}
-                      </p>
-
-                      <p className="text-sm text-gray-500">
-                        {app.company}
-                      </p>
-                    </div>
+          </div>
 
 
-                    <div className="text-right text-sm">
+          <div className="grid gap-5 md:grid-cols-2">
 
-                      <p className="font-bold">
-                        Score: {app.score}
-                      </p>
+            {/* ATS */}
 
-                      <p>
-                        ATS: {intel?.atsScore ?? 0}
-                      </p>
+            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl">
 
-                      <p>
-                        Pass:{" "}
-                        {intel?.atsPassProbability ?? 0}%
-                      </p>
+              <div className="flex items-start justify-between">
 
-                      <p className="capitalize">
-                        Risk:{" "}
-                        {intel?.riskLevel ?? "unknown"}
-                      </p>
+                <div>
 
-                      <p className="mt-2 font-medium text-xs text-gray-600">
-                        {intel?.atsScore &&
-                        intel.atsScore >= 75
-                          ? "Alta prioridad: aplicar ahora"
-                          : intel?.atsScore &&
-                            intel.atsScore >= 50
-                          ? "Buena oportunidad: mejorar CV ligeramente"
-                          : "Baja prioridad: revisar skills antes de aplicar"}
-                      </p>
+                  <p className="text-sm font-medium text-slate-400">
+                    ATS Score
+                  </p>
 
-                    </div>
+                  <div className="mt-3 flex items-end gap-2">
+
+                    <span className="text-5xl font-bold">
+                      {atsScore}
+                    </span>
+
+                    <span className="mb-2 text-sm text-slate-500">
+                      / 100
+                    </span>
 
                   </div>
 
                 </div>
-              );
-            })}
 
-        </div>
+                <div className="rounded-xl bg-cyan-400/10 px-3 py-2 text-xs font-semibold text-cyan-400">
+                  {scoreLabel(atsScore)}
+                </div>
 
+              </div>
 
-        {/* FORM */}
+              <div className="mt-6 h-2 overflow-hidden rounded-full bg-slate-800">
 
-        <div className="bg-white p-6 rounded-xl shadow mb-8">
+                <div
+                  className="h-full rounded-full bg-cyan-400"
+                  style={{
+                    width:
+                      scoreBar(atsScore),
+                  }}
+                />
 
-          <h2 className="text-xl font-semibold mb-4">
-            Nueva Postulación
-          </h2>
+              </div>
 
-
-          <input
-            placeholder="Empresa"
-            value={form.company}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                company: e.target.value,
-              })
-            }
-            className="border p-2 w-full mb-2"
-          />
-
-
-          <input
-            placeholder="Puesto"
-            value={form.position}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                position: e.target.value,
-              })
-            }
-            className="border p-2 w-full mb-2"
-          />
-
-
-          <input
-            placeholder="País"
-            value={form.country}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                country: e.target.value,
-              })
-            }
-            className="border p-2 w-full mb-2"
-          />
-
-
-          <textarea
-            placeholder="Descripción del trabajo (IMPORTANTE ATS)"
-            value={form.job_description}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                job_description:
-                  e.target.value,
-              })
-            }
-            className="border p-2 w-full mb-2"
-          />
-
-
-          <input
-            placeholder="Skills requeridas (ej: react, node, sql)"
-            value={form.required_skills}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                required_skills:
-                  e.target.value,
-              })
-            }
-            className="border p-2 w-full mb-2"
-          />
-
-
-          <input
-            type="number"
-            placeholder="CV Score (0-100)"
-            value={form.cv_strength_score}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                cv_strength_score:
-                  e.target.value,
-              })
-            }
-            className="border p-2 w-full mb-2"
-          />
-
-
-          <input
-            type="date"
-            value={form.application_date}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                application_date:
-                  e.target.value,
-              })
-            }
-            className="border p-2 w-full mb-2"
-          />
-
-
-          <textarea
-            placeholder="Notas"
-            value={form.notes}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                notes: e.target.value,
-              })
-            }
-            className="border p-2 w-full mb-2"
-          />
-
-          <button
-            onClick={saveApplication}
-            disabled={saving}
-            className="bg-blue-600 text-white p-3 rounded"
-          >
-            {saving
-              ? "Guardando..."
-              : "Guardar"}
-          </button>
-
-          {mensaje && (
-            <p className="text-green-600">
-              {mensaje}
-            </p>
-          )}
-
-          {errorMsg && (
-            <p className="text-red-600">
-              {errorMsg}
-            </p>
-          )}
-
-        </div>
-
-
-        {/* LISTA */}
-
-        <div className="bg-white p-6 rounded-xl shadow">
-
-          <h2 className="text-xl font-semibold mb-4">
-            Mis Postulaciones
-          </h2>
-
-
-          {applications.map((app) => (
-
-            <div
-              key={app.id}
-              className="border p-4 mb-2"
-            >
-
-              <p className="font-bold">
-                {app.position}
+              <p className="mt-4 text-sm text-slate-400">
+                Based on your latest real CV analysis.
               </p>
 
-              <p>
-                {app.company}
+            </div>
+
+
+            {/* MATCHING */}
+
+            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl">
+
+              <div className="flex items-start justify-between">
+
+                <div>
+
+                  <p className="text-sm font-medium text-slate-400">
+                    Opportunity Matching
+                  </p>
+
+                  <div className="mt-3 flex items-end gap-2">
+
+                    <span className="text-5xl font-bold">
+                      {rankingScore}
+                    </span>
+
+                    <span className="mb-2 text-sm text-slate-500">
+                      / 100
+                    </span>
+
+                  </div>
+
+                </div>
+
+                <div className="rounded-xl bg-violet-400/10 px-3 py-2 text-xs font-semibold text-violet-400">
+                  {scoreLabel(rankingScore)}
+                </div>
+
+              </div>
+
+              <div className="mt-6 h-2 overflow-hidden rounded-full bg-slate-800">
+
+                <div
+                  className="h-full rounded-full bg-violet-400"
+                  style={{
+                    width:
+                      scoreBar(rankingScore),
+                  }}
+                />
+
+              </div>
+
+              <p className="mt-4 text-sm text-slate-400">
+                Based on your strongest real job matches.
               </p>
 
-              <span
-                className={getStatusColor(
-                  app.status
+            </div>
+
+          </div>
+
+        </section>
+
+
+        {/* =====================================================
+            MAIN INTELLIGENCE GRID
+        ===================================================== */}
+
+        <section className="grid gap-8 lg:grid-cols-3">
+
+
+          {/* ===================================================
+              PROFESSIONAL STRENGTHS
+          =================================================== */}
+
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl">
+
+            <div className="mb-5">
+
+              <p className="text-sm font-semibold uppercase tracking-wider text-slate-500">
+                Professional Strengths
+              </p>
+
+              <h2 className="mt-1 text-xl font-semibold">
+                Your capabilities
+              </h2>
+
+              <p className="mt-2 text-sm text-slate-400">
+                Skills identified from your latest CV analysis.
+              </p>
+
+            </div>
+
+
+            <div className="flex flex-wrap gap-2">
+
+              {(analytics?.ats?.strengths ?? []).map(
+                (
+                  skill: string,
+                  index: number
+                ) => (
+
+                  <span
+                    key={`${skill}-${index}`}
+                    className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-200"
+                  >
+                    {skill}
+                  </span>
+
+                )
+              )}
+
+            </div>
+
+          </div>
+
+
+          {/* ===================================================
+              OPPORTUNITY ALIGNMENT
+          =================================================== */}
+
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl lg:col-span-2">
+
+            <div className="mb-5">
+
+              <p className="text-sm font-semibold uppercase tracking-wider text-slate-500">
+                Opportunity Alignment
+              </p>
+
+              <h2 className="mt-1 text-xl font-semibold">
+                Real opportunities identified
+              </h2>
+
+              <p className="mt-2 text-sm text-slate-400">
+                Opportunities identified by the Matching Engine.
+              </p>
+
+            </div>
+
+
+            <div className="grid gap-6 md:grid-cols-2">
+
+
+              {/* TARGET ROLES */}
+
+              <div>
+
+                <h3 className="mb-3 text-sm font-semibold text-slate-300">
+                  Target Roles
+                </h3>
+
+                <div className="space-y-2">
+
+                  {(analytics?.matching?.targetRoles ?? []).map(
+                    (
+                      role: string,
+                      index: number
+                    ) => (
+
+                      <div
+                        key={`${role}-${index}`}
+                        className="rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3"
+                      >
+                        <p className="text-sm font-medium text-slate-200">
+                          {role}
+                        </p>
+                      </div>
+
+                    )
+                  )}
+
+                </div>
+
+              </div>
+
+
+              {/* MATCHING FACTORS */}
+
+              <div>
+
+                <h3 className="mb-3 text-sm font-semibold text-slate-300">
+                  Matching Factors
+                </h3>
+
+                <div className="flex flex-wrap gap-2">
+
+                  {(analytics?.matching?.alignmentFactors ?? []).map(
+                    (
+                      factor: string,
+                      index: number
+                    ) => (
+
+                      <span
+                        key={`${factor}-${index}`}
+                        className="rounded-lg bg-violet-400/10 px-3 py-2 text-sm text-violet-300"
+                      >
+                        {factor}
+                      </span>
+
+                    )
+                  )}
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+        </section>
+
+
+        {/* =====================================================
+            APPLICATION ACTIVITY
+        ===================================================== */}
+
+        <section className="mt-8">
+
+          <div className="mb-4">
+
+            <p className="text-sm font-semibold uppercase tracking-wider text-slate-500">
+              Application Activity
+            </p>
+
+            <h2 className="mt-1 text-2xl font-semibold">
+              Your career pipeline
+            </h2>
+
+            <p className="mt-1 text-sm text-slate-400">
+              Current activity from your real application history.
+            </p>
+
+          </div>
+
+
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+
+
+            {/* APPLICATIONS */}
+
+            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl">
+
+              <p className="text-sm text-slate-400">
+                Applications
+              </p>
+
+              <p className="mt-3 text-4xl font-bold">
+                {applications}
+              </p>
+
+              <p className="mt-2 text-xs text-slate-500">
+                Total applications recorded
+              </p>
+
+            </div>
+
+
+            {/* ACTIVE PIPELINE */}
+
+            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl">
+
+              <p className="text-sm text-slate-400">
+                Active Pipeline
+              </p>
+
+              <p className="mt-3 text-4xl font-bold">
+                {analytics?.application?.activePipeline ?? 0}
+              </p>
+
+              <p className="mt-2 text-xs text-slate-500">
+                Applications currently active
+              </p>
+
+            </div>
+
+
+            {/* RESPONSE RATE */}
+
+            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl">
+
+              <p className="text-sm text-slate-400">
+                Response Rate
+              </p>
+
+              <p className="mt-3 text-4xl font-bold">
+                {(
+                  (analytics?.application?.responseRate ?? 0) *
+                  100
+                ).toFixed(1)}
+                %
+              </p>
+
+              <p className="mt-2 text-xs text-slate-500">
+                Based on recorded application responses
+              </p>
+
+            </div>
+
+
+            {/* HIRE PROBABILITY */}
+
+            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl">
+
+              <p className="text-sm text-slate-400">
+                Hire Probability
+              </p>
+
+              <p className="mt-3 text-4xl font-bold">
+                {(
+                  hireProbability *
+                  100
+                ).toFixed(1)}
+                %
+              </p>
+
+              <p className="mt-2 text-xs text-slate-500">
+                Derived from current available intelligence
+              </p>
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+        {/* =====================================================
+            CAREER INSIGHTS
+        ===================================================== */}
+
+        <section className="mt-8 grid gap-8 lg:grid-cols-3">
+
+
+          {/* INSIGHTS */}
+
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl lg:col-span-2">
+
+            <div className="mb-5">
+
+              <p className="text-sm font-semibold uppercase tracking-wider text-slate-500">
+                Career Insights
+              </p>
+
+              <h2 className="mt-1 text-xl font-semibold">
+                Professional areas identified
+              </h2>
+
+              <p className="mt-2 text-sm text-slate-400">
+                Areas currently supported by your real career data.
+              </p>
+
+            </div>
+
+
+            {insights.length > 0 ? (
+
+              <ul className="space-y-3">
+
+                {insights.map(
+                  (
+                    insight: string,
+                    index: number
+                  ) => (
+
+                    <li
+                      key={index}
+                      className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3"
+                    >
+
+                      <span className="h-2 w-2 rounded-full bg-cyan-400" />
+
+                      <span className="text-sm text-slate-200">
+                        {insight}
+                      </span>
+
+                    </li>
+
+                  )
                 )}
-              >
-                {app.status}
+
+              </ul>
+
+            ) : (
+
+              <p className="text-sm text-slate-500">
+                No additional insights are available yet.
+              </p>
+
+            )}
+
+          </div>
+
+
+          {/* STATUS */}
+
+          <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-6">
+
+            <p className="text-sm font-semibold uppercase tracking-wider text-emerald-400">
+              Intelligence Status
+            </p>
+
+            <h2 className="mt-3 text-2xl font-bold">
+              {status}
+            </h2>
+
+            <p className="mt-3 text-sm leading-6 text-slate-400">
+              Current state of the dashboard data pipeline.
+            </p>
+
+            <div className="mt-6 flex items-center gap-2">
+
+              <span className="h-3 w-3 rounded-full bg-emerald-400" />
+
+              <span className="text-sm font-medium text-emerald-400">
+                Real intelligence available
               </span>
 
             </div>
 
-          ))}
+          </div>
 
-        </div>
+        </section>
 
-      </main>
-    </div>
+
+        {/* =====================================================
+            FOOTER
+        ===================================================== */}
+
+        <footer className="mt-12 border-t border-slate-800 pt-6">
+
+          <p className="text-xs text-slate-600">
+            Global Career AI · Career Intelligence Dashboard V1.1
+          </p>
+
+        </footer>
+
+      </div>
+
+    </main>
   );
 }

@@ -1,0 +1,139 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+
+export default function Home() {
+  const [session, setSession] = useState(false);
+
+useEffect(() => {
+  const supabase = createSupabaseBrowserClient();
+
+  const loadSession = async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    setSession(Boolean(session));
+  };
+
+  void loadSession();
+
+  const {
+    data: { subscription },
+  } = supabase.auth.onAuthStateChange((_event, session) => {
+    setSession(Boolean(session));
+  });
+
+  return () => {
+    subscription.unsubscribe();
+  };
+}, []);
+
+const logout = async () => {
+  const supabase = createSupabaseBrowserClient();
+
+  await supabase.auth.signOut();
+  setSession(false);
+};
+
+  return (
+    <main className="min-h-screen bg-slate-50">
+
+      {/* NAVBAR */}
+      <nav className="bg-slate-900 text-white shadow-lg">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+
+          <h1 className="text-2xl font-extrabold text-blue-400">
+            Global Career AI
+          </h1>
+
+          <div className="flex gap-6 items-center">
+
+            <Link href="/" className="hover:text-blue-400">
+              Inicio
+            </Link>
+
+            <Link href="/empleos" className="hover:text-blue-400">
+              Empleos
+            </Link>
+
+            <Link href="/subir-cv" className="hover:text-blue-400">
+              Subir CV
+            </Link>
+
+            {!session ? (
+              <>
+                <Link href="/registro" className="hover:text-blue-400">
+                  Registro
+                </Link>
+
+                <Link
+                  href="/login"
+                  className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-semibold"
+                >
+                  Login
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/dashboard"
+                  className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg font-semibold"
+                >
+                  Mi Panel
+                </Link>
+
+                <button
+                  onClick={logout}
+                  className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-semibold"
+                >
+                  Cerrar sesión
+                </button>
+              </>
+            )}
+
+          </div>
+
+        </div>
+      </nav>
+
+
+      {/* HERO */}
+      <section className="py-24 px-6 text-center">
+
+        <h1 className="text-6xl font-extrabold text-slate-900 mb-6">
+          Global Career AI
+        </h1>
+
+        <p className="text-2xl text-slate-700 mb-10 max-w-3xl mx-auto">
+          Encuentra empleos internacionales en Canadá, Estados Unidos,
+          Australia y Europa con ayuda de Inteligencia Artificial.
+        </p>
+
+
+        <div className="flex justify-center gap-6">
+
+          <Link
+            href="/empleos"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-bold shadow-lg"
+          >
+            Ver Empleos
+          </Link>
+
+
+          <Link
+            href="/subir-cv"
+            className="bg-slate-800 hover:bg-slate-900 text-white px-8 py-4 rounded-xl font-bold shadow-lg"
+          >
+            Subir CV
+          </Link>
+
+        </div>
+
+      </section>
+
+    </main>
+  );
+}

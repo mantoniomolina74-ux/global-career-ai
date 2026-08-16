@@ -1,9 +1,12 @@
 import { supabaseServer } from "@/lib/supabase-server";
+import {
+  getATSResult,
+} from "@/lib/db/repositories/atsRepository";
 
 /**
- * ============================
+ * ============================================================
  * TYPES
- * ============================
+ * ============================================================
  */
 
 export interface ApplicationRecord {
@@ -34,173 +37,508 @@ interface AtsResult {
   missingSkills: string[];
 }
 
+interface ApplicationIntelligence {
+  atsScore: number | null;
+  atsPassProbability: number | null;
+  riskLevel: "low" | "medium" | "high" | null;
+  matchedSkills: string[];
+  missingSkills: string[];
+}
+
 /**
- * ============================
- * DATA ACCESS
- * ============================
+ * ============================================================
+ * APPLICATION STATUS
+ * ============================================================
+ *
+ * The product currently contains historical records using
+ * different status representations.
+ *
+ * We normalize them inside the intelligence layer instead of
+ * changing persisted data blindly.
+ *
+ * Canonical product statuses:
+ *
+ * - Saved
+ * - Applied
+ * - Under Review
+ * - Interview Scheduled
+ * - Final Interview
+ * - Offer Received
+ * - Hired
+ * - Rejected
+ * ============================================================
  */
 
-async function fetchApplications(userId: string): Promise<ApplicationRecord[]> {
-  const { data, error } = await supabaseServer
+export type ApplicationStatus =
+  | "Saved"
+  | "Applied"
+  | "Under Review"
+  | "Interview Scheduled"
+  | "Final Interview"
+  | "Offer Received"
+  | "Hired"
+  | "Rejected";
+
+export function normalizeApplicationStatus(
+  status: string
+): ApplicationStatus | null {
+
+  const normalized =
+    status
+      .trim()
+      .toLowerCase()
+      .replace(/[_-]+/g, " ")
+      .replace(/\s+/g, " ");
+
+  switch (normalized) {
+
+    case "saved":
+      return "Saved";
+
+    case "applied":
+      return "Applied";
+
+    case "under review":
+    case "in review":
+      return "Under Review";
+
+    case "interview":
+    case "interview scheduled":
+      return "Interview Scheduled";
+
+    case "final interview":
+      return "Final Interview";
+
+    case "offer":
+    case "offer received":
+      return "Offer Received";
+
+    case "hired":
+      return "Hired";
+
+    case "rejected":
+      return "Rejected";
+
+    default:
+      return null;
+  }
+}
+
+/**
+ * ============================================================
+ * DATA ACCESS
+ * ============================================================
+ */
+
+async function fetchApplications(
+  userId: string
+): Promise<ApplicationRecord[]> {
+
+  const {
+    data,
+    error,
+  } = await supabaseServer
     .from("applications")
     .select("*")
     .eq("user_id", userId);
 
   if (error) {
-    throw new Error(`Failed to fetch applications: ${error.message}`);
+    throw new Error(
+      `Failed to fetch applications: ${error.message}`
+    );
   }
 
   return (data || []) as ApplicationRecord[];
 }
 
 /**
- * ============================
+ * ============================================================
  * FUNNEL ENGINE
- * ============================
+ * ============================================================
  */
 
-export function calculateFunnel(apps: ApplicationRecord[]) {
-  const safeDiv = (a: number, b: number) =>
-    b === 0 ? 0 : a / b;
+export function calculateFunnel(
+  apps: ApplicationRecord[]
+) {
 
-  const saved = apps.filter((a) => a.status === "saved").length;
-  const applied = apps.filter((a) => a.status === "applied").length;
-  const in_review = apps.filter((a) => a.status === "in_review").length;
-  const interview = apps.filter((a) => a.status === "interview").length;
-  const offer = apps.filter((a) => a.status === "offer").length;
-  const rejected = apps.filter((a) => a.status === "rejected").length;
+  const safeDiv = (
+    a: number,
+    b: number
+  ) =>
+    b === 0
+      ? 0
+      : a / b;
+
+  const normalizedStatuses =
+    apps.map((app) => ({
+      ...app,
+      normalizedStatus:
+        normalizeApplicationStatus(
+          app.status
+        ),
+    }));
+
+  const saved =
+    normalizedStatuses.filter(
+      (a) =>
+        a.normalizedStatus === "Saved"
+    ).length;
+
+  const applied =
+    normalizedStatuses.filter(
+      (a) =>
+        a.normalizedStatus === "Applied"
+    ).length;
+
+  const inReview =
+    normalizedStatuses.filter(
+      (a) =>
+        a.normalizedStatus === "Under Review"
+    ).length;
+
+  const interview =
+    normalizedStatuses.filter(
+      (a) =>
+        a.normalizedStatus === "Interview Scheduled" ||
+        a.normalizedStatus === "Final Interview"
+    ).length;
+
+  const offer =
+    normalizedStatuses.filter(
+      (a) =>
+        a.normalizedStatus === "Offer Received"
+    ).length;
+
+  const rejected =
+    normalizedStatuses.filter(
+      (a) =>
+        a.normalizedStatus === "Rejected"
+    ).length;
 
   return {
     total: apps.length,
+
     saved,
+
     applied,
-    in_review,
+
+    in_review: inReview,
+
     interview,
+
     offer,
+
     rejected,
-    conversionRate: safeDiv(interview, applied),
-    offerRate: safeDiv(offer, applied),
-    successRate: safeDiv(offer, interview),
+
+    conversionRate:
+      safeDiv(
+        interview,
+        applied
+      ),
+
+    offerRate:
+      safeDiv(
+        offer,
+        applied
+      ),
+
+    successRate:
+      safeDiv(
+        offer,
+        interview
+      ),
   };
 }
 
 /**
- * ============================
+ * ============================================================
  * PERFORMANCE ENGINE
- * ============================
+ * ============================================================
  */
 
-export function calculatePerformance(apps: ApplicationRecord[]) {
-  const total = apps.length;
+export function calculatePerformance(
+  apps: ApplicationRecord[]
+) {
 
-  const activePipeline = apps.filter((a) =>
-    ["applied", "in_review", "interview"].includes(a.status)
-  ).length;
+  const total =
+    apps.length;
 
-  const responded = apps.filter((a) =>
-    ["in_review", "interview", "offer", "rejected"].includes(a.status)
-  ).length;
+  const normalizedStatuses =
+    apps.map((app) =>
+      normalizeApplicationStatus(
+        app.status
+      )
+    );
 
-  const rejected = apps.filter((a) => a.status === "rejected").length;
+  const activePipeline =
+    normalizedStatuses.filter(
+      (status) =>
+        status === "Applied" ||
+        status === "Under Review" ||
+        status === "Interview Scheduled" ||
+        status === "Final Interview"
+    ).length;
 
-  const responseRate = total === 0 ? 0 : responded / total;
-  const rejectionRate = total === 0 ? 0 : rejected / total;
+  const responded =
+    normalizedStatuses.filter(
+      (status) =>
+        status === "Under Review" ||
+        status === "Interview Scheduled" ||
+        status === "Final Interview" ||
+        status === "Offer Received" ||
+        status === "Hired" ||
+        status === "Rejected"
+    ).length;
+
+  const rejected =
+    normalizedStatuses.filter(
+      (status) =>
+        status === "Rejected"
+    ).length;
+
+  const responseRate =
+    total === 0
+      ? 0
+      : responded / total;
+
+  const rejectionRate =
+    total === 0
+      ? 0
+      : rejected / total;
 
   return {
-    totalApplications: total,
+    totalApplications:
+      total,
+
     activePipeline,
+
     responseRate,
+
     rejectionRate,
   };
 }
 
 /**
- * ============================
+ * ============================================================
  * INSIGHTS ENGINE
- * ============================
+ * ============================================================
  */
 
-export async function getApplicationInsights(userId: string) {
-  const applications = await fetchApplications(userId);
+export async function getApplicationInsights(
+  userId: string
+) {
 
-  const funnel = calculateFunnel(applications);
-  const performance = calculatePerformance(applications);
+  const applications =
+    await fetchApplications(
+      userId
+    );
 
-  const statusBreakdown: Record<string, number> = {};
-  const applicationScores: Record<string, number> = {};
-  const applicationIntelligence: Record<string, ApplicationIntelligence> = {};
+  const funnel =
+    calculateFunnel(
+      applications
+    );
+
+  const performance =
+    calculatePerformance(
+      applications
+    );
+
+  /**
+   * Canonical status breakdown.
+   *
+   * The UI can now consume stable product statuses regardless
+   * of how historical records were persisted.
+   */
+
+  const statusBreakdown:
+    Record<string, number> = {
+
+    Saved: 0,
+
+    Applied: 0,
+
+    "Under Review": 0,
+
+    "Interview Scheduled": 0,
+
+    "Final Interview": 0,
+
+    "Offer Received": 0,
+
+    Hired: 0,
+
+    Rejected: 0,
+
+  };
+
+  const applicationScores:
+    Record<string, number> = {};
+
+  const applicationIntelligence:
+    Record<
+      string,
+      ApplicationIntelligence
+    > = {};
 
   for (const app of applications) {
-    statusBreakdown[app.status] =
-      (statusBreakdown[app.status] || 0) + 1;
 
-    const ats: AtsResult =
+    /**
+     * --------------------------------------------------------
+     * STATUS
+     * --------------------------------------------------------
+     */
+
+    const normalizedStatus =
+      normalizeApplicationStatus(
+        app.status
+      );
+
+    if (normalizedStatus) {
+
+      statusBreakdown[
+        normalizedStatus
+      ] =
+        (
+          statusBreakdown[
+            normalizedStatus
+          ] ?? 0
+        ) + 1;
+
+    }
+
+    /**
+     * --------------------------------------------------------
+     * ATS
+     * --------------------------------------------------------
+     *
+     * Source of truth:
+     *
+     * public.ats_results
+     *
+     * No persisted ATS means:
+     *
+     * ats = null
+     *
+     * We do not invent intelligence.
+     * --------------------------------------------------------
+     */
+
+    const persistedATS =
+      await getATSResult(
+        app.id
+      );
+
+    const ats =
+      persistedATS ??
       app.atsResult ??
       app.ats ??
-      {
-        atsScore: app.cv_strength_score ?? 50,
-        passProbability: Math.round(
-          (app.cv_strength_score ?? 50) * 0.9
-        ),
-        interviewProbability: Math.round(
-          (app.cv_strength_score ?? 50) * 0.6
-        ),
-        offerProbability: Math.round(
-          (app.cv_strength_score ?? 50) * 0.4
-        ),
-        matchedSkills: app.matched_skills || [],
-        missingSkills: [],
-      };
+      null;
 
-    applicationScores[app.id] = ats.atsScore;
+    /**
+     * Compatibility score.
+     *
+     * Applications without ATS remain sortable at zero,
+     * but applicationIntelligence.atsScore remains null.
+     *
+     * This allows the UI to distinguish:
+     *
+     * 0 = real calculated ATS score of zero
+     *
+     * null = ATS not calculated yet
+     */
 
-    applicationIntelligence[app.id] = {
-      atsScore: ats.atsScore,
-      atsPassProbability: ats.passProbability,
+    applicationScores[
+      app.id
+    ] =
+      ats?.atsScore ?? 0;
+
+    applicationIntelligence[
+      app.id
+    ] = {
+
+      atsScore:
+        ats?.atsScore ?? null,
+
+      atsPassProbability:
+        ats?.passProbability ?? null,
+
       riskLevel:
-        ats.atsScore >= 75
-          ? "low"
-          : ats.atsScore >= 50
-          ? "medium"
-          : "high",
-      matchedSkills: ats.matchedSkills,
-      missingSkills: ats.missingSkills,
+        ats
+          ? ats.atsScore >= 75
+            ? "low"
+            : ats.atsScore >= 50
+              ? "medium"
+              : "high"
+          : null,
+
+      matchedSkills:
+        ats?.matchedSkills ?? [],
+
+      missingSkills:
+        ats?.missingSkills ?? [],
+
     };
+
   }
 
   return {
+
     funnel,
+
     performance,
+
     statusBreakdown,
+
     applicationScores,
+
     applicationIntelligence,
+
     meta: {
-      generatedAt: new Date().toISOString(),
-      source: "server-engine-v2",
+
+      generatedAt:
+        new Date().toISOString(),
+
+      source:
+        "server-engine-v2",
+
     },
+
   };
+
 }
 
 /**
- * ============================
+ * ============================================================
  * LIGHTWEIGHT HELPERS
- * ============================
+ * ============================================================
  */
 
-export async function getFunnelStats(userId: string) {
-  const apps = await fetchApplications(userId);
-  return calculateFunnel(apps);
+export async function getFunnelStats(
+  userId: string
+) {
+
+  const apps =
+    await fetchApplications(
+      userId
+    );
+
+  return calculateFunnel(
+    apps
+  );
+
 }
 
-export async function getPerformanceMetrics(userId: string) {
-  const apps = await fetchApplications(userId);
-  return calculatePerformance(apps);
-}
+export async function getPerformanceMetrics(
+  userId: string
+) {
 
-interface ApplicationIntelligence {
-  atsScore: number;
-  atsPassProbability: number;
-  riskLevel: "low" | "medium" | "high";
-  matchedSkills: string[];
-  missingSkills: string[];
+  const apps =
+    await fetchApplications(
+      userId
+    );
+
+  return calculatePerformance(
+    apps
+  );
+
 }

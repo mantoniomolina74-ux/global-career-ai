@@ -1,114 +1,184 @@
-"use client";
+﻿"use client";
 
-import { useRouter } from "next/navigation";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useEffect, useState } from "react";
 
-type Empleo = {
-  region: string;
-  titulo: string;
-  pais: string;
-  pago: string;
-  descripcion: string;
+type Job = {
+  id: string;
+  title?: string;
+  company?: string | null;
+  location?: string | null;
+  country?: string | null;
+  description?: string | null;
+  url?: string | null;
+  source?: string | null;
+  category?: string | null;
+  tags?: string | null;
 };
 
+function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export default function EmpleosPage() {
-  const router = useRouter();
-  const supabase = createSupabaseBrowserClient();
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const empleos: Empleo[] = [
-    {
-      region: "🌎 Norteamérica",
-      titulo: "Operador de Equipo Pesado",
-      pais: "Canadá",
-      pago: "CAD $28 - $38/hora",
-      descripcion: "Visa patrocinada y oportunidad en minería.",
-    },
-    {
-      region: "🌏 Oceanía",
-      titulo: "Trabajador Agrícola",
-      pais: "Australia",
-      pago: "AUD $30 - $35/hora",
-      descripcion: "Incluye alojamiento y soporte migratorio.",
-    },
-    {
-      region: "🌍 Europa",
-      titulo: "Ayudante de Construcción",
-      pais: "Alemania",
-      pago: "€2,300 - €3,200/mes",
-      descripcion: "Oportunidades en proyectos de infraestructura.",
-    },
-  ];
+  useEffect(() => {
+    async function loadJobs() {
+      try {
+        setLoading(true);
+        setError(null);
 
-  const aplicar = async (empleo: Empleo) => {
-    const userId = localStorage.getItem("user_id");
+        const response = await fetch("/api/jobs", {
+          cache: "no-store",
+        });
 
-    if (!userId) {
-      alert("Debes iniciar sesión primero");
-      router.push("/login");
-      return;
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          throw new Error(
+            data.error || "No se pudieron cargar los empleos."
+          );
+        }
+
+        const realJobs = (data.jobs ?? []).filter(
+          (job: Job) => Boolean(job.url)
+        );
+
+        setJobs(realJobs);
+      } catch (err) {
+        console.error("Error cargando empleos:", err);
+
+        setError(
+          err instanceof Error
+            ? err.message
+            : "No se pudieron cargar los empleos."
+        );
+      } finally {
+        setLoading(false);
+      }
     }
 
-    const { error } = await supabase.from("applications").insert({
-      user_id: userId,
-      company: empleo.region,
-      position: empleo.titulo,
-      country: empleo.pais,
-      application_date: new Date().toISOString(),
-      status: "Applied",
-      notes: "",
-    });
+    void loadJobs();
+  }, []);
 
-    if (error) {
-      console.error(error);
-      alert("❌ Error al enviar aplicación");
-      return;
-    }
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-slate-50 px-6 py-10">
+        <div className="mx-auto max-w-6xl">
+          <h1 className="text-3xl font-bold text-slate-900">
+            Oportunidades reales
+          </h1>
 
-    alert("✅ Aplicación enviada correctamente");
-  };
+          <p className="mt-4 text-slate-600">
+            Cargando oportunidades de trabajo internacional...
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="min-h-screen bg-slate-50 px-6 py-10">
+        <div className="mx-auto max-w-6xl">
+          <h1 className="text-3xl font-bold text-slate-900">
+            Oportunidades reales
+          </h1>
+
+          <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-6 text-red-700">
+            {error}
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
-    <main className="min-h-screen bg-slate-50 p-10">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-5xl font-extrabold text-slate-900 mb-3">
-          Vacantes Internacionales
-        </h1>
+    <main className="min-h-screen bg-slate-50 px-6 py-10">
+      <div className="mx-auto max-w-6xl">
+        <header className="mb-8">
+          <h1 className="text-3xl font-bold text-slate-900">
+            Oportunidades reales
+          </h1>
 
-        <p className="text-xl text-slate-600 mb-10">
-          Explora oportunidades laborales en Norteamérica, Oceanía y Europa.
-        </p>
+          <p className="mt-2 text-slate-600">
+            Explora oportunidades reales de trabajo internacional.
+          </p>
+        </header>
 
-        <div className="grid md:grid-cols-3 gap-8">
-          {empleos.map((empleo, index) => (
-            <div
-              key={index}
-              className="bg-white p-6 rounded-2xl shadow-lg border border-slate-200"
-            >
-              <div className="mb-3 text-sm font-bold text-blue-600">
-                {empleo.region}
-              </div>
+        {jobs.length === 0 ? (
+          <section className="rounded-2xl border border-slate-200 bg-white p-10 text-center">
+            <h2 className="text-xl font-semibold text-slate-900">
+              No hay oportunidades disponibles
+            </h2>
 
-              <h2 className="text-2xl font-bold text-slate-900 mb-3">
-                {empleo.titulo}
-              </h2>
-
-              <p className="text-slate-700 mb-2">📍 {empleo.pais}</p>
-
-              <p className="text-slate-700 mb-2">💰 {empleo.pago}</p>
-
-              <p className="text-slate-600 mb-6">
-                {empleo.descripcion}
-              </p>
-
-              <button
-                onClick={() => aplicar(empleo)}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold"
+            <p className="mt-3 text-slate-600">
+              No encontramos ofertas reales disponibles para
+              mostrar en este momento.
+            </p>
+          </section>
+        ) : (
+          <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {jobs.map((job) => (
+              <article
+                key={job.id}
+                className="flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
               >
-                Aplicar Ahora
-              </button>
-            </div>
-          ))}
-        </div>
+                <div className="flex-1">
+                  <div className="mb-4">
+                    <h2 className="text-xl font-bold text-slate-900">
+                      {job.title ?? "Puesto sin título"}
+                    </h2>
+
+                    <p className="mt-1 font-medium text-slate-700">
+                      {job.company ?? "Empresa no especificada"}
+                    </p>
+                  </div>
+
+                  <div className="mb-4 space-y-1 text-sm text-slate-600">
+                    {job.location && (
+                      <p>📍 {job.location}</p>
+                    )}
+
+                    {job.country && (
+                      <p>🌎 {job.country}</p>
+                    )}
+
+                    {job.category && (
+                      <p>🏷️ {job.category}</p>
+                    )}
+                  </div>
+
+                  <p className="mb-5 line-clamp-5 text-sm leading-6 text-slate-600">
+                    {job.description
+                      ? stripHtml(job.description)
+                      : "Descripción no disponible."}
+                  </p>
+                </div>
+
+                <div className="mt-6">
+                  <a
+                    href={`/empleos/${job.id}`}
+                    className="block w-full rounded-xl bg-blue-600 py-3 text-center font-semibold text-white hover:bg-blue-700"
+                  >
+                    VER OPORTUNIDAD →
+                  </a>
+                </div>
+              </article>
+            ))}
+          </section>
+        )}
       </div>
     </main>
   );

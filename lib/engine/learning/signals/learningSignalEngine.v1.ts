@@ -1,4 +1,4 @@
-import { LearningMemory } from "../memory/learningMemoryEngine.v2";
+import { LearningMemory } from "../memory/learningMemory.contract";
 
 /**
  * ============================================================

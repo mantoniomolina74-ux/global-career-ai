@@ -62,6 +62,15 @@ export async function getDashboardData(
     dashboard.intelligence.ats;
 
 
+  console.log("[DASHBOARD ADAPTER DEBUG]", {
+    userId,
+    dashboardATS: dashboard.intelligence.ats,
+    avgATS: dashboard.intelligence.ats?.score,
+    partialData:
+      dashboard.diagnostics.dataQuality.partialData,
+  });
+
+
   const matching =
     dashboard.intelligence.matching;
 
@@ -111,6 +120,7 @@ export async function getDashboardData(
 
         avgRanking:
           matching.matchScore,
+
 
       },
 
