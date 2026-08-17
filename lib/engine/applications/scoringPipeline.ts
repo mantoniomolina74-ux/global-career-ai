@@ -11,8 +11,32 @@ interface ScoringPipelineInput {
 interface ScoringApplication {
   applicationId?: string | number;
   id?: string | number;
+
+  /**
+   * Real job information.
+   */
+  title?: string;
+  industry?: string;
+  country?: string;
+  jobDescription?: string;
+
+  /**
+   * Candidate / matching information.
+   */
+  candidateSkills?: string[];
+
+  /**
+   * ATS intelligence.
+   */
   score?: number | string;
   atsScore?: number | string;
+  hiringScore?: number;
+  semanticScore?: number;
+  cvStrengthScore?: number;
+
+  /**
+   * Optional scoring metadata.
+   */
   breakdown?: Record<string, unknown>;
   signals?: unknown[];
 }

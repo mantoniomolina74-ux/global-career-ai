@@ -58,14 +58,20 @@ export default async function DashboardPage() {
   const analytics = data.analytics;
 
   const atsScore = analytics.ats?.score ?? 0;
+
   const matchingScore = analytics.matching?.matchScore ?? 0;
 
   const strengths = analytics.ats?.strengths ?? [];
+
   const improvements = analytics.ats?.improvements ?? [];
 
   const targetRoles = analytics.matching?.targetRoles ?? [];
+
   const alignmentFactors =
     analytics.matching?.alignmentFactors ?? [];
+
+      const opportunities =
+    analytics.matching?.opportunities ?? [];
 
   const totalApplications =
     analytics.application?.totalApplications ?? 0;
@@ -261,9 +267,10 @@ export default async function DashboardPage() {
           </div>
         </section>
 
-        {/* OPPORTUNITY ALIGNMENT */}
+                {/* OPPORTUNITY ALIGNMENT */}
         <section className="mb-8">
           <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
+
             <div className="mb-5">
               <h2 className="text-xl font-semibold">
                 Opportunity Alignment
@@ -274,49 +281,204 @@ export default async function DashboardPage() {
               </p>
             </div>
 
-            {uniqueTargetRoles.length > 0 ? (
+
+            {opportunities.length > 0 ? (
+
               <div>
+
                 <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-                  Target Roles
+                  Strongest Real Opportunities
                 </h3>
 
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  {uniqueTargetRoles.map((role) => (
-                    <div
-                      key={role}
-                      className="rounded-xl border border-slate-800 bg-slate-950 p-4"
-                    >
-                      <p className="font-medium text-slate-200">
-                        {role}
-                      </p>
-                    </div>
-                  ))}
+
+                <div className="mt-4 grid gap-4">
+
+                  {opportunities.map(
+                    (opportunity) => (
+
+                      <div
+                        key={opportunity.id}
+                        className="rounded-xl border border-slate-800 bg-slate-950 p-5"
+                      >
+
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+
+                          <div>
+
+                            <p className="text-lg font-semibold text-slate-200">
+                              {opportunity.title}
+                            </p>
+
+
+                            {opportunity.country && (
+                              <p className="mt-1 text-sm text-slate-500">
+                                {opportunity.country}
+                              </p>
+                            )}
+
+                          </div>
+
+
+                          <div className="shrink-0">
+
+                            <span className="text-2xl font-bold text-white">
+                              {opportunity.matchScore}
+                            </span>
+
+                            <span className="ml-1 text-sm text-slate-500">
+                              / 100
+                            </span>
+
+                          </div>
+
+                        </div>
+
+                         {opportunity.reasons.length > 0 && (
+  <div className="mt-3">
+    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+      Match Reasons
+    </p>
+
+    <div className="mt-2 space-y-2">
+      {opportunity.reasons.map(
+        (reason) => (
+          <p
+            key={`${opportunity.id}-reason-${reason}`}
+            className="text-sm leading-6 text-slate-300"
+          >
+            {reason}
+          </p>
+        )
+      )}
+    </div>
+  </div>
+)}
+                        {(opportunity.matchedSkills.length > 0 ||
+                          opportunity.matchedIndustries.length > 0) && (
+
+                          <div className="mt-5 border-t border-slate-800 pt-4">
+
+                            <p className="text-sm font-semibold text-slate-300">
+                              Why this opportunity matches
+                            </p>
+
+
+                            {opportunity.matchedSkills.length > 0 && (
+                              <div className="mt-3">
+
+                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                  Matching Skills
+                                </p>
+
+                                <div className="mt-2 flex flex-wrap gap-2">
+
+                                  {opportunity.matchedSkills.map(
+                                    (skill) => (
+
+                                      <span
+                                        key={`${opportunity.id}-skill-${skill}`}
+                                        className="rounded-full border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm text-slate-300"
+                                      >
+                                        {skill}
+                                      </span>
+
+                                    )
+                                  )}
+
+                                </div>
+
+                              </div>
+                            )}
+
+
+                            {opportunity.matchedIndustries.length > 0 && (
+                              <div className="mt-4">
+
+                                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                  Matching Industries
+                                </p>
+
+                                <div className="mt-2 flex flex-wrap gap-2">
+
+                                  {opportunity.matchedIndustries.map(
+                                    (industry) => (
+
+                                      <span
+                                        key={`${opportunity.id}-industry-${industry}`}
+                                        className="rounded-full border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm text-slate-400"
+                                      >
+                                        {industry}
+                                      </span>
+
+                                    )
+                                  )}
+
+                                </div>
+
+                              </div>
+                            )}
+
+                          </div>
+
+                        )}
+
+
+                        <div className="mt-5">
+
+                          <Link
+                            href={`/empleos/${opportunity.id}`}
+                            className="inline-flex rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-200"
+                          >
+                            VER OPORTUNIDAD
+                          </Link>
+
+                        </div>
+
+                      </div>
+
+                    )
+                  )}
+
                 </div>
+
               </div>
+
             ) : (
+
               <p className="text-sm text-slate-500">
-                No target roles available yet.
+                No real opportunities available yet.
               </p>
+
             )}
+
 
             {uniqueAlignmentFactors.length > 0 && (
               <div className="mt-6 border-t border-slate-800 pt-5">
+
                 <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-                  Matching Factors
+                  Overall Matching Factors
                 </h3>
 
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {uniqueAlignmentFactors.map((factor) => (
-                    <span
-                      key={factor}
-                      className="rounded-full border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-300"
-                    >
-                      {factor}
-                    </span>
-                  ))}
+
+                  {uniqueAlignmentFactors.map(
+                    (factor) => (
+
+                      <span
+                        key={factor}
+                        className="rounded-full border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-300"
+                      >
+                        {factor}
+                      </span>
+
+                    )
+                  )}
+
                 </div>
+
               </div>
             )}
+
           </div>
         </section>
 

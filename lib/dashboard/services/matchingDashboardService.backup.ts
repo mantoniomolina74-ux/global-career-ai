@@ -56,5 +56,6 @@ export async function getMatchingDashboardInsight(
         .map(job => job.title ?? ""),
 
     alignmentFactors: [],
+    opportunities: [],
   };
 }

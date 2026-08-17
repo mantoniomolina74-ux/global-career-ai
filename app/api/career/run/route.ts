@@ -1,211 +1,369 @@
 import { NextResponse } from "next/server";
 
 import { CareerRunSchema } from "@/lib/api/schemas/careerSchema";
+
 import {
-validateCareerOrchestratorInput,
+  validateCareerOrchestratorInput,
 } from "@/lib/validation/orchestrator";
 
-import { runCareerOrchestratorV7 } from "@/lib/engine/orchestration/careerOrchestrator.v7";
+import {
+  runCareerOrchestratorV7,
+} from "@/lib/engine/orchestration/careerOrchestrator.v7";
 
 import {
-buildCareerState,
+  buildCareerState,
 } from "@/lib/engine/builders/careerStateBuilder";
 
-import { buildSaaSRequestContext } from "@/lib/api/middleware/saasGuard";
+import {
+  buildSaaSRequestContext,
+} from "@/lib/api/middleware/saasGuard";
+
 
 /**
+ * ============================================================
+ * Global Career AI
+ * API Layer V1.2
+ * ============================================================
+ *
+ * Production entry point for Career Intelligence.
+ *
+ * Responsibilities:
+ * - Validate API input
+ * - Preserve SaaS tenant context
+ * - Normalize API data into Engine contracts
+ * - Execute Career Orchestrator
+ * - Compose CareerState
+ *
+ * No intelligence logic.
+ * No scoring logic.
+ * No dashboard logic.
+ * ============================================================
+ */
 
-* ============================================================
-* Global Career AI
-* API Layer V1 (Production Entry Point)
-* ============================================================
-  */
+
+/**
+ * ============================================================
+ * APPLICATION INPUT
+ * ============================================================
+ *
+ * Represents the API application payload before normalization.
+ *
+ * Real job identity is intentionally preserved here so it can
+ * travel through the Engine Layer into Matching Intelligence.
+ */
 
 type ApplicationInput = {
-applicationId?: string;
-candidateSkills?: string[];
-jobDescription?: string;
-cvStrengthScore?: number;
+
+  applicationId?: string;
+
+  /**
+   * Real job information.
+   */
+
+  title?: string;
+
+  industry?: string;
+
+  country?: string;
+
+
+  /**
+   * Candidate / matching information.
+   */
+
+  candidateSkills?: string[];
+
+  jobDescription?: string;
+
+
+  /**
+   * ATS input.
+   */
+
+  cvStrengthScore?: number;
+
 };
 
-export async function POST(req: Request) {
-try {
-const body = await req.json();
+
+export async function POST(
+  req: Request
+) {
+
+  try {
+
+    const body =
+      await req.json();
 
 
-const saasContext =
-  await buildSaaSRequestContext(req);
+    /**
+     * ============================================================
+     * SAAS CONTEXT
+     * ============================================================
+     */
+
+    const saasContext =
+      await buildSaaSRequestContext(
+        req
+      );
 
 
-/**
- * ============================================================
- * API VALIDATION LAYER
- * ============================================================
- */
+    /**
+     * ============================================================
+     * API VALIDATION LAYER
+     * ============================================================
+     */
 
-const parsed =
-  CareerRunSchema.safeParse(body);
+    const parsed =
+      CareerRunSchema.safeParse(
+        body
+      );
 
 
-if (!parsed.success) {
-  return NextResponse.json(
-    {
-      error: "Invalid input schema",
-      details: parsed.error.flatten(),
-    },
-    {
-      status: 400,
+    if (!parsed.success) {
+
+      return NextResponse.json(
+
+        {
+          error:
+            "Invalid input schema",
+
+          details:
+            parsed.error.flatten(),
+        },
+
+        {
+          status: 400,
+        }
+
+      );
+
     }
-  );
-}
 
 
-/**
- * ============================================================
- * NORMALIZATION LAYER
- * Adapt API shape → CareerOrchestratorInput
- * ============================================================
- */
+    /**
+     * ============================================================
+     * NORMALIZATION LAYER
+     * ============================================================
+     *
+     * Adapt API shape → CareerOrchestratorInput.
+     *
+     * IMPORTANT:
+     * Real job identity must not be discarded here.
+     */
 
-  const normalizedInput = {
+    const normalizedInput = {
 
-  userId:
-    parsed.data.userId,
-
-  tenantId:
-    saasContext.tenant.tenantId,
-
-
-  profile: {
-    professionalText:
-      parsed.data.profile?.professionalText,
-  },
+      userId:
+        parsed.data.userId,
 
 
-  candidateSkills:
-    parsed.data.candidateSkills ?? [],
+      tenantId:
+        saasContext.tenant.tenantId,
 
 
-  requiredSkills:
-    parsed.data.requiredSkills ?? [],
+      profile: {
+
+        professionalText:
+          parsed.data.profile
+            ?.professionalText,
+
+      },
 
 
-  jobDescription:
-    parsed.data.jobDescription ?? "",
+      candidateSkills:
+        parsed.data.candidateSkills ?? [],
 
 
-  cvStrengthScore:
-    parsed.data.cvStrengthScore ?? 0,
+      requiredSkills:
+        parsed.data.requiredSkills ?? [],
 
 
-  applications:
-    parsed.data.applications.map(
-      (app: ApplicationInput) => ({
-
-        applicationId:
-          app.applicationId ??
-          `app-${Date.now()}`,
-
-        candidateSkills:
-          app.candidateSkills ?? [],
-
-        jobDescription:
-          app.jobDescription ?? "",
-
-        cvStrengthScore:
-          app.cvStrengthScore ?? 0,
-
-      })
-    ),
+      jobDescription:
+        parsed.data.jobDescription ?? "",
 
 
-  rankingStrategy:
-    parsed.data.rankingStrategy,
+      cvStrengthScore:
+        parsed.data.cvStrengthScore ?? 0,
 
 
-  topK:
-    parsed.data.topK,
-};
+      /**
+       * ==========================================================
+       * APPLICATIONS
+       * ==========================================================
+       *
+       * Preserve real job information:
+       *
+       * applicationId
+       * title
+       * industry
+       * country
+       * jobDescription
+       *
+       * These values continue through:
+       *
+       * API
+       * ↓
+       * CareerApplication
+       * ↓
+       * MatchingInputAdapter
+       * ↓
+       * Matching Engine
+       * ↓
+       * MatchingState
+       * ↓
+       * Dashboard
+       */
+
+      applications:
+        parsed.data.applications.map(
+          (app: ApplicationInput) => ({
+
+            applicationId:
+              app.applicationId ??
+              `app-${Date.now()}`,
 
 
-/**
- * ============================================================
- * CORE CONTRACT VALIDATION
- * Runtime protection before Engine execution
- * ============================================================
- */
+            /**
+             * Real job identity.
+             */
 
-const validatedInput =
-  validateCareerOrchestratorInput(
-    normalizedInput
-  );
+            title:
+              app.title,
 
 
-/**
- * ============================================================
- * CORE ENGINE EXECUTION
- * ============================================================
- */
-
-const result =
-  await runCareerOrchestratorV7(
-    validatedInput
-  );
+            industry:
+              app.industry,
 
 
-/**
- * ============================================================
- * CAREER INTELLIGENCE STATE
- * Compose unified professional state
- * ============================================================
- */
-
-const careerState =
-  buildCareerState(result);
+            country:
+              app.country,
 
 
-/**
- * ============================================================
- * RESPONSE
- * ============================================================
- */
+            /**
+             * Candidate / matching data.
+             */
 
-return NextResponse.json({
-
-  success: true,
-
-  data: {
-
-    ...result,
-
-    careerState,
-
-  },
-
-});
+            candidateSkills:
+              app.candidateSkills ?? [],
 
 
-} catch (error: unknown) {
+            jobDescription:
+              app.jobDescription ?? "",
 
-return NextResponse.json(
 
-  {
-    success: false,
+            /**
+             * ATS data.
+             */
 
-    error:
-      "Internal Server Error",
+            cvStrengthScore:
+              app.cvStrengthScore ?? 0,
 
-    message:
-      error instanceof Error
-        ? error.message
-        : "Unknown error",
-  },
+          })
+        ),
 
-  {
-    status: 500,
+
+      /**
+       * ==========================================================
+       * OPTIONAL RANKING PARAMETERS
+       * ==========================================================
+       */
+
+      rankingStrategy:
+        parsed.data.rankingStrategy,
+
+
+      topK:
+        parsed.data.topK,
+
+    };
+
+
+    /**
+     * ============================================================
+     * CORE CONTRACT VALIDATION
+     * ============================================================
+     *
+     * Runtime protection before Engine execution.
+     */
+
+    const validatedInput =
+      validateCareerOrchestratorInput(
+        normalizedInput
+      );
+
+
+    /**
+     * ============================================================
+     * CORE ENGINE EXECUTION
+     * ============================================================
+     */
+
+    const result =
+      await runCareerOrchestratorV7(
+        validatedInput
+      );
+
+
+    /**
+     * ============================================================
+     * CAREER INTELLIGENCE STATE
+     * ============================================================
+     *
+     * Compose the unified professional state after all
+     * intelligence engines have completed.
+     */
+
+    const careerState =
+      buildCareerState(
+        result
+      );
+
+
+    /**
+     * ============================================================
+     * RESPONSE
+     * ============================================================
+     */
+
+    return NextResponse.json({
+
+      success: true,
+
+      data: {
+
+        ...result,
+
+        careerState,
+
+      },
+
+    });
+
+
+  } catch (
+    error: unknown
+  ) {
+
+    return NextResponse.json(
+
+      {
+        success: false,
+
+        error:
+          "Internal Server Error",
+
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unknown error",
+      },
+
+      {
+        status: 500,
+      }
+
+    );
+
   }
 
-);
-
 }
-  }

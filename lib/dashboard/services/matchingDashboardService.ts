@@ -1,7 +1,7 @@
 /**
  * ============================================================
  * Global Career AI
- * Matching Dashboard Service V1.2
+ * Matching Dashboard Service V1.2.1
  * ============================================================
  *
  * Source of truth:
@@ -74,6 +74,7 @@ export async function getMatchingDashboardInsight(
     .limit(1)
     .maybeSingle();
 
+
   console.log("[MATCHING CV DEBUG]", {
     userId: context.userId,
     cvFound: !!cv,
@@ -81,6 +82,7 @@ export async function getMatchingDashboardInsight(
     skills: cv?.skills ?? null,
     industries: cv?.industries ?? null,
   });
+
 
   if (cvError) {
 
@@ -100,9 +102,15 @@ export async function getMatchingDashboardInsight(
   if (!cv) {
 
     return {
+
       matchScore: 0,
+
       targetRoles: [],
+
       alignmentFactors: [],
+
+      opportunities: [],
+
     };
 
   }
@@ -133,15 +141,20 @@ export async function getMatchingDashboardInsight(
    */
 
   const {
-    data: jobs,
-    error: jobsError,
-  } = await supabaseServer
-    .from("jobs")
-    .select("*")
-    .eq(
-      "source",
-      "hirebase"
-    );
+  data: jobs,
+  error: jobsError,
+} = await supabaseServer
+  .from("jobs")
+  .select("*")
+  .eq(
+    "source",
+    "hirebase"
+  )
+  .eq(
+    "country",
+    "Canada"
+  );
+
 
   console.log("[MATCHING JOBS DEBUG]", {
     userId: context.userId,
@@ -156,6 +169,7 @@ export async function getMatchingDashboardInsight(
       : null,
   });
 
+
   if (jobsError) {
 
     throw new Error(
@@ -168,9 +182,15 @@ export async function getMatchingDashboardInsight(
   if (!jobs || jobs.length === 0) {
 
     return {
+
       matchScore: 0,
+
       targetRoles: [],
+
       alignmentFactors: [],
+
+      opportunities: [],
+
     };
 
   }
@@ -190,6 +210,7 @@ export async function getMatchingDashboardInsight(
         industries,
       }
     );
+
 
   console.log("[MATCHING DASHBOARD DEBUG]", {
     userId: context.userId,
@@ -214,15 +235,22 @@ export async function getMatchingDashboardInsight(
     })),
   });
 
+
   if (
     !result.items ||
     result.items.length === 0
   ) {
 
     return {
+
       matchScore: 0,
+
       targetRoles: [],
+
       alignmentFactors: [],
+
+      opportunities: [],
+
     };
 
   }
@@ -242,8 +270,32 @@ export async function getMatchingDashboardInsight(
    * Therefore the score is calculated from the top 5 matches.
    */
 
-  const topMatches =
-    result.items.slice(0, 5);
+  const eligibleMatches =
+  result.items.filter(
+    (item) =>
+      item.match_score > 0
+  );
+
+
+if (eligibleMatches.length === 0) {
+
+  return {
+
+    matchScore: 0,
+
+    targetRoles: [],
+
+    alignmentFactors: [],
+
+    opportunities: [],
+
+  };
+
+}
+
+
+const topMatches =
+  eligibleMatches.slice(0, 5);
 
 
   const matchScore =
@@ -282,6 +334,64 @@ export async function getMatchingDashboardInsight(
     ];
 
 
+  /**
+   * ============================================================
+   * REAL OPPORTUNITIES
+   * ============================================================
+   *
+   * Preserve real Matching Engine output.
+   *
+   * No generated titles.
+   * No fabricated reasons.
+   * No inferred candidate evidence.
+   */
+
+  const opportunities =
+    topMatches
+      .filter(
+        (
+          item
+        ): item is typeof item & {
+          title: string;
+        } =>
+          typeof item.title === "string" &&
+          item.title.trim().length > 0
+      )
+      .map(
+        (item) => ({
+
+          id:
+            item.id,
+
+          title:
+            item.title,
+
+          matchScore:
+            item.match_score,
+
+          country:
+            item.country,
+
+          reasons:
+            (item.match_reasons ?? [])
+              .filter(
+                (reason): reason is string =>
+                  typeof reason === "string" &&
+                  reason.trim().length > 0
+              ),
+
+          matchedSkills:
+            item.match_explanation
+              ?.matched_skills ?? [],
+
+          matchedIndustries:
+            item.match_explanation
+              ?.matched_industries ?? [],
+
+        })
+      );
+
+
   return {
 
     matchScore,
@@ -289,6 +399,8 @@ export async function getMatchingDashboardInsight(
     targetRoles,
 
     alignmentFactors,
+
+    opportunities,
 
   };
 

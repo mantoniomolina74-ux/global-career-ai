@@ -179,87 +179,35 @@ export function scoreJobs(
 
 
   return jobs
-      .map((job) => {
+    .map((job) => {
 
       let score = 0;
 
 
       const fields = {
-  title: normalizeText(job.title ?? ""),
-  description: normalizeText(job.description ?? ""),
-  industry: normalizeText(job.industry ?? ""),
-  category: normalizeText(job.category ?? ""),
-  tags: normalizeText(job.tags ?? ""),
-};
-    const text = Object.values(fields).join(" ");
+        title: normalizeText(job.title ?? ""),
+        description: normalizeText(job.description ?? ""),
+        industry: normalizeText(job.industry ?? ""),
+        category: normalizeText(job.category ?? ""),
+        tags: normalizeText(job.tags ?? ""),
+      };
 
-      const skillFieldMultiplier = (skill: string): number => {
-  if (matchesConcept(fields.title, skill)) {
-    return SCORING_WEIGHTS.context.title;
-  }
 
-  if (matchesConcept(fields.industry, skill)) {
-    return SCORING_WEIGHTS.context.industry;
-  }
+      const text = Object.values(fields).join(" ");
 
-  if (matchesConcept(fields.category, skill)) {
-    return SCORING_WEIGHTS.context.category;
-  }
 
-  if (matchesConcept(fields.tags, skill)) {
-    return SCORING_WEIGHTS.context.tags;
-  }
+      skills.forEach((skill) => {
+        if (matchesConcept(text, skill)) {
+          score += SCORING_WEIGHTS.skillsMatch;
+        }
+      });
 
-  if (matchesConcept(fields.description, skill)) {
-    return SCORING_WEIGHTS.context.description;
-  }
 
-  return 0;
-};
-
-const industryFieldMultiplier = (industry: string): number => {
-  if (matchesConcept(fields.title, industry)) {
-    return SCORING_WEIGHTS.context.title;
-  }
-
-  if (matchesConcept(fields.industry, industry)) {
-    return SCORING_WEIGHTS.context.industry;
-  }
-
-  if (matchesConcept(fields.category, industry)) {
-    return SCORING_WEIGHTS.context.category;
-  }
-
-  if (matchesConcept(fields.tags, industry)) {
-    return SCORING_WEIGHTS.context.tags;
-  }
-
-  if (matchesConcept(fields.description, industry)) {
-    return SCORING_WEIGHTS.context.description;
-  }
-
-  return 0;
-};
-
-skills.forEach((skill) => {
-  const multiplier = skillFieldMultiplier(skill);
-
-  if (multiplier > 0) {
-    score +=
-      SCORING_WEIGHTS.skillsMatch *
-      multiplier;
-  }
-});
-
-industries.forEach((industry) => {
-  const multiplier = industryFieldMultiplier(industry);
-
-  if (multiplier > 0) {
-    score +=
-      SCORING_WEIGHTS.industryMatch *
-      multiplier;
-  }
-});
+      industries.forEach((industry) => {
+        if (matchesConcept(text, industry)) {
+          score += SCORING_WEIGHTS.industryMatch;
+        }
+      });
 
 
       /**

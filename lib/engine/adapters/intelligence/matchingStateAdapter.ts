@@ -1,7 +1,8 @@
+
 /**
  * ============================================================
  * Global Career AI
- * Matching State Adapter V1.1
+ * Matching State Adapter V1.2.1
  * ============================================================
  *
  * Transforms Matching Engine output into Matching domain state.
@@ -22,6 +23,7 @@ import type {
 } from "@/lib/engine/contracts/matchingContracts";
 
 import type {
+  MatchingOpportunity,
   MatchingState,
 } from "@/lib/engine/contracts/intelligence/matchingState";
 
@@ -29,6 +31,12 @@ import type {
 export function buildMatchingState(
   results: MatchingResultItem[]
 ): MatchingState {
+
+  /**
+   * ============================================================
+   * EMPTY STATE
+   * ============================================================
+   */
 
   if (results.length === 0) {
     return {
@@ -43,9 +51,35 @@ export function buildMatchingState(
       evidence: [],
 
       recommendations: [],
+
+      targetRoles: [],
+
+      opportunities: [],
     };
   }
 
+
+  /**
+   * ============================================================
+   * TOP MATCHES
+   * ============================================================
+   *
+   * The Matching Engine already returns results ordered by
+   * match_score descending.
+   *
+   * The domain score represents the quality of the strongest
+   * real opportunities, therefore we use the top 5.
+   */
+
+  const bestMatches =
+    results.slice(0, 5);
+
+
+  /**
+   * ============================================================
+   * MATCHING SCORE
+   * ============================================================
+   */
 
   const average = (
     values: number[]
@@ -58,61 +92,216 @@ export function buildMatchingState(
     );
 
 
-  const bestMatches =
-    results.slice(0, 5);
-
-
-  return {
-    score: average(
-      results.map(
+  const score =
+    average(
+      bestMatches.map(
         (item) => item.match_score
       )
+    );
+
+
+  /**
+   * ============================================================
+   * CONFIDENCE
+   * ============================================================
+   *
+   * Confidence reflects the amount of real matching data
+   * available to evaluate the candidate.
+   */
+
+  const confidence =
+    Math.min(
+      results.length / 10,
+      1
+    );
+
+
+  /**
+   * ============================================================
+   * STRENGTHS
+   * ============================================================
+   *
+   * Only verified matching signals produced by the engine
+   * are exposed as strengths.
+   */
+
+  const strengths = [
+    ...new Set(
+      bestMatches.flatMap(
+        (item) =>
+          item.match_explanation?.matched_skills ?? []
+      )
     ),
+  ];
 
-    confidence:
-      results.length > 0
-        ? Math.min(
-            results.length / 10,
-            1
-          )
-        : 0,
 
-    strengths: [
-      ...new Set(
-        bestMatches.flatMap(
+  /**
+   * ============================================================
+   * WEAKNESSES
+   * ============================================================
+   *
+   * The current Matching Engine does not expose verified
+   * candidate-side missing skills.
+   *
+   * Therefore we must not infer weaknesses from:
+   * - matched industries
+   * - certifications required by a job
+   * - geography
+   *
+   * No evidence = no weakness.
+   */
+
+  const weaknesses: string[] = [];
+
+
+  /**
+   * ============================================================
+   * EVIDENCE
+   * ============================================================
+   */
+
+  const evidence = [
+    ...new Set(
+      bestMatches.flatMap(
+        (item) =>
+          item.match_reasons ?? []
+      )
+    ),
+  ];
+
+
+  /**
+   * ============================================================
+   * RECOMMENDATIONS
+   * ============================================================
+   *
+   * Preserve the real matching reasons as recommendations.
+   * These remain separate from target roles.
+   */
+
+  const recommendations = [
+    ...new Set(
+      bestMatches
+        .flatMap(
           (item) =>
-            item.match_explanation.matched_skills
+            item.match_reasons ?? []
         )
-      ),
-    ],
-
-    weaknesses: [
-      ...new Set(
-        results.flatMap(
-          (item) =>
-            item.match_explanation.matched_industries
+        .filter(
+          (reason): reason is string =>
+            typeof reason === "string" &&
+            reason.trim().length > 0
         )
-      ),
-    ],
+    ),
+  ];
 
-    evidence: [
-      ...new Set(
-        results.flatMap(
-          (item) =>
-            item.match_reasons
+
+  /**
+   * ============================================================
+   * TARGET ROLES
+   * ============================================================
+   *
+   * These are real job titles coming directly from the
+   * Matching Engine / public.jobs source.
+   *
+   * No generated or inferred role names.
+   */
+
+  const targetRoles = [
+    ...new Set(
+      bestMatches
+        .map(
+          (item) => item.title
         )
-      ),
-    ],
+        .filter(
+          (title): title is string =>
+            typeof title === "string" &&
+            title.trim().length > 0
+        )
+    ),
+  ];
 
-    recommendations: [
-      ...new Set(
-        results
-          .map(
-            (item) =>
-              item.match_reasons[0]
-          )
-          .filter(Boolean)
-      ),
-    ],
+
+  /**
+   * ============================================================
+   * REAL OPPORTUNITIES
+   * ============================================================
+   *
+   * Preserve the strongest real opportunities together with
+   * the verified signals generated by the Matching Engine.
+   *
+   * No generated titles.
+   * No fabricated explanations.
+   * No inferred candidate evidence.
+   */
+
+  const opportunities: MatchingOpportunity[] =
+    bestMatches
+      .filter(
+        (
+          item
+        ): item is MatchingResultItem & {
+          title: string;
+        } =>
+          typeof item.title === "string" &&
+          item.title.trim().length > 0
+      )
+      .map(
+        (item) => ({
+          id:
+            item.id,
+
+          title:
+            item.title,
+
+          score:
+            item.match_score,
+
+          country:
+            item.country,
+
+          reasons:
+            (item.match_reasons ?? [])
+              .filter(
+                (reason): reason is string =>
+                  typeof reason === "string" &&
+                  reason.trim().length > 0
+              ),
+
+          matchedSkills:
+            item.match_explanation
+              ?.matched_skills ?? [],
+
+          matchedIndustries:
+            item.match_explanation
+              ?.matched_industries ?? [],
+        })
+      );
+
+
+  /**
+   * ============================================================
+   * FINAL DOMAIN STATE
+   * ============================================================
+   */
+
+  return {
+
+    score,
+
+    confidence,
+
+    strengths,
+
+    weaknesses,
+
+    evidence,
+
+    recommendations,
+
+    targetRoles,
+
+    opportunities,
+
   };
+
 }

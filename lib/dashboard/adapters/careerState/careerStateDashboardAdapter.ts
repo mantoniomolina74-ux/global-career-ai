@@ -1,7 +1,8 @@
+
 /**
  * ============================================================
  * Global Career AI
- * Career State Dashboard Adapter V1.1
+ * Career State Dashboard Adapter V1.2.1
  * ============================================================
  *
  * Adapter between:
@@ -28,7 +29,6 @@ import type {
 export function adaptCareerStateToDashboard(
   careerState: CareerState
 ): DashboardIntelligence {
-
 
   const ats =
     careerState.intelligence.ats;
@@ -60,6 +60,11 @@ export function adaptCareerStateToDashboard(
 
   return {
 
+    /**
+     * ==========================================================
+     * ATS
+     * ==========================================================
+     */
 
     ats: {
 
@@ -81,19 +86,66 @@ export function adaptCareerStateToDashboard(
     },
 
 
+    /**
+     * ==========================================================
+     * MATCHING
+     * ==========================================================
+     *
+     * MatchingState is the source of truth for Career
+     * Intelligence.
+     *
+     * Opportunities are preserved from real Matching Engine
+     * results and exposed to the Dashboard without generating
+     * or inferring additional information.
+     */
+
     matching: {
 
       matchScore:
         matching?.score ?? 0,
 
       targetRoles:
-        matching?.recommendations ?? [],
+        matching?.targetRoles ?? [],
 
       alignmentFactors:
         matching?.strengths ?? [],
 
+      opportunities:
+        matching?.opportunities?.map(
+          (opportunity) => ({
+
+            id:
+              opportunity.id,
+
+            title:
+              opportunity.title,
+
+            matchScore:
+              opportunity.score,
+
+            country:
+              opportunity.country,
+
+            reasons:
+              opportunity.reasons,
+
+            matchedSkills:
+              opportunity.matchedSkills,
+
+            matchedIndustries:
+              opportunity.matchedIndustries,
+
+          })
+        ) ?? [],
+
     },
 
+
+    /**
+     * ==========================================================
+     * COMPETENCY
+     * ==========================================================
+     */
 
     competency: {
 
@@ -109,6 +161,12 @@ export function adaptCareerStateToDashboard(
     },
 
 
+    /**
+     * ==========================================================
+     * KNOWLEDGE
+     * ==========================================================
+     */
+
     knowledge: {
 
       dominantDomains:
@@ -117,16 +175,20 @@ export function adaptCareerStateToDashboard(
             domain.domain.name
         ) ?? [],
 
-
       averageScore:
         knowledge?.averageScore ?? 0,
-
 
       knowledgeGaps:
         [],
 
     },
 
+
+    /**
+     * ==========================================================
+     * APPLICATION
+     * ==========================================================
+     */
 
     application: {
 
@@ -154,6 +216,12 @@ export function adaptCareerStateToDashboard(
     },
 
 
+    /**
+     * ==========================================================
+     * LEARNING
+     * ==========================================================
+     */
+
     learning: {
 
       activePatterns:
@@ -177,6 +245,12 @@ export function adaptCareerStateToDashboard(
     },
 
 
+    /**
+     * ==========================================================
+     * DECISION
+     * ==========================================================
+     */
+
     decision: {
 
       recommendations:
@@ -192,19 +266,24 @@ export function adaptCareerStateToDashboard(
 
     },
 
-
   };
 
 }
 
 
 /**
+ * ============================================================
  * Safe extraction helpers
+ * ============================================================
  *
- * CareerState keeps learning and decision
- * contracts flexible during V1.1 evolution.
+ * CareerState keeps learning and decision contracts flexible
+ * during V1.1 evolution.
  */
 
+
+/**
+ * Extracts a string array safely from an unknown source.
+ */
 
 function extractLearningArray(
   source: unknown,
@@ -233,6 +312,9 @@ function extractLearningArray(
 }
 
 
+/**
+ * Extracts confidence safely from an unknown source.
+ */
 
 function extractConfidence(
   source: unknown

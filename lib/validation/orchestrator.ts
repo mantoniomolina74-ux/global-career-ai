@@ -15,6 +15,10 @@ export const ApplicationReferenceSchema = z.object({
   company: z.string().optional(),
   position: z.string().optional(),
 
+  title: z.string().optional(),
+  industry: z.string().optional(),
+  country: z.string().optional(),
+
   jobDescription: z.string().optional(),
 
   requiredSkills: z.array(z.string()).optional(),

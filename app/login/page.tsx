@@ -1,24 +1,24 @@
-"use client";
+﻿"use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mensaje, setMensaje] = useState("");
+
   const searchParams = useSearchParams();
   const jobId = searchParams.get("jobId");
 
   const login = async () => {
-
     const supabase = createSupabaseBrowserClient();
 
     const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-});
+      email,
+      password,
+    });
 
     if (error) {
       console.log(error);
@@ -26,7 +26,6 @@ export default function LoginPage() {
       return;
     }
 
-    // Guardar usuario en localStorage para uso en toda la app
     if (data?.user?.id) {
       localStorage.setItem("user_id", data.user.id);
     }
@@ -34,10 +33,10 @@ export default function LoginPage() {
     setMensaje("Inicio de sesión exitoso");
 
     setTimeout(() => {
-  window.location.href = jobId
-  ? `/applications?jobId=${encodeURIComponent(jobId)}`
-  : "/dashboard";
-}, 1000);
+      window.location.href = jobId
+        ? `/applications?jobId=${encodeURIComponent(jobId)}`
+        : "/dashboard";
+    }, 1000);
   };
 
   return (
@@ -89,5 +88,13 @@ export default function LoginPage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }

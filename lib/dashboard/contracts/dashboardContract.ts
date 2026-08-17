@@ -98,6 +98,25 @@ export interface ATSInsight {
 
 
 
+export interface OpportunityMatch {
+
+  id: string;
+
+  title: string;
+
+  matchScore: number;
+
+  country?: string;
+
+  reasons: string[];
+
+  matchedSkills: string[];
+
+  matchedIndustries: string[];
+
+}
+
+
 export interface MatchingInsight {
 
   matchScore: number;
@@ -105,6 +124,8 @@ export interface MatchingInsight {
   targetRoles: string[];
 
   alignmentFactors: string[];
+
+  opportunities: OpportunityMatch[];
 
 }
 

@@ -1,3 +1,22 @@
+/**
+ * ============================================================
+ * Global Career AI
+ * Match Reasons V1.2.1
+ * ============================================================
+ *
+ * Generates transparent explanations for Matching Engine scores.
+ *
+ * Responsibilities:
+ * - Explain verified matching signals
+ * - Identify the job field where the signal was found
+ * - Keep explanations aligned with score calculation
+ *
+ * No scoring logic.
+ * No persistence.
+ * No dashboard logic.
+ * ============================================================
+ */
+
 type MatchJobInput = {
   title?: string;
   description?: string;
@@ -10,10 +29,12 @@ type MatchJobInput = {
   requires_first_aid?: boolean;
 };
 
+
 type MatchCvInput = {
   skills?: string[];
   industries?: string[];
 };
+
 
 const MATCH_GROUPS = [
   {
@@ -27,9 +48,9 @@ const MATCH_GROUPS = [
       "miner",
       "underground",
       "subterranea",
-      "subterranea",
     ],
   },
+
   {
     name: "Heavy Equipment",
     keywords: [
@@ -45,6 +66,7 @@ const MATCH_GROUPS = [
       "tractor",
     ],
   },
+
   {
     name: "Agriculture",
     keywords: [
@@ -58,6 +80,7 @@ const MATCH_GROUPS = [
       "cultivo",
     ],
   },
+
   {
     name: "Construction",
     keywords: [
@@ -68,6 +91,7 @@ const MATCH_GROUPS = [
       "obra",
     ],
   },
+
   {
     name: "Maintenance",
     keywords: [
@@ -75,10 +99,13 @@ const MATCH_GROUPS = [
       "mantenimiento",
       "repair",
       "reparacion",
+      "reparación",
       "mecanico",
+      "mecánico",
       "mechanic",
     ],
   },
+
   {
     name: "Welding",
     keywords: [
@@ -90,97 +117,249 @@ const MATCH_GROUPS = [
   },
 ];
 
-function normalizeText(value: string = "") {
+
+function normalizeText(
+  value: string = ""
+): string {
+
   return value
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
 }
+
 
 function matchesConcept(
   text: string,
   value: string
-) {
-  const normalizedValue = normalizeText(value);
+): boolean {
 
-  const group = MATCH_GROUPS.find((item) =>
-    item.keywords.includes(normalizedValue)
-  );
+  const normalizedText =
+    normalizeText(text);
 
-  if (!group) {
-    return text.includes(normalizedValue);
+  const normalizedValue =
+    normalizeText(value);
+
+  if (!normalizedValue) {
+    return false;
   }
 
-  return group.keywords.some((keyword) =>
-    text.includes(normalizeText(keyword))
+
+  const group =
+    MATCH_GROUPS.find(
+      (item) =>
+        item.keywords.some(
+          (keyword) =>
+            normalizeText(keyword) ===
+            normalizedValue
+        )
+    );
+
+
+  if (!group) {
+
+    return normalizedText
+      .split(/\s+/)
+      .includes(normalizedValue);
+
+  }
+
+
+  return group.keywords.some(
+    (keyword) =>
+      normalizedText
+        .split(/\s+/)
+        .includes(
+          normalizeText(keyword)
+        )
   );
+
 }
+
+
+function findMatchingField(
+  job: MatchJobInput,
+  value: string
+): string | null {
+
+  const fields = [
+
+    {
+      key: "title",
+      label: "título del puesto",
+      text:
+        normalizeText(
+          job.title ?? ""
+        ),
+    },
+
+    {
+      key: "industry",
+      label: "industria",
+      text:
+        normalizeText(
+          job.industry ?? ""
+        ),
+    },
+
+    {
+      key: "category",
+      label: "categoría",
+      text:
+        normalizeText(
+          job.category ?? ""
+        ),
+    },
+
+    {
+      key: "tags",
+      label: "etiquetas",
+      text:
+        normalizeText(
+          job.tags ?? ""
+        ),
+    },
+
+    {
+      key: "description",
+      label: "descripción del puesto",
+      text:
+        normalizeText(
+          job.description ?? ""
+        ),
+    },
+
+  ];
+
+
+  const match =
+    fields.find(
+      (field) =>
+        matchesConcept(
+          field.text,
+          value
+        )
+    );
+
+
+  return match?.label ?? null;
+
+}
+
 
 export function buildMatchReasons(
   job: MatchJobInput,
   cv: MatchCvInput
 ): string[] {
+
   const reasons: string[] = [];
 
-  const skills = Array.isArray(cv.skills)
-    ? cv.skills
-    : [];
 
-  const industries = Array.isArray(cv.industries)
-    ? cv.industries
-    : [];
+  const skills =
+    Array.isArray(cv.skills)
+      ? cv.skills
+      : [];
 
-  const text = normalizeText(
-    `${job.title || ""}
-    ${job.description || ""}
-    ${job.industry || ""}
-    ${job.category || ""}
-    ${job.tags || ""}`
+
+  const industries =
+    Array.isArray(cv.industries)
+      ? cv.industries
+      : [];
+
+
+  /**
+   * ============================================================
+   * SKILL MATCH REASONS
+   * ============================================================
+   *
+   * Field priority intentionally mirrors jobScoring.ts:
+   *
+   * title
+   * industry
+   * category
+   * tags
+   * description
+   *
+   * This ensures the explanation corresponds to the field
+   * that determines the scoring multiplier.
+   */
+
+  skills.forEach(
+    (skill) => {
+
+      const matchedField =
+        findMatchingField(
+          job,
+          skill
+        );
+
+
+      if (!matchedField) {
+        return;
+      }
+
+
+      reasons.push(
+        `Coincidencia de habilidad: ${skill} aparece en ${matchedField}.`
+      );
+
+    }
   );
 
-  const matchedSkills = skills.filter((skill) =>
-    matchesConcept(text, skill)
+
+  /**
+   * ============================================================
+   * INDUSTRY MATCH REASONS
+   * ============================================================
+   */
+
+  industries.forEach(
+    (industry) => {
+
+      const matchedField =
+        findMatchingField(
+          job,
+          industry
+        );
+
+
+      if (!matchedField) {
+        return;
+      }
+
+
+      reasons.push(
+        `Coincidencia de industria: ${industry} aparece en ${matchedField}.`
+      );
+
+    }
   );
 
-  if (matchedSkills.length > 0) {
-    reasons.push(
-      `Coincide con habilidades detectadas en tu CV (${matchedSkills.join(", ")})`
-    );
-  }
 
-  const matchedIndustries = industries.filter((industry) =>
-    matchesConcept(text, industry)
-  );
+  /**
+   * ============================================================
+   * SCORE CONSISTENCY
+   * ============================================================
+   *
+   * Certifications and geography are intentionally excluded.
+   *
+   * They may be useful metadata for the opportunity, but they
+   * do not currently contribute points to the official
+   * match_score and therefore must not be presented as reasons
+   * for the score.
+   */
 
-  if (matchedIndustries.length > 0) {
-    reasons.push(
-      `Coincide con tu experiencia en la industria ${matchedIndustries.join(", ")}`
-    );
-  }
+  return [
+    ...new Set(
+      reasons.filter(
+        (reason) =>
+          reason.trim().length > 0
+      )
+    ),
+  ];
 
-  if (job.requires_whmis) {
-    reasons.push(
-      "El puesto valora certificación WHMIS"
-    );
-  }
-
-  if (job.requires_csts) {
-    reasons.push(
-      "El puesto valora certificación CSTS"
-    );
-  }
-
-  if (job.requires_first_aid) {
-    reasons.push(
-      "El puesto valora capacitación en First Aid"
-    );
-  }
-
-  if (job.country) {
-    reasons.push(
-      `Oportunidad ubicada en ${job.country}`
-    );
-  }
-
-  return reasons;
 }

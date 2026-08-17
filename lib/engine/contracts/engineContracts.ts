@@ -33,15 +33,54 @@ import type {
 // ============================
 
 export interface CareerApplication {
+  /**
+   * ============================================================
+   * APPLICATION IDENTITY
+   * ============================================================
+   */
+
   applicationId: string;
+
+  /**
+   * Real job information.
+   *
+   * These fields originate from the real job/application
+   * and must be preserved through the Engine Layer.
+   */
+
+  title?: string;
+
+  industry?: string;
+
+  country?: string;
+
+
+  /**
+   * ============================================================
+   * CANDIDATE / JOB MATCHING INPUT
+   * ============================================================
+   */
 
   candidateSkills?: string[];
 
   jobDescription?: string;
 
+
+  /**
+   * ============================================================
+   * CV / ATS INPUT
+   * ============================================================
+   */
+
   cvStrengthScore?: number;
 
-  // ATS enrichment fields
+
+  /**
+   * ============================================================
+   * ATS ENRICHMENT
+   * ============================================================
+   */
+
   atsScore?: number;
 
   hiringScore?: number;
@@ -285,7 +324,7 @@ export interface OrchestratorResult {
 
   knowledge: unknown;
 
-  decision: unknown;
+  decision: DecisionOutput;
 
   context: LearningContext;
 

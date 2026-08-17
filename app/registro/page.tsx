@@ -1,161 +1,170 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-export default function RegistroPage() {
-const supabase = createSupabaseBrowserClient();
-const searchParams = useSearchParams();
-const jobId = searchParams.get("jobId");
+function RegistroForm() {
+  const supabase = createSupabaseBrowserClient();
+  const searchParams = useSearchParams();
+  const jobId = searchParams.get("jobId");
 
-const [nombre, setNombre] = useState("");
-const [email, setEmail] = useState("");
-const [password, setPassword] = useState("");
-const [confirmarPassword, setConfirmarPassword] = useState("");
-const [mensaje, setMensaje] = useState("");
-const [loading, setLoading] = useState(false);
+  const [nombre, setNombre] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmarPassword, setConfirmarPassword] = useState("");
+  const [mensaje, setMensaje] = useState("");
+  const [loading, setLoading] = useState(false);
 
-const registrar = async () => {
-if (!nombre || !email || !password || !confirmarPassword) {
-setMensaje("Completa todos los campos");
-return;
-}
+  const registrar = async () => {
+    if (!nombre || !email || !password || !confirmarPassword) {
+      setMensaje("Completa todos los campos");
+      return;
+    }
 
-if (password !== confirmarPassword) {
-  setMensaje("Las contraseñas no coinciden");
-  return;
-}
+    if (password !== confirmarPassword) {
+      setMensaje("Las contraseñas no coinciden");
+      return;
+    }
 
-try {
-  setLoading(true);
+    try {
+      setLoading(true);
 
-  const { error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        nombre,
-      },
-    },
-  });
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            nombre,
+          },
+        },
+      });
 
-  if (error) {
-  if (error.message.toLowerCase().includes("already registered")) {
-    setMensaje(
-      "Esta cuenta ya está registrada. Redirigiendo al inicio de sesión..."
-    );
+      if (error) {
+        if (error.message.toLowerCase().includes("already registered")) {
+          setMensaje(
+            "Esta cuenta ya está registrada. Redirigiendo al inicio de sesión..."
+          );
 
-    setTimeout(() => {
-      window.location.href = jobId
-        ? `/login?jobId=${encodeURIComponent(jobId)}`
-        : "/login";
-    }, 1500);
+          setTimeout(() => {
+            window.location.href = jobId
+              ? `/login?jobId=${encodeURIComponent(jobId)}`
+              : "/login";
+          }, 1500);
 
-    return;
-  }
+          return;
+        }
 
-  setMensaje(error.message);
-  return;
-}
+        setMensaje(error.message);
+        return;
+      }
 
-  setMensaje("Cuenta creada correctamente");
+      setMensaje("Cuenta creada correctamente");
 
-  setTimeout(() => {
-    window.location.href = jobId
-  ? `/login?jobId=${encodeURIComponent(jobId)}`
-  : "/login";
-  }, 2000);
-} catch (err) {
-  console.error(err);
-  setMensaje("Error al crear la cuenta");
-} finally {
-  setLoading(false);
-}
+      setTimeout(() => {
+        window.location.href = jobId
+          ? `/login?jobId=${encodeURIComponent(jobId)}`
+          : "/login";
+      }, 2000);
+    } catch (err) {
+      console.error(err);
+      setMensaje("Error al crear la cuenta");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  return (
+    <main className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
+      <div className="bg-white shadow-2xl rounded-2xl p-10 w-full max-w-md border border-slate-200">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-extrabold text-slate-900">
+            Global Career AI
+          </h1>
 
-};
+          <p className="text-slate-600 mt-2">
+            Crea tu cuenta y accede a oportunidades internacionales
+          </p>
+        </div>
 
-return ( <main className="min-h-screen bg-slate-50 flex items-center justify-center px-6"> <div className="bg-white shadow-2xl rounded-2xl p-10 w-full max-w-md border border-slate-200"> <div className="text-center mb-8"> <h1 className="text-4xl font-extrabold text-slate-900">
-Global Career AI </h1>
+        <div className="mb-4">
+          <label className="block mb-2 font-medium text-slate-700">
+            Nombre completo
+          </label>
 
-      <p className="text-slate-600 mt-2">
-        Crea tu cuenta y accede a oportunidades internacionales
-      </p>
-    </div>
+          <input
+            type="text"
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            placeholder="Tu nombre completo"
+            className="w-full p-3 border border-slate-300 rounded-lg text-slate-900"
+          />
+        </div>
 
-    <div className="mb-4">
-      <label className="block mb-2 font-medium text-slate-700">
-        Nombre completo
-      </label>
+        <div className="mb-4">
+          <label className="block mb-2 font-medium text-slate-700">
+            Correo electrónico
+          </label>
 
-      <input
-        type="text"
-        value={nombre}
-        onChange={(e) => setNombre(e.target.value)}
-        placeholder="Tu nombre completo"
-        className="w-full p-3 border border-slate-300 rounded-lg text-slate-900"
-      />
-    </div>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="correo@ejemplo.com"
+            className="w-full p-3 border border-slate-300 rounded-lg text-slate-900"
+          />
+        </div>
 
-    <div className="mb-4">
-      <label className="block mb-2 font-medium text-slate-700">
-        Correo electrónico
-      </label>
+        <div className="mb-4">
+          <label className="block mb-2 font-medium text-slate-700">
+            Contraseña
+          </label>
 
-      <input
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="correo@ejemplo.com"
-        className="w-full p-3 border border-slate-300 rounded-lg text-slate-900"
-      />
-    </div>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="********"
+            className="w-full p-3 border border-slate-300 rounded-lg text-slate-900"
+          />
+        </div>
 
-    <div className="mb-4">
-      <label className="block mb-2 font-medium text-slate-700">
-        Contraseña
-      </label>
+        <div className="mb-6">
+          <label className="block mb-2 font-medium text-slate-700">
+            Confirmar contraseña
+          </label>
 
-      <input
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder="********"
-        className="w-full p-3 border border-slate-300 rounded-lg text-slate-900"
-      />
-    </div>
+          <input
+            type="password"
+            value={confirmarPassword}
+            onChange={(e) => setConfirmarPassword(e.target.value)}
+            placeholder="********"
+            className="w-full p-3 border border-slate-300 rounded-lg text-slate-900"
+          />
+        </div>
 
-    <div className="mb-6">
-      <label className="block mb-2 font-medium text-slate-700">
-        Confirmar contraseña
-      </label>
+        <button
+          onClick={registrar}
+          disabled={loading}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold transition"
+        >
+          {loading ? "Creando cuenta..." : "Crear Cuenta"}
+        </button>
 
-      <input
-        type="password"
-        value={confirmarPassword}
-        onChange={(e) => setConfirmarPassword(e.target.value)}
-        placeholder="********"
-        className="w-full p-3 border border-slate-300 rounded-lg text-slate-900"
-      />
-    </div>
-
-    <button
-      onClick={registrar}
-      disabled={loading}
-      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold transition"
-    >
-      {loading ? "Creando cuenta..." : "Crear Cuenta"}
-    </button>
-
-    {mensaje && (
-      <div className="mt-5 text-center font-semibold text-slate-800">
-        {mensaje}
+        {mensaje && (
+          <div className="mt-5 text-center font-semibold text-slate-800">
+            {mensaje}
+          </div>
+        )}
       </div>
-    )}
-  </div>
-</main>
+    </main>
+  );
+}
 
-
-);
+export default function RegistroPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegistroForm />
+    </Suspense>
+  );
 }
