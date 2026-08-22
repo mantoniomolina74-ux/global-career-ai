@@ -1,10 +1,10 @@
-﻿"use client";
+"use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-export default function NewApplicationPage() {
+function NewApplicationContent() {
   const searchParams = useSearchParams();
   const jobId = searchParams.get("jobId");
 
@@ -106,3 +106,25 @@ export default function NewApplicationPage() {
     </main>
   );
 }
+  
+  export default function NewApplicationPage() {
+    return (
+      <Suspense
+        fallback={
+          <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6">
+            <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-xl">
+              <h1 className="text-2xl font-bold text-slate-900">
+                Cargando...
+              </h1>
+
+              <p className="mt-4 text-sm leading-6 text-slate-600">
+                Preparando la aplicación...
+              </p>
+            </div>
+          </main>
+        }
+      >
+        <NewApplicationContent />
+      </Suspense>
+    );
+  }

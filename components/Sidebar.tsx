@@ -13,7 +13,6 @@ export default function Sidebar() {
         <Link href="/applications">Postulaciones</Link>
         <Link href="/cv">CV</Link>
         <Link href="/empleos">Empleos</Link>
-        <Link href="/insights">Insights IA</Link>
         <Link href="/visa">Visa Engine</Link>
       </nav>
     </aside>

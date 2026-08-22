@@ -34,7 +34,7 @@ function LoginForm() {
 
     setTimeout(() => {
       window.location.href = jobId
-        ? `/applications?jobId=${encodeURIComponent(jobId)}`
+        ? `/applications/new?jobId=${encodeURIComponent(jobId)}`
         : "/dashboard";
     }, 1000);
   };
