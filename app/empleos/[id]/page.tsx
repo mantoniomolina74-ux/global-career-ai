@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { getJobById } from "@/lib/jobs/getJobById";
+import { createSupabaseServerAuth } from "@/lib/supabase/server";
 
 type JobDetailPageProps = {
   params: Promise<{
@@ -22,6 +23,11 @@ export default async function JobDetailPage({
   params,
 }: JobDetailPageProps) {
   const { id } = await params;
+  const supabase = await createSupabaseServerAuth();
+
+const {
+  data: { user },
+} = await supabase.auth.getUser();
 
   const job = await getJobById(id);
 
@@ -100,7 +106,11 @@ export default async function JobDetailPage({
               </div>
 
               <Link
-                href={`/registro?jobId=${encodeURIComponent(job.id)}`}
+                href={
+                 user
+                  ? `/applications/new?jobId=${encodeURIComponent(job.id)}`
+                  : `/registro?jobId=${encodeURIComponent(job.id)}`
+}
                 className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700"
               >
                 CONTINUAR CON LA APLICACIÓN

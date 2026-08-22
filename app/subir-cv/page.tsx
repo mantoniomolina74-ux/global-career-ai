@@ -36,7 +36,7 @@ export default function SubirCVPage() {
       throw new Error("No file selected");
     }
 
-    const fileName = `cvs/${Date.now()}-${file.name}`;
+    const fileName = `cvs/${crypto.randomUUID()}-${file.name}`;
 
     const { error: uploadError } = await supabase.storage
       .from("cvs")

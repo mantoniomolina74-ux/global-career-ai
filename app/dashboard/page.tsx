@@ -57,8 +57,6 @@ export default async function DashboardPage() {
 
   const analytics = data.analytics;
 
-  const atsScore = analytics.ats?.score ?? 0;
-
   const matchingScore = analytics.matching?.matchScore ?? 0;
 
   const strengths = analytics.ats?.strengths ?? [];
@@ -143,7 +141,7 @@ export default async function DashboardPage() {
           </p>
         </header>
 
-        {/* PERFORMANCE */}
+                          {/* PERFORMANCE */}
         <section className="mb-8">
           <div className="mb-4">
             <h2 className="text-xl font-semibold">
@@ -157,37 +155,9 @@ export default async function DashboardPage() {
 
           <div className="grid gap-4 sm:grid-cols-2">
 
-            {/* ATS */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-              <p className="text-sm font-medium uppercase tracking-wide text-slate-500">
-                ATS Score
-              </p>
-
-              <div className="mt-3 flex items-end gap-2">
-                <span className="text-5xl font-bold">
-                  {atsScore}
-                </span>
-
-                <span className="mb-1 text-slate-500">
-                  / 100
-                </span>
-              </div>
-
-              <p className="mt-3 text-sm text-slate-400">
-                Based on your latest CV analysis.
-              </p>
-
-              <Link
-                href="/cv"
-                className="mt-5 inline-flex rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
-              >
-                VER MI CV
-              </Link>
-            </div>
-
             {/* MATCHING */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-              <p className="text-sm font-medium uppercase tracking-wide text-slate-500">
+            <div className="rounded-2xl border border-slate-700 bg-slate-900 p-6">
+              <p className="text-sm font-medium uppercase tracking-wide text-slate-400">
                 Opportunity Matching
               </p>
 
@@ -201,9 +171,12 @@ export default async function DashboardPage() {
                 </span>
               </div>
 
-              <p className="mt-3 text-sm text-slate-400">
-                Based on your strongest real job matches.
-              </p>
+              <p className="mt-3 text-sm leading-6 text-slate-400">
+  Your profile currently has a limited match with the available
+  opportunities. Explore the opportunities below to see where your
+  professional profile aligns and why.
+               </p>
+
 
               <Link
                 href="/empleos"
@@ -213,9 +186,32 @@ export default async function DashboardPage() {
               </Link>
             </div>
 
+            {/* PROFESSIONAL PROFILE */}
+<div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
+  <p className="text-sm font-medium uppercase tracking-wide text-slate-500">
+    Professional Profile
+  </p>
+
+  <div className="mt-3">
+    <span className="text-2xl font-bold text-white">
+      Profile analyzed
+    </span>
+  </div>
+
+  <p className="mt-3 text-sm text-slate-400">
+    Your professional profile has been analyzed from your latest CV.
+  </p>
+
+  <Link
+    href="/cv"
+    className="mt-5 inline-flex rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+  >
+    VER MI CV
+  </Link>
+</div>
+
           </div>
         </section>
-
         {/* PROFESSIONAL STRENGTHS */}
         <section className="mb-8">
           <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
@@ -246,13 +242,19 @@ export default async function DashboardPage() {
               </p>
             )}
 
-            {improvements.length > 0 && (
+                                {improvements.length > 0 && (
               <div className="mt-6 border-t border-slate-800 pt-5">
                 <h3 className="text-sm font-semibold text-slate-300">
-                  Areas for improvement
+                  What Could Improve Your Opportunities
                 </h3>
 
-                <div className="mt-3 flex flex-wrap gap-2">
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
+                  These areas were identified from your current CV analysis.
+                  Strengthening them may help your profile align with a wider
+                  range of relevant opportunities.
+                </p>
+
+                <div className="mt-4 flex flex-wrap gap-2">
                   {improvements.map((item) => (
                     <span
                       key={item}
@@ -263,6 +265,37 @@ export default async function DashboardPage() {
                   ))}
                 </div>
               </div>
+            )}
+          </div>
+        </section>
+                {/* TARGET ROLES */}
+        <section className="mb-8">
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
+            <div className="mb-5">
+              <h2 className="text-xl font-semibold">
+                Target Roles
+              </h2>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Roles identified as relevant to your current professional profile.
+              </p>
+            </div>
+
+            {uniqueTargetRoles.length > 0 ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {uniqueTargetRoles.map((role) => (
+                  <div
+                    key={role}
+                    className="rounded-xl border border-slate-800 bg-slate-950 p-4 text-slate-300"
+                  >
+                    {role}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500">
+                No target roles identified yet.
+              </p>
             )}
           </div>
         </section>
@@ -333,26 +366,35 @@ export default async function DashboardPage() {
 
                         </div>
 
-                         {opportunity.reasons.length > 0 && (
-  <div className="mt-3">
-    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-      Match Reasons
-    </p>
+                                                 <div className="mt-3">
+                          <p className="text-sm leading-6 text-slate-400">
+                            This score represents how closely your current
+                            professional profile aligns with this specific
+                            opportunity, based on matching evidence identified
+                            by the Matching Engine.
+                          </p>
+                        </div>
 
-    <div className="mt-2 space-y-2">
-      {opportunity.reasons.map(
-        (reason) => (
-          <p
-            key={`${opportunity.id}-reason-${reason}`}
-            className="text-sm leading-6 text-slate-300"
-          >
-            {reason}
-          </p>
-        )
-      )}
-    </div>
-  </div>
-)}
+                        {opportunity.reasons.length > 0 && (
+                          <div className="mt-4">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                               Match Evidence
+                            </p>
+
+                            <div className="mt-2 space-y-2">
+                              {opportunity.reasons.map(
+                                (reason) => (
+                                  <p
+                                    key={`${opportunity.id}-reason-${reason}`}
+                                    className="text-sm leading-6 text-slate-300"
+                                  >
+                                    {reason}
+                                  </p>
+                                )
+                              )}
+                            </div>
+                          </div>
+                        )}
                         {(opportunity.matchedSkills.length > 0 ||
                           opportunity.matchedIndustries.length > 0) && (
 

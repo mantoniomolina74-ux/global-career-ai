@@ -18,6 +18,7 @@
 
 import type {
   DashboardContract,
+  DashboardIntelligence,
 } from "../contracts/dashboardContract";
 
 import type {
@@ -76,29 +77,158 @@ export async function aggregateDashboard(
   context: DashboardContext
 ): Promise<DashboardContract> {
 
+  /**
+   * ==========================================================
+   * CAREER STATE PATH
+   * ==========================================================
+   *
+   * CareerState is the primary source of intelligence.
+   *
+   * When available, do not execute Dashboard services again.
+   * CareerState already contains:
+   *
+   * - ATSState
+   * - MatchingState
+   * - CompetencyState
+   * - KnowledgeState
+   * - ApplicationState
+   * - Learning
+   * - Decision
+   *
+   * This prevents duplicate intelligence execution.
+   */
+
+  if (context.careerState) {
+
+    const dashboardIntelligence =
+      adaptCareerStateToDashboard(
+        context.careerState
+      );
+
+    return buildDashboardContract({
+
+      metadata: {
+
+        version: "1.1",
+
+        userId:
+          context.userId,
+
+        tenantId:
+          context.tenantId,
+
+        generatedAt:
+          new Date().toISOString(),
+
+      },
+
+      executiveSummary: {
+
+        overallScore: 0,
+
+        careerPosition:
+          "INITIALIZING",
+
+        mainStrengths: [],
+
+        improvementAreas: [],
+
+      },
+
+      intelligence:
+        dashboardIntelligence,
+
+      recommendations: {
+
+        priorityActions: [],
+
+        quickWins: [],
+
+        longTermGoals: [],
+
+      },
+
+      evidence: {
+
+        items: [],
+
+        overallConfidence: 0,
+
+      },
+
+      timeline: {
+
+        snapshots: [],
+
+        milestones: [],
+
+        improvements: [],
+
+        evolutionTrend:
+          "STARTING",
+
+      },
+
+      diagnostics: {
+
+        traceId:
+          crypto.randomUUID(),
+
+        processingTime: 0,
+
+        executionStatus:
+          "SUCCESS",
+
+        engineVersions: {},
+
+        warnings: [],
+
+        dataQuality: {
+
+          completeness: 0,
+
+          confidence: 0,
+
+          partialData: false,
+
+        },
+
+      },
+
+    });
+
+  }
+
+
+  /**
+   * ==========================================================
+   * LEGACY FALLBACK PATH
+   * ==========================================================
+   *
+   * Preserved temporarily for consumers that do not yet
+   * provide CareerState.
+   */
 
   const [
-  applicationInsights,
-  atsInsight,
-matchingInsight,
-
+    applicationInsights,
+    atsInsight,
+    matchingInsight,
     competencyInsight,
-
     knowledgeInsight,
-
     learningInsight,
-
   ] = await Promise.all([
-  getApplicationInsights(context.userId),
-getATSDashboardInsight(
-      context
+
+    getApplicationInsights(
+      context.userId
     ),
 
+    getATSDashboardInsight(
+      context
+    ),
 
     getMatchingDashboardInsight(
       context
     ),
-
 
     getCompetencyDashboardInsight({
 
@@ -109,7 +239,6 @@ getATSDashboardInsight(
 
     }),
 
-
     getKnowledgeDashboardInsight({
 
       ...context,
@@ -119,87 +248,67 @@ getATSDashboardInsight(
 
     }),
 
-
     getLearningDashboardInsight(
       context
     ),
 
-
   ]);
 
 
+  const dashboardIntelligence: DashboardIntelligence = {
 
-  const dashboardIntelligence =
+    ats:
+      atsInsight,
 
-    context.careerState
+    matching:
+      matchingInsight,
 
+    competency:
+      competencyInsight,
 
-      ? adaptCareerStateToDashboard(
-          context.careerState
-        )
+    knowledge:
+      knowledgeInsight,
 
+    application: {
 
-      : {
+      totalApplications:
+        applicationInsights.performance.totalApplications,
 
+      activePipeline:
+        applicationInsights.performance.activePipeline,
 
-          ats:
-            atsInsight,
+      responseRate:
+        applicationInsights.performance.responseRate,
 
+      rejectionRate:
+        applicationInsights.performance.rejectionRate,
 
-          matching:
-            matchingInsight,
+      conversionRate:
+        applicationInsights.funnel.conversionRate,
 
+      offerRate:
+        applicationInsights.funnel.offerRate,
 
-          competency:
-            competencyInsight,
+      successRate:
+        applicationInsights.funnel.successRate,
 
+    },
 
-          knowledge:
-            knowledgeInsight,
+    learning:
+      learningInsight,
 
+    decision: {
 
-          application: {
-        totalApplications:
-          applicationInsights.performance.totalApplications,
+      confidence: 0,
 
-        activePipeline:
-          applicationInsights.performance.activePipeline,
+      recommendations: [],
 
-        responseRate:
-          applicationInsights.performance.responseRate,
+    },
 
-        rejectionRate:
-          applicationInsights.performance.rejectionRate,
+  };
 
-        conversionRate:
-          applicationInsights.funnel.conversionRate,
-
-        offerRate:
-          applicationInsights.funnel.offerRate,
-
-        successRate:
-          applicationInsights.funnel.successRate,
-
-      },
-
-
-          learning:
-            learningInsight,
-
-
-          decision: {
-
-            confidence: 0,
-
-            recommendations: [],
-
-          },
-
-
-        };
 
   return buildDashboardContract({
-
 
     metadata: {
 
@@ -216,8 +325,6 @@ getATSDashboardInsight(
 
     },
 
-
-
     executiveSummary: {
 
       overallScore: 0,
@@ -231,12 +338,8 @@ getATSDashboardInsight(
 
     },
 
-
-
     intelligence:
       dashboardIntelligence,
-
-
 
     recommendations: {
 
@@ -248,8 +351,6 @@ getATSDashboardInsight(
 
     },
 
-
-
     evidence: {
 
       items: [],
@@ -257,8 +358,6 @@ getATSDashboardInsight(
       overallConfidence: 0,
 
     },
-
-
 
     timeline: {
 
@@ -272,8 +371,6 @@ getATSDashboardInsight(
         "STARTING",
 
     },
-
-
 
     diagnostics: {
 
@@ -300,7 +397,6 @@ getATSDashboardInsight(
       },
 
     },
-
 
   });
 
