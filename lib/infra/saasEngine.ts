@@ -8,7 +8,6 @@ import {
 import { eventBus } from "@/lib/events/core/eventBus";
 
 import { initLearningEventConsumer } from "@/lib/engine/events/learningEventConsumer";
-import { initLearningEngineV1 } from "@/lib/engine/learning/learningEngine.v1";
 
 import {
   runCareerOrchestratorV7,
@@ -25,7 +24,6 @@ import type {
 
 
 initLearningEventConsumer();
-initLearningEngineV1();
 
 
 type ApplicationStatus =
