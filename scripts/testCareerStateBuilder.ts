@@ -88,22 +88,10 @@ const mockResult: OrchestratorResult = {
 
 
   context: {
-  weights: {
     atsMultiplier: 1,
     rankingMultiplier: 1,
     decisionSensitivity: 1,
-    skillWeights: {},
   },
-
-  state: {
-    totalEvents: 0,
-    avgATS: 0,
-    avgDecisionScore: 0,
-    successSignals: 0,
-    rejectionSignals: 0,
-  },
-},
-
 
   summary: {
     totalApplications: 1,

@@ -7,8 +7,8 @@ import type {
 } from "./enrichedApplication";
 
 import type {
-  LearningContext,
-} from "@/lib/engine/learning/learningIntegration.v1";
+  LearningWeights,
+} from "@/lib/engine/learning/learningWeights.bridge";
 
 /**
  * ============================================================
@@ -326,7 +326,7 @@ export interface OrchestratorResult {
 
   decision: DecisionOutput;
 
-  context: LearningContext;
+  context: LearningWeights;
 
   summary: OrchestratorSummary;
 

@@ -20,8 +20,8 @@ import {
   analyzeMatchingProfile,
 } from "@/lib/engine/services/matchingProfileService";
 
-import { buildLearningContext } from "@/lib/engine/learning/learningIntegration.v1";
-import { getLearningEvents } from "@/lib/engine/learning/learningMemory.store";
+import { getLearningWeights } from "@/lib/engine/learning/learningWeights.bridge";
+
 
 import {
   initialize,
@@ -51,13 +51,7 @@ export async function runCareerOrchestratorV7(
    * ============================================================
    */
 
-  const learningContext =
-    buildLearningContext(
-      getLearningEvents()
-    );
-
-  const weights =
-    learningContext.weights;
+  const weights = getLearningWeights();
 
 
   /**
@@ -387,7 +381,7 @@ export async function runCareerOrchestratorV7(
       decisions[0],
 
 
-    context: learningContext,
+    context: weights,
 
 
     summary: {

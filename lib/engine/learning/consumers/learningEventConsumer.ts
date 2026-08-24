@@ -16,6 +16,7 @@ import {
 } from "../semanticMemory/semanticMemory.engine";
 
 import { KnowledgeEngine } from "../knowledge/knowledgeEngine";
+import { updateLearningWeights } from "../learningWeights.bridge";
 import { LearningToKnowledgeBridge } from "../knowledge/integration/learningToKnowledge.bridge";
 
 import {
@@ -324,9 +325,13 @@ export function processLearningEventBatch(
   );
 
 
-  return applyLearningStep(
+  const nextState = applyLearningStep(
     currentState,
     weightSignals,
     history,
   );
+
+  updateLearningWeights(nextState);
+
+  return nextState;
 }
