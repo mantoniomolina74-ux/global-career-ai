@@ -5,7 +5,6 @@ import {
 
 interface ScoringPipelineInput {
   applications?: ScoringApplication[];
-  knowledgeContext?: unknown;
 }
 
 interface ScoringApplication {

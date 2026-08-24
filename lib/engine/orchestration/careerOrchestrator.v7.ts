@@ -23,10 +23,6 @@ import {
 import { getLearningWeights } from "@/lib/engine/learning/learningWeights.bridge";
 
 
-import {
-  initialize,
-  searchSimilar,
-} from "@/lib/engine/learning/semantic/semanticMemory.service";
 
 import { emitLearning } from "@/lib/engine/learning/learningEventBus";
 
@@ -52,26 +48,6 @@ export async function runCareerOrchestratorV7(
    */
 
   const weights = getLearningWeights();
-
-
-  /**
-   * ============================================================
-   * STEP 0B — SEMANTIC MEMORY
-   * ============================================================
-   */
-
-  initialize();
-
-  const semanticContext =
-    searchSimilar({
-      candidateSkills:
-        input.candidateSkills || [],
-    });
-
-
-  const knowledgeContext =
-    semanticContext;
-
 
   /**
    * ============================================================
@@ -214,8 +190,6 @@ export async function runCareerOrchestratorV7(
     await runScoringPipeline({
       applications:
         enrichedApplications,
-
-      knowledgeContext,
     });
 
 
@@ -311,8 +285,6 @@ export async function runCareerOrchestratorV7(
     context: {
       action: "DECISION_CREATED",
       decision: decisions,
-      semanticContext,
-      knowledgeContext,
     },
 
     payload: {
@@ -371,12 +343,6 @@ export async function runCareerOrchestratorV7(
       confidence:
         systemConfidence,
     },
-
-
-    knowledge:
-      knowledgeContext,
-
-
     decision:
       decisions[0],
 

@@ -73,9 +73,6 @@ const mockResult: OrchestratorResult = {
   recommendations: {},
 
 
-  knowledge: {},
-
-
   decision: {
     applicationId: "app-1",
     decision: "INTERVIEW",

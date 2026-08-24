@@ -322,8 +322,6 @@ export interface OrchestratorResult {
 
   recommendations: unknown;
 
-  knowledge: unknown;
-
   decision: DecisionOutput;
 
   context: LearningWeights;
