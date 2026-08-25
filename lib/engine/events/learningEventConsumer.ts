@@ -1,4 +1,4 @@
-import { eventBus } from "@/lib/events/core/eventBus";
+import { learningEventBus } from "@/lib/engine/learning/learningEventBus";
 
 import { updateUserEmbeddings } from "@/lib/engine/learning/updateUserEmbeddings";
 import { incrementUserSignals } from "@/lib/engine/learning/incrementUserSignals";
@@ -15,9 +15,12 @@ import { LearningDomainEvent } from "@/lib/engine/learning/learningTypes";
  */
 
 export function initLearningEventConsumer(): void {
-  eventBus.on("learning:event", async (event: LearningDomainEvent) => {
-    await handleLearningEvent(event);
-  });
+  learningEventBus.onEvent(
+    "learning:event",
+    async (event: LearningDomainEvent) => {
+      await handleLearningEvent(event);
+    }
+  );
 }
 
 /**
@@ -26,13 +29,15 @@ export function initLearningEventConsumer(): void {
  * =========================================================
  */
 
-async function handleLearningEvent(event: LearningDomainEvent): Promise<void> {
+async function handleLearningEvent(
+  event: LearningDomainEvent
+): Promise<void> {
   try {
     const {
-  userId,
-  tenantId,
-  context,
-} = event;
+      userId,
+      tenantId,
+      context,
+    } = event;
 
     /**
      * =====================================================
@@ -80,24 +85,22 @@ async function handleLearningEvent(event: LearningDomainEvent): Promise<void> {
     });
 
     /**
- * =====================================================
- * 5. INTELLIGENCE LAYER
- * =====================================================
- */
-const intelligence =
-  runLearningIntelligence([event]);
+     * =====================================================
+     * 5. INTELLIGENCE LAYER
+     * =====================================================
+     */
+    const intelligence =
+      runLearningIntelligence([event]);
 
+    console.log(
+      "[Learning Intelligence Result]",
+      intelligence
+    );
 
-console.log(
-  "[Learning Intelligence Result]",
-  intelligence
-);
-
-
-console.log(
-  "[Learning Policy Adjustments]",
-  intelligence.policyAdjustments
-);
+    console.log(
+      "[Learning Policy Adjustments]",
+      intelligence.policyAdjustments
+    );
   } catch (error) {
     console.error("[learningEventConsumer]", {
       error,
@@ -113,7 +116,9 @@ console.log(
  * =========================================================
  */
 
-function shouldUpdateEmbeddings(action: string): boolean {
+function shouldUpdateEmbeddings(
+  action: string
+): boolean {
   const triggers = new Set([
     "profile_updated",
     "job_viewed",

@@ -21,8 +21,8 @@ import {
 } from "./policy/learningPolicyEngine";
 
 import {
-  LearningSignal as WeightLearningSignal,
-} from "./weights/learningWeights.engine";
+  LearningPolicySignal,
+} from "./policy/learningPolicySignal";
 
 
 /* ============================================================
@@ -53,7 +53,7 @@ export interface LearningInsight {
 
   patterns: LearningPattern[];
 
-  policyAdjustments: WeightLearningSignal[];
+  policyAdjustments: LearningPolicySignal[];
 
   confidence: number;
 

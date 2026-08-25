@@ -1,12 +1,14 @@
-import { LearningSignal } from "../weights/learningWeights.engine";
-
 import {
   LearningPattern,
 } from "../../learning-intelligence/learningPatternTypes";
 
+import {
+  LearningPolicySignal,
+} from "./learningPolicySignal";
+
 
 export interface LearningPolicyResult {
-  signals: LearningSignal[];
+  signals: LearningPolicySignal[];
 
   reasoning: string[];
 }

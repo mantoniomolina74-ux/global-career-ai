@@ -6,23 +6,29 @@ import type { LearningDomainEvent } from "./learningTypes";
  * ============================================================
  * Learning Event Bus (V1)
  * ============================================================
- * - Emits events for reactive systems
- * - Stores events for learning layer
+ * - Emits canonical learning events
+ * - Stores events in runtime learning memory
+ * - Provides a canonical reactive learning:event channel
  * ============================================================
  */
 
 class LearningEventBus extends EventEmitter {
   emitLearning(event: LearningDomainEvent): boolean {
-    // 1. persist event in memory store
+    // 1. Runtime learning memory
     pushLearningEvent(event);
 
-    // 2. emit event for reactive subscribers
+    // 2. Canonical learning event channel
+    super.emit("learning:event", event);
+
+    // 3. Typed event channel
     return super.emit(event.type, event);
   }
 
   onEvent(
     eventType: string,
-    handler: (event: LearningDomainEvent) => void
+    handler: (
+      event: LearningDomainEvent
+    ) => void | Promise<void>
   ): this {
     super.on(eventType, handler);
     return this;
@@ -36,10 +42,12 @@ export const learningEventBus = new LearningEventBus();
 
 /**
  * ============================================================
- * Public API (safe wrapper)
+ * Public API
  * ============================================================
  */
 
-export function emitLearning(event: LearningDomainEvent) {
+export function emitLearning(
+  event: LearningDomainEvent
+): void {
   learningEventBus.emitLearning(event);
 }
