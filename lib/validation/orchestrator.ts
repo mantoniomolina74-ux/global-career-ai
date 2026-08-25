@@ -1,6 +1,4 @@
-﻿
 import { z } from "zod";
-import type { LearningMemory } from "@/lib/engine/learning/memory/learningMemory.contract";
 
 /**
  * =========================================================
@@ -27,38 +25,6 @@ export const ApplicationReferenceSchema = z.object({
   cvStrengthScore: z.number().optional(),
 
   createdAt: z.string().optional(),
-});
-
-export const LearningMemorySchema: z.ZodType<LearningMemory> = z.object({
-  userId: z.string(),
-
-  trends: z.object({
-    atsHistory: z.array(z.number()),
-    rankingHistory: z.array(z.number()),
-    recommendationHistory: z.array(z.number()),
-    decisionHistory: z.array(
-      z.object({
-        decisionId: z.string(),
-        score: z.number(),
-        priority: z.string(),
-        timestamp: z.string(),
-      })
-    ),
-  }),
-
-  skills: z.object({
-    evolution: z.record(
-      z.string(),
-      z.object({
-        successRate: z.number(),
-        occurrences: z.number(),
-      })
-    ),
-  }),
-
-  metadata: z.object({
-    lastUpdated: z.string(),
-  }),
 });
 
 export const CareerOrchestratorInputSchema = z.object({
@@ -88,7 +54,6 @@ export const CareerOrchestratorInputSchema = z.object({
 
   topK: z.number().int().positive().optional(),
 
-  memory: LearningMemorySchema.optional(),
 });
 
 /**
