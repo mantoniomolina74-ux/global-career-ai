@@ -1,7 +1,10 @@
 import {
-  LearningPattern,
   LearningPolicyResult,
 } from "./learningPolicyTypes";
+
+import {
+  LearningPattern,
+} from "../../learning-intelligence/learningPatternTypes";
 
 import {
   LearningPolicySignal,
@@ -12,7 +15,6 @@ export function evaluateLearningPolicies(
   patterns: LearningPattern[]
 ): LearningPolicyResult {
   const signals: LearningPolicySignal[] = [];
-  const reasoning: string[] = [];
 
   for (const pattern of patterns) {
     switch (pattern.type) {
@@ -24,10 +26,6 @@ export function evaluateLearningPolicies(
         };
 
         signals.push(signal);
-
-        reasoning.push(
-          `FAILURE_PATTERN detected (confidence=${pattern.confidence})`
-        );
 
         break;
       }
@@ -41,10 +39,6 @@ export function evaluateLearningPolicies(
 
         signals.push(signal);
 
-        reasoning.push(
-          `SUCCESS_PATTERN detected (confidence=${pattern.confidence})`
-        );
-
         break;
       }
 
@@ -57,10 +51,6 @@ export function evaluateLearningPolicies(
 
         signals.push(signal);
 
-        reasoning.push(
-          `SKILL_GAP detected (confidence=${pattern.confidence})`
-        );
-
         break;
       }
     }
@@ -68,6 +58,5 @@ export function evaluateLearningPolicies(
 
   return {
     signals,
-    reasoning,
   };
 }
