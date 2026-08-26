@@ -175,8 +175,6 @@ export default async function DashboardPage() {
   const applications =
     funnel?.applications ?? 0;
 
-  const hireProbability =
-    funnel?.estimatedHireProbability ?? 0;
 
   const status =
     data.ui?.status ?? "UNKNOWN";
@@ -623,27 +621,6 @@ export default async function DashboardPage() {
             </div>
 
 
-            {/* HIRE PROBABILITY */}
-
-            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl">
-
-              <p className="text-sm text-slate-400">
-                Hire Probability
-              </p>
-
-              <p className="mt-3 text-4xl font-bold">
-                {(
-                  hireProbability *
-                  100
-                ).toFixed(1)}
-                %
-              </p>
-
-              <p className="mt-2 text-xs text-slate-500">
-                Derived from current available intelligence
-              </p>
-
-            </div>
 
           </div>
 

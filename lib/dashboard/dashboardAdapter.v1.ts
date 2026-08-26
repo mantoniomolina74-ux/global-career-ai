@@ -127,13 +127,6 @@ export async function getDashboardData(
 
 
       funnel: {
-
-
-        estimatedHireProbability:
-          decision.confidence,
-
-
-
         applications:
           application.totalApplications,
 
