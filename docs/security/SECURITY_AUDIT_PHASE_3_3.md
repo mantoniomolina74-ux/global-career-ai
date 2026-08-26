@@ -125,7 +125,7 @@ Components reviewed:
 - Learning Event Bus
 - Learning Consumers
 - Learning Repository
-- Adaptive Weight Engine
+- Learning Weights Bridge
 - Semantic Learning Engine
 - Learning Memory
 - Vector Memory Adapter

@@ -893,29 +893,29 @@ The memory layer allows Global Career AI to improve through accumulated experien
 
 ---
 
-# 7.4 Adaptive Weight Engine
+# 7.4 Learning State Integration
 
 ## Definition
 
-The Adaptive Weight Engine provides controlled adjustment mechanisms based on learning signals.
+The Learning Intelligence Layer provides controlled learning state consumed by downstream intelligence components.
 
 ---
 
 ## Responsibilities
 
-It manages:
+It provides:
 
-- Weight adjustments.
-- Performance signals.
-- Optimization feedback.
+- ATS learning weight state.
+- Ranking learning weight state.
+- Decision sensitivity state.
 
 ---
 
 ## Architectural Rule
 
-Adaptive changes must remain controlled and observable.
+Learning state consumption must remain deterministic, controlled and observable.
 
-Learning adjustments cannot bypass core architectural rules.
+Learning state cannot bypass core architectural rules or directly modify runtime execution.
 
 ---
 

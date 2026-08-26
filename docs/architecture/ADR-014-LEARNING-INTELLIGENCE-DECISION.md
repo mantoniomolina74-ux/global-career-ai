@@ -70,7 +70,6 @@ Existing:
 - learningMemory
 - learningMemoryRepository
 - learningEventRepository
-- learningWeights.engine
 - Knowledge Learning Adapter
 - Career Orchestrator
 - SaaS Engine

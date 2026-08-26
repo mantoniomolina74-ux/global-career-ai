@@ -35,7 +35,6 @@ Provide a reliable foundation for collecting and persisting learning signals gen
 
 Implemented components:
 
-- Learning Weights Engine
 - Semantic Learning Integration
 - Learning Pattern Detection
 

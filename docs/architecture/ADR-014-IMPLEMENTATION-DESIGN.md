@@ -33,7 +33,7 @@ Implemented components:
 - learningEventRepository
 - learningMemoryRepository
 - learningMemory.store
-- learningWeights.engine
+- learningWeights.bridge
 - Knowledge Learning Adapter
 - tenant-aware Learning Events
 - tenant-aware Learning Memory persistence
@@ -63,7 +63,7 @@ Existing systems:
 
 learningEventBus
 learningMemory
-learningWeights.engine
+learningWeights.bridge
 Knowledge Learning Adapter
 
 

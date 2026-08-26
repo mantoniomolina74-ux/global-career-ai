@@ -129,7 +129,7 @@ Includes:
 - Learning Event Bus
 - Learning Consumers
 - Learning Memory
-- Adaptive Weight Engine
+- Learning Weights Bridge
 - Semantic Learning Integration
 - Vector Memory Adapter
 

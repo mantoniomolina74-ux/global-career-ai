@@ -16,7 +16,7 @@ Existing components:
 - learningEventConsumer
 - learningMemory
 - learningMemory_v2
-- learningWeights.engine
+- learningWeights.bridge
 - Semantic Memory Integration
 - Knowledge Learning Adapter
 
@@ -31,7 +31,7 @@ Implemented:
 - Memory persistence
 - Semantic context
 - Knowledge integration
-- Weight adaptation
+- Learning state consumption
 
 ---
 

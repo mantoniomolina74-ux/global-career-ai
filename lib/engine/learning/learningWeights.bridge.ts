@@ -25,19 +25,3 @@ let cachedWeights: LearningWeights = {
 export function getLearningWeights(): LearningWeights {
   return { ...cachedWeights };
 }
-
-/**
- * ============================================================
- * STATE UPDATE
- * ============================================================
- */
-
-export function updateLearningWeights(
-  weights: LearningWeights
-): void {
-  cachedWeights = {
-    atsMultiplier: weights.atsMultiplier,
-    rankingMultiplier: weights.rankingMultiplier,
-    decisionSensitivity: weights.decisionSensitivity,
-  };
-}

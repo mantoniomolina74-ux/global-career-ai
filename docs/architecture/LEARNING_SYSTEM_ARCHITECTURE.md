@@ -234,7 +234,7 @@ This layer transforms accumulated knowledge into future improvements.
 
 Capabilities include:
 
-- weight adaptation,
+- learning state consumption,
 - optimization signals,
 - improved decision intelligence.
 
@@ -843,59 +843,55 @@ Adaptive Intelligence
 This progression enables Global Career AI to continuously improve through accumulated knowledge.
 ---
 
-# 11. Adaptive Weight Engine Architecture
+# 11. Learning Weights State Architecture
 
-The Adaptive Weight Engine provides dynamic optimization capabilities within the Learning System.
+The Learning Weights Bridge provides the current learning weights state consumed by downstream intelligence components.
 
-Its purpose is adjusting intelligence parameters based on accumulated experience and validated learning signals.
-
-The Adaptive Weight Engine transforms historical knowledge into future optimization.
+Its purpose is exposing controlled learning parameters without performing autonomous weight calculation or runtime mutation.
 
 ---
 
-## Adaptive Weight Responsibilities
+## Learning Weights State
 
-The Adaptive Weight Engine manages:
+The current learning state contains:
 
-- signal evaluation,
-- weight adjustments,
-- optimization calculations,
-- improvement recommendations.
+- ATS multiplier,
+- ranking multiplier,
+- decision sensitivity.
 
----
-
-## Adaptive Learning Flow
-
-The process follows:
-Execution Results
-|
-v
-Learning Signals
-|
-v
-Signal Analysis
-|
-v
-Weight Adjustment
-|
-v
-Future Intelligence Improvement
-
+The V1.0 bridge exposes this state through a read-only public accessor.
 
 ---
 
-## Adaptive Weight Boundaries
+## Learning Weights Flow
 
-The Adaptive Weight Engine does not:
+The current runtime flow is:
 
-- directly modify runtime execution,
+Learning State
+|
+v
+Learning Weights Bridge
+|
++--> ATS
+|
++--> Ranking
+|
++--> Career Orchestrator
+
+---
+
+## Learning Weights Boundaries
+
+The Learning Weights Bridge does not:
+
+- calculate new weights,
+- modify runtime execution,
 - bypass contracts,
-- alter engine responsibilities.
+- autonomously optimize system behavior.
 
-Its role is providing improvement signals through controlled mechanisms.
+Its role is exposing controlled learning state to authorized intelligence consumers.
 
 ---
-
 # 12. Feedback Loop Architecture
 
 Feedback loops allow Global Career AI to improve through operational outcomes.

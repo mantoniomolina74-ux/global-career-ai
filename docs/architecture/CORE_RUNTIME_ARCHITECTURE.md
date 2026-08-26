@@ -873,7 +873,7 @@ The Learning System manages:
 
 - memory storage,
 - feedback analysis,
-- adaptive weighting,
+- learning state consumption,
 - knowledge evolution.
 
 ---
