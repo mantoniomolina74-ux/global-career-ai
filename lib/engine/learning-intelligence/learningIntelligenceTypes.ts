@@ -32,36 +32,3 @@ export interface LearningSignal {
   context?: LearningContext;
   createdAt: Date;
 }
-
-
-export type LearningPatternType =
-  | "IMPROVEMENT"
-  | "GAP"
-  | "SUCCESS"
-  | "FAILURE"
-  | "TREND";
-
-
-export interface LearningPattern {
-  id: string;
-  type: LearningPatternType;
-  description: string;
-  confidence: number;
-  signals: LearningSignal[];
-}
-
-
-export type LearningInsightType =
-  | "RECOMMENDATION"
-  | "WARNING"
-  | "OPPORTUNITY";
-
-
-export interface LearningInsight {
-  id: string;
-  type: LearningInsightType;
-  title: string;
-  description: string;
-  confidence: number;
-  pattern: LearningPattern;
-}

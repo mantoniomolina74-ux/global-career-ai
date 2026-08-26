@@ -1,9 +1,11 @@
 import {
   LearningContext,
   LearningSignal,
-  LearningPattern,
-  LearningInsight,
 } from "../lib/engine/learning-intelligence/learningIntelligenceTypes";
+
+import {
+  LearningPattern,
+} from "../lib/engine/learning-intelligence/learningPatternTypes";
 
 
 const context: LearningContext = {
@@ -29,23 +31,13 @@ const signal: LearningSignal = {
 
 const pattern: LearningPattern = {
   id: "pattern-001",
-  type: "GAP",
+  type: "SKILL_GAP",
   description:
     "Technical certification gaps reduce job compatibility",
   confidence: 0.87,
+  confidenceLevel: "HIGH",
   signals: [signal],
-};
-
-
-const insight: LearningInsight = {
-  id: "insight-001",
-  type: "RECOMMENDATION",
-  title:
-    "Improve hydraulic systems knowledge",
-  description:
-    "Completing hydraulic training may improve career compatibility",
-  confidence: 0.91,
-  pattern,
+  createdAt: new Date(),
 };
 
 
@@ -55,7 +47,6 @@ console.log(
       context,
       signal,
       pattern,
-      insight,
     },
     null,
     2,
