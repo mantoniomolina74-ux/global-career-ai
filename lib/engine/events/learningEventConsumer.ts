@@ -3,7 +3,6 @@ import { learningEventBus } from "@/lib/engine/learning/learningEventBus";
 import { updateUserEmbeddings } from "@/lib/engine/learning/updateUserEmbeddings";
 import { incrementUserSignals } from "@/lib/engine/learning/incrementUserSignals";
 import { persistLearningEvent } from "@/lib/engine/learning/persistLearningEvent";
-import { learningEngineV2 } from "@/lib/engine/learning/learningEngine.v2";
 import { runLearningIntelligence } from "@/lib/engine/learning/learningIntelligence";
 
 import { LearningDomainEvent } from "@/lib/engine/learning/learningTypes";
@@ -35,7 +34,6 @@ async function handleLearningEvent(
   try {
     const {
       userId,
-      tenantId,
       context,
     } = event;
 
@@ -72,21 +70,7 @@ async function handleLearningEvent(
 
     /**
      * =====================================================
-     * 4. ANALYTICS ENGINE (V2)
-     * =====================================================
-     */
-    await learningEngineV2({
-      userId,
-      applicationId: context.applicationId ?? "",
-      atsScore: context.atsScore ?? 0,
-      status: context.status ?? "unknown",
-      matchedSkills: context.matchedSkills ?? [],
-      missingSkills: context.missingSkills ?? [],
-    });
-
-    /**
-     * =====================================================
-     * 5. INTELLIGENCE LAYER
+     * 4. INTELLIGENCE LAYER
      * =====================================================
      */
     const intelligence =

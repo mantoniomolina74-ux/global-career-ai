@@ -1,11 +1,11 @@
-﻿import { scoringPipelineV2 } from "../domain/applications/scoringPipeline";
+import { scoringPipelineV2 } from "../domain/applications/scoringPipeline";
 import { runRankingEngine } from "../engine/applications/rankingEngine";
 import {
   runRecruiterAgent,
   type RecruiterCandidate,
 } from "../engine/ai/recruiterAgent";
 
-import { eventBus } from "@/lib/events/core/eventBus";
+import { emitLearning } from "@/lib/engine/learning/learningEventBus";
 
 import { initLearningEventConsumer } from "@/lib/engine/events/learningEventConsumer";
 
@@ -285,7 +285,7 @@ export async function saasEngine(
 
 
 
-    result =
+    const scoringResult =
       await scoringPipelineV2({
 
         userId,
@@ -314,27 +314,39 @@ export async function saasEngine(
           p.cvStrengthScore,
       });
 
+    result = scoringResult;
+
 
 
     try {
 
-      eventBus.emit(
-        "learning:event",
-        {
+      emitLearning({
 
-          userId,
+        id:
+          `ats-${Date.now()}`,
 
-          tenantId,
+        userId,
 
-          organizationId: effectiveOrganizationId,
+        tenantId:
+          tenantId ??
+          effectiveOrganizationId,
+
+        type:
+          "ATS_EVALUATED",
+
+        timestamp:
+          new Date().toISOString(),
+
+        context: {
+
+          action:
+            "ATS_EVALUATED",
 
           applicationId:
-            p.applicationId!,
+            p.applicationId,
 
           atsScore:
-            (result as GenericRecord)
-              .atsScore,
-
+            scoringResult.atsScore,
 
           status:
             p.status &&
@@ -350,23 +362,25 @@ export async function saasEngine(
 
               : "applied",
 
-
           matchedSkills:
-            (result as GenericRecord)
-              .matchedSkills,
-
+            scoringResult.matchedSkills,
 
           missingSkills:
-            (result as GenericRecord)
-              .missingSkills,
-        }
-      );
+            scoringResult.missingSkills,
+        },
 
+        metadata: {
+
+          source:
+            "ATS",
+        },
+
+      });
 
     } catch (err) {
 
       console.error(
-        "[eventBus learning:event error]",
+        "[Learning ATS emission error]",
         err
       );
 

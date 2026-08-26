@@ -4,64 +4,59 @@ dotenv.config({
   path: ".env.local",
 });
 
-
 /**
  * ============================================================
  * Global Career AI
  * Learning Event Consumer Runtime Test
  * ============================================================
  *
- * Validates:
+ * Validates the canonical Learning pipeline:
  *
- * eventBus
- *    ↓
+ * emitLearning
+ *    ?
+ * learningEventBus
+ *    ?
  * learningEventConsumer
- *    ↓
+ *    ?
  * persistLearningEvent
- *    ↓
- * learningEngineV2
- *    ↓
+ *    ?
+ * incrementUserSignals
+ *    ?
+ * selective embeddings
+ *    ?
  * runLearningIntelligence
  *
  * ============================================================
  */
 
-
 async function run() {
-
-  const { eventBus } =
-    await import("../lib/events/core/eventBus");
-
+  const { emitLearning } =
+    await import("../lib/engine/learning/learningEventBus");
 
   const {
     initLearningEventConsumer,
   } =
     await import("../lib/engine/events/learningEventConsumer");
 
-
   initLearningEventConsumer();
-
 
   const event = {
     userId: "00000000-0000-0000-0000-000000000001",
 
-    type: "REJECTION_RECEIVED",
+    tenantId: "00000000-0000-0000-0000-000000000002",
 
-    timestamp:
-      new Date().toISOString(),
+    type: "REJECTION_RECEIVED" as const,
+
+    timestamp: new Date().toISOString(),
 
     context: {
-      action:
-        "application_rejected",
+      action: "application_rejected",
 
-      applicationId:
-        "application-001",
+      applicationId: "application-001",
 
-      status:
-        "REJECTED",
+      status: "REJECTED",
 
-      atsScore:
-        65,
+      atsScore: 65,
 
       matchedSkills: [
         "equipment-operation",
@@ -72,47 +67,31 @@ async function run() {
         "hydraulic-systems",
       ],
 
-      industry:
-        "Mining",
+      industry: "Mining",
 
-      country:
-        "Canada",
+      country: "Canada",
     },
 
-    payload: {
-      source:
-        "TEST",
-
-      confidence:
-        0.75,
+    metadata: {
+      source: "USER" as const,
+      confidence: 0.75,
     },
   };
 
+  console.log("Sending canonical Learning Event...");
 
-  console.log(
-    "Sending Learning Event..."
-  );
+  emitLearning(event);
 
+  await new Promise((resolve) => setTimeout(resolve, 250));
 
-  await eventBus.emit(
-    "learning:event",
-    event,
-  );
-
-
-  console.log(
-    "Learning Event processed"
-  );
+  console.log("Canonical Learning Event processed");
 }
 
+run().catch((error) => {
+  console.error(
+    "Runtime test failed:",
+    error,
+  );
 
-run()
-  .catch((error) => {
-
-    console.error(
-      "Runtime test failed:",
-      error,
-    );
-
-    process.exit(1);
-  });
+  process.exit(1);
+});
