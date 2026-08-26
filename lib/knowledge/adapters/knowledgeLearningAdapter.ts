@@ -30,15 +30,13 @@ export function emitKnowledgeLearningEvent(
       action: "KNOWLEDGE_GAP_ANALYSIS",
 
       matchedSkills: analysis.strengths.map(
-        strength => strength.domainName
+        (strength) => strength.domainName
       ),
 
       missingSkills: analysis.gaps.map(
-        gap => gap.competencyName
-      )
-    },
+        (gap) => gap.competencyName
+      ),
 
-    payload: {
       knowledgeAnalysis: {
         totalGaps: analysis.gaps.length,
 

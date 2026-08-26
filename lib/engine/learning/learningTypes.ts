@@ -37,22 +37,7 @@ export interface LearningDomainEvent {
     missingSkills?: string[];
 
     [key: string]: unknown;
-  };
-
-    /**
-   * Legacy compatibility layer
-   * Temporary during Learning Engine migration
-   */
-  payload?: {
-    applicationId?: string;
-    atsScore?: number;
-    hiringScore?: number;
-    decision?: string;
-    avgScore?: number;
-    total?: number;
-
-    [key: string]: unknown;
-  };
+};
 
   metadata?: {
   source:
@@ -68,4 +53,5 @@ export interface LearningDomainEvent {
 
   traceId?: string;
 };
+
 }

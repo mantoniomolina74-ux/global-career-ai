@@ -139,10 +139,6 @@ export async function runCareerOrchestratorV7(
       atsScore: averageATS,
     },
 
-    payload: {
-      atsScore: averageATS,
-    },
-
     metadata: {
       source: "ATS",
       confidence:
@@ -220,12 +216,6 @@ export async function runCareerOrchestratorV7(
         ranking.items.length,
     },
 
-    payload: {
-      avgScore: averageATS,
-      total:
-        ranking.items.length,
-    },
-
     metadata: {
       source: "RANKING",
       confidence:
@@ -285,11 +275,6 @@ export async function runCareerOrchestratorV7(
     context: {
       action: "DECISION_CREATED",
       decision: decisions,
-    },
-
-    payload: {
-      decision:
-        "DECISION_CREATED",
     },
 
     metadata: {
