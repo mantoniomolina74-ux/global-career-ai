@@ -197,8 +197,6 @@ export interface DecisionInsight {
 
   recommendations: string[];
 
-  confidence: number;
-
 }
 
 

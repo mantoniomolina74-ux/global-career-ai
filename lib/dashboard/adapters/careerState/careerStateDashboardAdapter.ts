@@ -259,11 +259,6 @@ export function adaptCareerStateToDashboard(
           "recommendations"
         ),
 
-      confidence:
-        extractConfidence(
-          decision
-        ),
-
     },
 
   };
@@ -308,33 +303,5 @@ function extractLearningArray(
           typeof item === "string"
       )
     : [];
-
-}
-
-
-/**
- * Extracts confidence safely from an unknown source.
- */
-
-function extractConfidence(
-  source: unknown
-): number {
-
-  if (
-    typeof source !== "object" ||
-    source === null
-  ) {
-    return 0;
-  }
-
-
-  const value =
-    (source as Record<string, unknown>)
-      .confidence;
-
-
-  return typeof value === "number"
-    ? value
-    : 0;
 
 }
