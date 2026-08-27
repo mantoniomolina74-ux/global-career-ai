@@ -28,6 +28,4 @@ export interface ATSState {
   missingSkills: string[];
 
   recommendation: string;
-
-  confidence: number;
 }

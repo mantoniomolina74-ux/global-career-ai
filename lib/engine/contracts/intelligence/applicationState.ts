@@ -29,5 +29,4 @@ export interface ApplicationState {
 
   successRate: number;
 
-  confidence: number;
 }

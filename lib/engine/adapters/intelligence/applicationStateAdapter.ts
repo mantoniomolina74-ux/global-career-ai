@@ -51,7 +51,6 @@ export function buildApplicationState(
     successRate:
       result.funnel.successRate,
 
-    confidence: 1,
   };
 
 }

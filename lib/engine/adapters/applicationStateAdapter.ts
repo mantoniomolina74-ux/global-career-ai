@@ -66,9 +66,5 @@ export function buildApplicationState(
     successRate:
       insights.funnel.successRate,
 
-    confidence:
-      insights.performance.totalApplications > 0
-        ? 1
-        : 0,
   };
 }

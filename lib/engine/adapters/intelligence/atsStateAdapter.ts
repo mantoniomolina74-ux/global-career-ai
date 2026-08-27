@@ -45,8 +45,6 @@ export function buildATSState(
       missingSkills: [],
 
       recommendation: "No ATS data available",
-
-      confidence: 0,
     };
   }
 
@@ -105,11 +103,5 @@ export function buildATSState(
 
     recommendation:
       results[0].recommendation,
-
-    confidence: average(
-      results.map(
-        (item) => item.learningSignal * 100
-      )
-    ) / 100,
   };
 }
