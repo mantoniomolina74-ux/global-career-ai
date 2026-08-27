@@ -388,6 +388,10 @@ const topMatches =
             item.match_explanation
               ?.matched_industries ?? [],
 
+          certifications:
+            item.match_explanation
+              ?.certifications ?? {},
+
         })
       );
 

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ============================================================
  * Global Career AI
  * Dashboard Contract V1.1
@@ -113,6 +113,12 @@ export interface OpportunityMatch {
   matchedSkills: string[];
 
   matchedIndustries: string[];
+
+    certifications: {
+    whmis?: boolean;
+    csts?: boolean;
+    firstAid?: boolean;
+  };
 
 }
 

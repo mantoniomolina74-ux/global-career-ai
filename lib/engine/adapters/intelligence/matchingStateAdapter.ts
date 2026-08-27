@@ -274,6 +274,10 @@ export function buildMatchingState(
           matchedIndustries:
             item.match_explanation
               ?.matched_industries ?? [],
+
+          certifications:
+        item.match_explanation
+          ?.certifications ?? {},
         })
       );
 

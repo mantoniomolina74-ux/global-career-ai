@@ -57,6 +57,12 @@ export interface MatchingOpportunity {
    */
   matchedIndustries: string[];
 
+    certifications: {
+    whmis?: boolean;
+    csts?: boolean;
+    firstAid?: boolean;
+  };
+
 }
 
 

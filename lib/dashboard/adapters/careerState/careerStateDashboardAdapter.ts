@@ -135,6 +135,9 @@ export function adaptCareerStateToDashboard(
             matchedIndustries:
               opportunity.matchedIndustries,
 
+            certifications:
+              opportunity.certifications,
+
           })
         ) ?? [],
 
