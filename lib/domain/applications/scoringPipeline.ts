@@ -27,7 +27,6 @@ export interface ScoringOutput {
   applicationId?: string;
 
   atsScore: number;
-  passProbability: number;
 
   keywordScore: number;
   cvStrengthScore: number;
@@ -42,7 +41,6 @@ export interface ScoringOutput {
   signals: {
     isStrongMatch: boolean;
     needsUpskilling: boolean;
-    priorityRank: number;
   };
 
   meta: {
@@ -96,11 +94,6 @@ export async function scoringPipelineV2(
   const isStrongMatch = ats.atsScore >= 75;
   const needsUpskilling = ats.missingSkills.length > 3;
 
-  const priorityRank =
-    ats.atsScore * 0.7 +
-    ats.keywordScore * 0.2 +
-    ats.passProbability * 0.1;
-
   /**
    * =========================================================
    * OUTPUT NORMALIZATION
@@ -112,7 +105,6 @@ export async function scoringPipelineV2(
     applicationId: input.applicationId,
 
     atsScore: ats.atsScore,
-    passProbability: ats.passProbability,
 
     keywordScore: ats.keywordScore,
     cvStrengthScore: ats.cvStrengthScore,
@@ -127,7 +119,6 @@ export async function scoringPipelineV2(
     signals: {
       isStrongMatch,
       needsUpskilling,
-      priorityRank: Math.round(priorityRank),
     },
 
     meta: {

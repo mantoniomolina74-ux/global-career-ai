@@ -108,8 +108,6 @@ export interface ATSResult {
 
   hiringScore: number;
 
-  passProbability: number;
-
   matchedSkills: string[];
 
   missingSkills: string[];

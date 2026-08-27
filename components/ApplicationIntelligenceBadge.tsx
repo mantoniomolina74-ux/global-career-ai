@@ -1,7 +1,6 @@
 type Props = {
   intelligence?: {
     score: number;
-    probabilityOfHire: number;
     momentum: number;
     riskLevel: "low" | "medium" | "high";
     nextAction: "FOLLOW_UP" | "PREPARE_INTERVIEW" | "IMPROVE_CV" | "WAIT" | "MOVE_ON";

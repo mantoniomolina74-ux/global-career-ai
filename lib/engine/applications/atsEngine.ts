@@ -171,19 +171,18 @@ export async function calculateATS(
     interviewProbability,
     offerProbability,
     hiringScore,
-    passProbability: clamp(Math.round(atsScore * 0.85), 0, 100),
     matchedSkills,
     missingSkills,
     recommendation:
       missingSkills.length > 0
         ? `Skill gaps detected: ${missingSkills.join(", ")}`
         : hiringScore >= 80
-        ? "High hiring probability"
+        ? "Strong hiring signal"
         : hiringScore >= 60
         ? "Moderate profile"
         : hiringScore >= 40
         ? "Developing candidate"
-        : "Low probability - optimization required",
+        : "Low hiring signal - optimization required",
     learningSignal,
   };
 

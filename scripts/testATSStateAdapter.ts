@@ -9,7 +9,6 @@ const result = buildATSState([
     interviewProbability: 0.7,
     offerProbability: 0.4,
     hiringScore: 78,
-    passProbability: 0.8,
     matchedSkills: [
       "typescript",
       "react",

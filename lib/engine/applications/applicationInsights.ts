@@ -30,7 +30,6 @@ export interface ApplicationRecord {
 
 interface AtsResult {
   atsScore: number;
-  passProbability: number;
   interviewProbability?: number;
   offerProbability?: number;
   matchedSkills: string[];
@@ -39,7 +38,6 @@ interface AtsResult {
 
 interface ApplicationIntelligence {
   atsScore: number | null;
-  atsPassProbability: number | null;
   riskLevel: "low" | "medium" | "high" | null;
   matchedSkills: string[];
   missingSkills: string[];
@@ -459,8 +457,6 @@ export async function getApplicationInsights(
       atsScore:
         ats?.atsScore ?? null,
 
-      atsPassProbability:
-        ats?.passProbability ?? null,
 
       riskLevel:
         ats

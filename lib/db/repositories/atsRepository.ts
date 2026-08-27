@@ -9,8 +9,6 @@ import { supabaseServer } from "@/lib/supabase-server";
 export type ATSResult = {
   atsScore: number;
 
-  passProbability: number;
-
   interviewProbability: number;
 
   offerProbability: number;
@@ -32,11 +30,6 @@ function mapATSResult(data: any): ATSResult {
     atsScore:
       typeof data.ats_score === "number"
         ? data.ats_score
-        : 0,
-
-    passProbability:
-      typeof data.pass_probability === "number"
-        ? data.pass_probability
         : 0,
 
     interviewProbability:
@@ -94,9 +87,6 @@ export async function saveATSResult(
 
           ats_score:
             ats.atsScore,
-
-          pass_probability:
-            ats.passProbability,
 
           interview_probability:
             ats.interviewProbability,
@@ -266,8 +256,6 @@ export async function getLatestCVATSResult(
         ? data.ats_score
         : 0,
 
-    passProbability: 0,
-
     interviewProbability: 0,
 
     offerProbability: 0,
@@ -403,17 +391,6 @@ export async function getAverageATSResult(
     );
 
 
-  const passProbability =
-    Math.round(
-      average(
-        results.map(
-          (result) =>
-            result.passProbability
-        )
-      )
-    );
-
-
   const interviewProbability =
     Math.round(
       average(
@@ -460,8 +437,6 @@ export async function getAverageATSResult(
 
   return {
     atsScore,
-
-    passProbability,
 
     interviewProbability,
 
