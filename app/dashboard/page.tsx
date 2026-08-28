@@ -471,7 +471,7 @@ export default async function DashboardPage() {
                            <div className="mt-5 border-t border-slate-800 pt-4">
 
                           <p className="text-sm font-semibold text-slate-300">
-                            Certification Evidence
+                            Certification Requirements
                             </p>
 
                             <div className="mt-3 flex flex-wrap gap-2">
