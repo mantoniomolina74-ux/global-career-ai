@@ -463,7 +463,41 @@ export default async function DashboardPage() {
                           </div>
 
                         )}
+                          {(
+                            opportunity.certifications.whmis ||
+                            opportunity.certifications.csts ||
+                            opportunity.certifications.firstAid
+                          ) && (
+                           <div className="mt-5 border-t border-slate-800 pt-4">
 
+                          <p className="text-sm font-semibold text-slate-300">
+                            Certification Evidence
+                            </p>
+
+                            <div className="mt-3 flex flex-wrap gap-2">
+
+                            {opportunity.certifications.whmis && (
+                            <span className="rounded-full border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm text-slate-300">
+                               WHMIS
+                            </span>
+                          )}
+
+                            {opportunity.certifications.csts && (
+                            <span className="rounded-full border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm text-slate-300">
+                              CSTS
+                            </span>
+                          )}
+
+                            {opportunity.certifications.firstAid && (
+                            <span className="rounded-full border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm text-slate-300">
+                            First Aid
+                            </span>
+                          )}
+
+                            </div>
+
+                            </div>
+                          )}
 
                         <div className="mt-5">
 

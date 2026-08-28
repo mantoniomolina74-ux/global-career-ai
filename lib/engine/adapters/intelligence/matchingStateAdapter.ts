@@ -275,9 +275,16 @@ export function buildMatchingState(
             item.match_explanation
               ?.matched_industries ?? [],
 
-          certifications:
-        item.match_explanation
-          ?.certifications ?? {},
+          certifications: {
+                  whmis:
+                  item.match_explanation?.certifications?.whmis,
+
+                  csts:
+                  item.match_explanation?.certifications?.csts,
+
+                 firstAid:
+                  item.match_explanation?.certifications?.first_aid,
+                  },
         })
       );
 
