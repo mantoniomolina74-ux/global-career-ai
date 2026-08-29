@@ -42,8 +42,6 @@ export function buildMatchingState(
     return {
       score: 0,
 
-      confidence: 0,
-
       strengths: [],
 
       weaknesses: [],
@@ -298,8 +296,6 @@ export function buildMatchingState(
   return {
 
     score,
-
-    confidence,
 
     strengths,
 

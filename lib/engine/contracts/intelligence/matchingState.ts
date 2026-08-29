@@ -78,12 +78,6 @@ export interface MatchingState {
 
 
   /**
-   * Confidence in the Matching intelligence.
-   */
-  confidence: number;
-
-
-  /**
    * Verified candidate strengths detected against
    * real job opportunities.
    */
