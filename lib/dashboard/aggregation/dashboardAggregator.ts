@@ -64,7 +64,7 @@ export interface DashboardContext {
 
   tenantId: string;
 
-  applicationId?: string;
+  applicationId?: number;
 
   professionalText?: string;
 

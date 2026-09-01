@@ -55,6 +55,10 @@ export interface CareerApplication {
   country?: string;
 
 
+  category?: string;
+
+  tags?: string;
+
   /**
    * ============================================================
    * CANDIDATE / JOB MATCHING INPUT

@@ -67,6 +67,10 @@ type ApplicationInput = {
   country?: string;
 
 
+  category?: string;
+
+  tags?: string;
+
   /**
    * Candidate / matching information.
    */
@@ -242,6 +246,12 @@ export async function POST(
             country:
               app.country,
 
+
+            category:
+              app.category,
+
+            tags:
+              app.tags,
 
             /**
              * Candidate / matching data.

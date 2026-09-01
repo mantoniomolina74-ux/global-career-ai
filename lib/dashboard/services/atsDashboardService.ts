@@ -11,7 +11,7 @@ export interface ATSDashboardContext {
 
   tenantId: string;
 
-  applicationId?: string;
+  applicationId?: number;
 }
 
 

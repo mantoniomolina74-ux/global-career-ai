@@ -10,10 +10,10 @@ import {
  */
 
 export interface ApplicationRecord {
-  id: string;
+  id: number;
   user_id: string;
   company: string;
-  role: string;
+  position: string;
   status: string;
   created_at: string;
   updated_at: string;

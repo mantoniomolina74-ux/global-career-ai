@@ -32,7 +32,7 @@ export async function getDashboardData(
 
   tenantId: string = "default",
 
-  applicationId?: string,
+  applicationId?: number,
 
   professionalText?: string,
 

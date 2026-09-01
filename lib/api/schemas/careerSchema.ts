@@ -74,6 +74,12 @@ export const CareerRunSchema = z.object({
           z.string().optional(),
 
 
+
+        category:
+          z.string().optional(),
+
+        tags:
+          z.string().optional(),
         /**
          * Candidate / matching information.
          */

@@ -46,6 +46,10 @@ export interface MatchingJobInput {
 
   country?: string;
 
+  category?: string;
+
+  tags?: string;
+
 }
 
 
@@ -102,6 +106,12 @@ export function buildMatchingInput(
         country:
           application.country,
 
+
+        category:
+          application.category,
+
+        tags:
+          application.tags,
       })
     ),
 

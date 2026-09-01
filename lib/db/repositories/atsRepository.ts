@@ -126,7 +126,7 @@ export async function saveATSResult(
  */
 
 export async function getATSResult(
-  applicationId: string
+  applicationId: number
 ): Promise<ATSResult | null> {
 
   const {
