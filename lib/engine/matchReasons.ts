@@ -17,6 +17,8 @@
  * ============================================================
  */
 
+import { matchesConcept, normalizeText } from "./matchingConcepts";
+
 type MatchJobInput = {
   title?: string;
   description?: string;
@@ -36,149 +38,7 @@ type MatchCvInput = {
 };
 
 
-const MATCH_GROUPS = [
-  {
-    name: "Mining",
-    keywords: [
-      "mining",
-      "mine",
-      "mina",
-      "mineria",
-      "minero",
-      "miner",
-      "underground",
-      "subterranea",
-    ],
-  },
 
-  {
-    name: "Heavy Equipment",
-    keywords: [
-      "machinery",
-      "maquinaria",
-      "equipment",
-      "heavy equipment",
-      "equipo pesado",
-      "operator",
-      "operador",
-      "forklift",
-      "montacargas",
-      "tractor",
-    ],
-  },
-
-  {
-    name: "Agriculture",
-    keywords: [
-      "agriculture",
-      "agricultura",
-      "farm",
-      "granja",
-      "harvest",
-      "cosecha",
-      "campo",
-      "cultivo",
-    ],
-  },
-
-  {
-    name: "Construction",
-    keywords: [
-      "construction",
-      "construccion",
-      "construcción",
-      "building",
-      "obra",
-    ],
-  },
-
-  {
-    name: "Maintenance",
-    keywords: [
-      "maintenance",
-      "mantenimiento",
-      "repair",
-      "reparacion",
-      "reparación",
-      "mecanico",
-      "mecánico",
-      "mechanic",
-    ],
-  },
-
-  {
-    name: "Welding",
-    keywords: [
-      "welding",
-      "soldadura",
-      "welder",
-      "soldador",
-    ],
-  },
-];
-
-
-function normalizeText(
-  value: string = ""
-): string {
-
-  return value
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^\p{L}\p{N}\s]/gu, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-
-}
-
-
-function matchesConcept(
-  text: string,
-  value: string
-): boolean {
-
-  const normalizedText =
-    normalizeText(text);
-
-  const normalizedValue =
-    normalizeText(value);
-
-  if (!normalizedValue) {
-    return false;
-  }
-
-
-  const group =
-    MATCH_GROUPS.find(
-      (item) =>
-        item.keywords.some(
-          (keyword) =>
-            normalizeText(keyword) ===
-            normalizedValue
-        )
-    );
-
-
-  if (!group) {
-
-    return normalizedText
-      .split(/\s+/)
-      .includes(normalizedValue);
-
-  }
-
-
-  return group.keywords.some(
-    (keyword) =>
-      normalizedText
-        .split(/\s+/)
-        .includes(
-          normalizeText(keyword)
-        )
-  );
-
-}
 
 
 function findMatchingField(
