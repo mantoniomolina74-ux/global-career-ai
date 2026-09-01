@@ -29,6 +29,8 @@ export interface MatchingInputProfile {
 
   industries: string[];
 
+  candidateCertifications: string[];
+
 }
 
 
@@ -62,6 +64,8 @@ export function buildMatchingInput(
     skills: string[];
 
     industries: string[];
+
+    candidateCertifications: string[];
 
   };
 
@@ -115,6 +119,9 @@ export function buildMatchingInput(
 
       industries:
         profile.industries,
+
+      candidateCertifications:
+        profile.candidateCertifications,
 
     },
 

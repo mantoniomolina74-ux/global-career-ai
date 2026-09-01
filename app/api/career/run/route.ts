@@ -174,6 +174,10 @@ export async function POST(
         parsed.data.candidateSkills ?? [],
 
 
+
+      candidateCertifications:
+        parsed.data.candidateCertifications ?? [],
+
       requiredSkills:
         parsed.data.requiredSkills ?? [],
 

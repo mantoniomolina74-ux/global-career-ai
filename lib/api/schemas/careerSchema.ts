@@ -120,6 +120,11 @@ export const CareerRunSchema = z.object({
       z.string()
     ).optional(),
 
+  candidateCertifications:
+    z.array(
+      z.string()
+    ).optional(),
+
   jobDescription:
     z.string().optional(),
 

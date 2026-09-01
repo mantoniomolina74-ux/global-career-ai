@@ -27,6 +27,7 @@ type JobScoreInput = {
 type CvScoreInput = {
   skills?: string[];
   industries?: string[];
+  candidateCertifications?: string[];
 };
 
 

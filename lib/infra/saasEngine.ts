@@ -131,6 +131,9 @@ type CareerPayload = {
 
   candidateSkills: string[];
 
+  candidateCertifications: string[];
+
+
 
   requiredSkills: string[];
 
@@ -309,6 +312,8 @@ export async function saasEngine(
 
         candidateSkills:
           p.candidateSkills,
+
+
 
         cvStrengthScore:
           p.cvStrengthScore,
@@ -538,6 +543,10 @@ export async function saasEngine(
 
         candidateSkills:
           p.candidateSkills,
+
+        candidateCertifications:
+          p.candidateCertifications,
+
 
 
         requiredSkills:

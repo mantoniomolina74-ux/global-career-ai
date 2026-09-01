@@ -247,6 +247,8 @@ export interface CareerOrchestratorInput {
 
   candidateSkills: string[];
 
+  candidateCertifications: string[];
+
   requiredSkills: string[];
 
   jobDescription: string;

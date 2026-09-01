@@ -3,6 +3,7 @@ import { CandidateEvidence } from "./matchingTypes";
 export type CvEvidenceInput = {
   skills?: string[];
   industries?: string[];
+  candidateCertifications?: string[];
 };
 
 export function buildCandidateEvidence(
@@ -27,6 +28,16 @@ export function buildCandidateEvidence(
       source: "work_experience",
       relevance: "related",
       confidence: "medium",
+    });
+  });
+
+  (input.candidateCertifications ?? []).forEach((certification) => {
+    evidences.push({
+      skill: certification,
+      evidenceType: "certification",
+      source: "certifications",
+      relevance: "direct",
+      confidence: "high",
     });
   });
 

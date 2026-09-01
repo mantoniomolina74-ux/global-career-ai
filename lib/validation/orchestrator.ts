@@ -40,6 +40,8 @@ export const CareerOrchestratorInputSchema = z.object({
 
   candidateSkills: z.array(z.string()),
 
+  candidateCertifications: z.array(z.string()),
+
   requiredSkills: z.array(z.string()),
 
   jobDescription: z.string(),

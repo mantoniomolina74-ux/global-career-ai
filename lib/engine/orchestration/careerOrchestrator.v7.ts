@@ -165,6 +165,9 @@ export async function runCareerOrchestratorV7(
           input.industry
             ? [input.industry]
             : [],
+
+        candidateCertifications:
+          input.candidateCertifications || [],
       }
     );
 
