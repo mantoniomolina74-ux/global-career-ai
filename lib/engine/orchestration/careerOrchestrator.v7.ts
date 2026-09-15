@@ -1,4 +1,4 @@
-import { calculateATS } from "@/lib/engine/applications/atsEngine";
+﻿import { calculateATS } from "@/lib/engine/applications/atsEngine";
 import { runScoringPipeline } from "@/lib/engine/applications/scoringPipeline";
 import { runRankingEngine } from "@/lib/engine/applications/rankingEngine";
 import { getApplicationInsights } from "@/lib/engine/applications/applicationInsights";
@@ -29,7 +29,7 @@ import { emitLearning } from "@/lib/engine/learning/learningEventBus";
 /**
  * ============================================================
  * Global Career AI
- * Career Orchestrator V7 — HARDENED (8C.14)
+ * Career Orchestrator V7 â€” HARDENED (8C.14)
  * ============================================================
  */
 
@@ -43,7 +43,7 @@ export async function runCareerOrchestratorV7(
 
   /**
    * ============================================================
-   * STEP 0 — LEARNING CONTEXT
+   * STEP 0 â€” LEARNING CONTEXT
    * ============================================================
    */
 
@@ -51,7 +51,7 @@ export async function runCareerOrchestratorV7(
 
   /**
    * ============================================================
-   * STEP 1 — ATS ENRICHMENT
+   * STEP 1 â€” ATS ENRICHMENT
    * ============================================================
    */
 
@@ -61,24 +61,25 @@ export async function runCareerOrchestratorV7(
         async (app) => {
 
           const ats =
-            await calculateATS(
-              input.requiredSkills || [],
-              app.candidateSkills ||
-                input.candidateSkills ||
-                [],
-              app.jobDescription ||
-                input.jobDescription ||
-                "",
-              app.cvStrengthScore ||
-                input.cvStrengthScore ||
-                50,
-              undefined,
-              {
-                userId: input.userId,
-                applicationId:
-                  app.applicationId,
-              }
-            );
+  await calculateATS(
+    input.requiredSkills || [],
+    app.candidateSkills ||
+      input.candidateSkills ||
+      [],
+    app.jobDescription ||
+      input.jobDescription ||
+      "",
+    app.cvStrengthScore ||
+      input.cvStrengthScore ||
+      50,
+    undefined,
+    {
+      userId: input.userId,
+      applicationId:
+        app.applicationId,
+    },
+    input.profile?.professionalText ?? ""
+  );
 
 
           return {
@@ -93,10 +94,6 @@ export async function runCareerOrchestratorV7(
                 ats.data.atsScore *
                 weights.atsMultiplier
               ),
-
-            hiringScore:
-              ats.data.hiringScore,
-
             semanticScore:
               ats.data.semanticScore,
           };
@@ -150,7 +147,7 @@ export async function runCareerOrchestratorV7(
 
   /**
    * ============================================================
-   * STEP 2 — MATCHING INTELLIGENCE
+   * STEP 2 â€” MATCHING INTELLIGENCE
    * ============================================================
    */
 
@@ -168,20 +165,63 @@ export async function runCareerOrchestratorV7(
 
         candidateCertifications:
           input.candidateCertifications || [],
+
+        professionalText:
+          input.profile?.professionalText ?? "",
       }
     );
 
 
-  const matching =
+    const matching =
     analyzeMatchingProfile(
       matchingInput.jobs,
       matchingInput.cv
     );
 
+  console.log("=== PREMIUM MATCHING DEBUG ===", {
+  jobsCount: matchingInput.jobs.length,
+
+  candidateSkills:
+    matchingInput.cv.skills,
+
+  candidateIndustries:
+    matchingInput.cv.industries,
+
+  jobs:
+    matchingInput.jobs.slice(0, 5).map((job) => ({
+      id: job.id,
+      title: job.title,
+      industry: job.industry,
+      category: job.category,
+      tags: job.tags,
+      descriptionLength:
+        job.description?.length ?? 0,
+    })),
+
+  matches:
+    matching.bestMatches.slice(0, 5).map((item) => ({
+      id: item.id,
+      title: item.title,
+      match_score: item.match_score,
+      matched_skills:
+        item.match_explanation?.matched_skills ?? [],
+      matched_industries:
+        item.match_explanation?.matched_industries ?? [],
+      match_reasons:
+        item.match_reasons ?? [],
+        evidence_analysis:
+      JSON.stringify(
+        item.evidence_analysis,
+    null,
+    2
+  ),
+    })),
+});
+
 
   /**
    * ============================================================
-   * STEP 3 — SCORING
+   * STEP 3 â€” SCORING
    * ============================================================
    */
 
@@ -194,7 +234,7 @@ export async function runCareerOrchestratorV7(
 
   /**
    * ============================================================
-   * STEP 4 — RANKING
+   * STEP 4 â€” RANKING
    * ============================================================
    */
 
@@ -230,7 +270,7 @@ export async function runCareerOrchestratorV7(
 
   /**
    * ============================================================
-   * STEP 5 — DECISION
+   * STEP 5 â€” DECISION
    * ============================================================
    */
 

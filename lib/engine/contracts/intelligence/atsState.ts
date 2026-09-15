@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ============================================================
  * Global Career AI
  * ATS State Contract V1.1
@@ -21,11 +21,10 @@ export interface ATSState {
 
   semanticScore: number;
 
-  hiringScore: number;
-
   matchedSkills: string[];
 
   missingSkills: string[];
 
   recommendation: string;
 }
+

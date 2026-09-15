@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 import { getDashboardData } from "@/lib/dashboard/dashboardAdapter.v1";
 import { createSupabaseServerAuth } from "@/lib/supabase/server";
@@ -112,6 +112,8 @@ export default async function DashboardPage() {
     ),
   ];
 
+  const nextOpportunity = opportunities[0] ?? null;
+
   const uniqueInsights = [
     ...new Set(
       insights.filter(
@@ -185,6 +187,82 @@ export default async function DashboardPage() {
                 EXPLORAR EMPLEOS
               </Link>
             </div>
+
+            {/* NEXT STEP */}
+            <section className="mb-8">
+              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
+                <div className="mb-5">
+                  <h2 className="text-xl font-semibold">
+                    Recommended Next Step
+                  </h2>
+
+                  <p className="mt-1 text-sm text-slate-500">
+                    A practical action based on your current real opportunity matching.
+                  </p>
+                </div>
+
+                {nextOpportunity ? (
+                  <div className="rounded-xl border border-slate-800 bg-slate-950 p-5">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="text-lg font-semibold text-slate-200">
+                          Review your strongest opportunity
+                        </p>
+
+                        <p className="mt-2 text-sm text-slate-400">
+                          {nextOpportunity.title}
+                        </p>
+
+                        {nextOpportunity.country && (
+                          <p className="mt-1 text-sm text-slate-500">
+                            {nextOpportunity.country}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="shrink-0">
+                        <span className="text-2xl font-bold text-white">
+                          {nextOpportunity.matchScore}
+                        </span>
+
+                        <span className="ml-1 text-sm text-slate-500">
+                          / 100
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-400">
+                      This is currently one of the strongest real opportunities
+                      identified for your professional profile. Review the
+                      opportunity to understand the match and decide whether
+                      to continue with the application.
+                    </p>
+
+                    <Link
+                      href={`/empleos/${nextOpportunity.id}`}
+                      className="mt-5 inline-flex rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-200"
+                    >
+                      REVISAR OPORTUNIDAD
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-slate-800 bg-slate-950 p-5">
+                    <p className="text-sm leading-6 text-slate-400">
+                      No real opportunity matches are available yet.
+                      Explore current opportunities to find where your profile
+                      may align.
+                    </p>
+
+                    <Link
+                      href="/empleos"
+                      className="mt-5 inline-flex rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-200"
+                    >
+                      EXPLORAR EMPLEOS
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </section>
 
             {/* PROFESSIONAL PROFILE */}
 <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
@@ -679,3 +757,4 @@ export default async function DashboardPage() {
     </main>
   );
 }
+

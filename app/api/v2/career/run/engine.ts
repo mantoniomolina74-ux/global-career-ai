@@ -11,7 +11,7 @@ import { saasEngine } from "@/lib/infra/saasEngine";
 export type CareerRunRequest<TPayload = unknown> = {
   userId: string;
   organizationId: string;
-  mode: "score" | "rank" | "recruit";
+  mode: "score" | "rank" | "recruit" | "career";
   payload: TPayload;
 };
 

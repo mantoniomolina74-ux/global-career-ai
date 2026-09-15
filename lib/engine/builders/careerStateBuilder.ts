@@ -91,7 +91,15 @@ export function buildCareerState(
     },
 
     metrics: {
-      averageMatch: result.summary.averageATS,
+      averageMatch:
+        result.matching.items.length > 0
+    ? Math.round(
+        result.matching.items.reduce(
+          (sum, item) => sum + (item.match_score || 0),
+          0
+        ) / result.matching.items.length
+      )
+    : 0,
 
       topMatches: result.summary.topScore,
 

@@ -1,6 +1,6 @@
 import {
-  procurementCompetencies
-} from "../competencies/procurementCompetencies";
+  professionalCompetencies
+} from "../competencies/professionalCompetencies";
 
 import {
   normalizeTokens
@@ -27,7 +27,7 @@ export function scoreCompetencies(
     normalizeTokens(text);
 
 
-  return procurementCompetencies
+  return professionalCompetencies
     .map(
       competency => {
 

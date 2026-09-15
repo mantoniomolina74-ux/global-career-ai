@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ============================================================
  * Global Career AI
  * ATS State Adapter V1.1
@@ -37,8 +37,6 @@ export function buildATSState(
       keywordScore: 0,
 
       semanticScore: 0,
-
-      hiringScore: 0,
 
       matchedSkills: [],
 
@@ -79,12 +77,6 @@ export function buildATSState(
       )
     ),
 
-    hiringScore: average(
-      results.map(
-        (item) => item.hiringScore
-      )
-    ),
-
     matchedSkills: [
       ...new Set(
         results.flatMap(
@@ -105,3 +97,4 @@ export function buildATSState(
       results[0].recommendation,
   };
 }
+

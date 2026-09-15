@@ -1,140 +1,145 @@
 /**
- * ============================================================
- * Global Career AI
- * Matching Input Adapter V1.2
- * ============================================================
- *
- * Transforms CareerApplication input into Matching Engine input.
- *
- * Responsibilities:
- * - Normalize application data
- * - Preserve real job information
- * - Preserve candidate profile information
- * - Preserve domain boundaries
- *
- * No scoring logic.
- * No persistence.
- * No dashboard logic.
- * ============================================================
- */
+
+* ============================================================
+* Global Career AI
+* Matching Input Adapter V1.2
+* ============================================================
+*
+* Transforms CareerApplication input into Matching Engine input.
+*
+* Responsibilities:
+* * Normalize application data
+* * Preserve real job information
+* * Preserve candidate profile information
+* * Preserve professional CV text
+* * Preserve domain boundaries
+*
+* No scoring logic.
+* No persistence.
+* No dashboard logic.
+* ============================================================
+  */
 
 import type {
-  CareerApplication,
+CareerApplication,
 } from "@/lib/engine/contracts/engineContracts";
-
 
 export interface MatchingInputProfile {
 
-  skills: string[];
+skills: string[];
 
-  industries: string[];
+industries: string[];
 
-  candidateCertifications: string[];
+candidateCertifications: string[];
+
+professionalText?: string;
 
 }
-
 
 export interface MatchingJobInput {
 
-  id: string;
+id: string;
 
-  title?: string;
+title?: string;
 
-  description?: string;
+description?: string;
 
-  industry?: string;
+industry?: string;
 
-  country?: string;
+country?: string;
 
-  category?: string;
+category?: string;
 
-  tags?: string;
+tags?: string;
 
 }
 
-
 export function buildMatchingInput(
 
-  applications: CareerApplication[],
+applications: CareerApplication[],
 
-  profile: MatchingInputProfile
+profile: MatchingInputProfile
 
 ): {
 
-  jobs: MatchingJobInput[];
+jobs: MatchingJobInput[];
 
-  cv: {
+cv: {
 
-    skills: string[];
+skills: string[];
 
-    industries: string[];
+industries: string[];
 
-    candidateCertifications: string[];
+candidateCertifications: string[];
 
-  };
+professionalText: string;
+
+};
 
 } {
 
-  return {
+return {
 
-    /**
-     * ============================================================
-     * REAL JOB INPUT
-     * ============================================================
-     *
-     * Preserve real job information carried by the application.
-     *
-     * These fields are consumed by the Matching Engine and later
-     * become evidence for MatchingState.
-     */
+/**
+ * ============================================================
+ * REAL JOB INPUT
+ * ============================================================
+ *
+ * Preserve real job information carried by the application.
+ *
+ * These fields are consumed by the Matching Engine and later
+ * become evidence for MatchingState.
+ */
 
-    jobs: applications.map(
-      (application) => ({
+jobs: applications.map(
+  (application) => ({
 
-        id:
-          application.applicationId,
+    id:
+      application.applicationId,
 
-        title:
-          application.title,
+    title:
+      application.title,
 
-        description:
-          application.jobDescription ?? "",
+    description:
+      application.jobDescription ?? "",
 
-        industry:
-          application.industry,
+    industry:
+      application.industry,
 
-        country:
-          application.country,
+    country:
+      application.country,
+
+    category:
+      application.category,
+
+    tags:
+      application.tags,
+  })
+),
 
 
-        category:
-          application.category,
+/**
+ * ============================================================
+ * CANDIDATE PROFILE
+ * ============================================================
+ */
 
-        tags:
-          application.tags,
-      })
-    ),
+cv: {
 
+  skills:
+    profile.skills,
 
-    /**
-     * ============================================================
-     * CANDIDATE PROFILE
-     * ============================================================
-     */
+  industries:
+    profile.industries,
 
-    cv: {
+  candidateCertifications:
+    profile.candidateCertifications,
 
-      skills:
-        profile.skills,
+  professionalText:
+    profile.professionalText ?? "",
 
-      industries:
-        profile.industries,
+},
 
-      candidateCertifications:
-        profile.candidateCertifications,
-
-    },
-
-  };
+};
 
 }

@@ -53,6 +53,17 @@ export function evaluateLearningPolicies(
 
         break;
       }
+
+      case "IMPROVEMENT": {
+        const signal: LearningPolicySignal = {
+          atsDelta: 0.02,
+          weight: pattern.confidence,
+        };
+
+        signals.push(signal);
+
+        break;
+      }
     }
   }
 

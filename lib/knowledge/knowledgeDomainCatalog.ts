@@ -1,4 +1,4 @@
-import {
+﻿import {
   KnowledgeDomain
 } from "./knowledgeTypes";
 
@@ -9,6 +9,22 @@ import {
 import {
   supplyChainDomain
 } from "./domains/supplyChain";
+
+import {
+  operationsDomain
+} from "./domains/operations";
+
+import {
+  managementLeadershipDomain
+} from "./domains/managementLeadership";
+
+import {
+  securityInvestigationDomain
+} from "./domains/securityInvestigation";
+
+import {
+  administrationAnalysisDomain
+} from "./domains/administrationAnalysis";
 
 
 /**
@@ -24,7 +40,15 @@ export const knowledgeDomainCatalog: KnowledgeDomain[] = [
 
   supplyChainDomain,
 
-  procurementDomain
+  procurementDomain,
+
+  operationsDomain,
+
+  managementLeadershipDomain,
+
+  securityInvestigationDomain,
+
+  administrationAnalysisDomain
 
 ];
 

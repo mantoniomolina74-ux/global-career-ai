@@ -1,4 +1,4 @@
-import {
+﻿import {
   ScoringResult,
   ScoringResultItem,
 } from "../contracts/engineContracts";
@@ -29,10 +29,6 @@ interface ScoringApplication {
    */
   score?: number | string;
   atsScore?: number | string;
-  hiringScore?: number;
-  semanticScore?: number;
-  cvStrengthScore?: number;
-
   /**
    * Optional scoring metadata.
    */

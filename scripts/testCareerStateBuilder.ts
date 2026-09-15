@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ============================================================
  * Global Career AI
  * CareerState Builder Validation
@@ -7,9 +7,9 @@
  * Validates:
  *
  * OrchestratorResult
- *        ↓
+ *        â†“
  * CareerStateBuilder
- *        ↓
+ *        â†“
  * CareerState
  *
  * No external dependencies.
@@ -34,15 +34,11 @@ const mockResult: OrchestratorResult = {
       keywordScore: 90,
       cvStrengthScore: 80,
       semanticScore: 82,
-      interviewProbability: 0.7,
-      offerProbability: 0.4,
-      hiringScore: 78,
       matchedSkills: [
         "typescript",
       ],
       missingSkills: [],
       recommendation: "Proceed",
-      learningSignal: 0.9,
     },
   ],
 
@@ -144,5 +140,6 @@ if (!careerState.intelligence.ats) {
 
 
 console.log(
-  "✅ CareerState Builder validation passed"
+  "âœ… CareerState Builder validation passed"
 );
+

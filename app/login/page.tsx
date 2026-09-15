@@ -34,7 +34,7 @@ function LoginForm() {
 
     setTimeout(() => {
       window.location.href = jobId
-        ? `/applications/new?jobId=${encodeURIComponent(jobId)}`
+        ? `/subir-cv?jobId=${encodeURIComponent(jobId)}`
         : "/dashboard";
     }, 1000);
   };
@@ -98,3 +98,4 @@ export default function LoginPage() {
     </Suspense>
   );
 }
+

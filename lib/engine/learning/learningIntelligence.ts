@@ -187,6 +187,11 @@ export function runLearningIntelligence(
       adaptLearningEventToSignal
     );
 
+  console.log(
+  "=== LEARNING SIGNALS AFTER ADAPTER ===",
+  JSON.stringify(signals.slice(0, 5), null, 2)
+    );
+
 
   const patterns =
     detectLearningPatterns(

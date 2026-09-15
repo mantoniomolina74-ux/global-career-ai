@@ -1,4 +1,4 @@
-import { supabaseServer } from "@/lib/supabase-server";
+﻿import { supabaseServer } from "@/lib/supabase-server";
 import {
   getATSResult,
 } from "@/lib/db/repositories/atsRepository";
@@ -18,6 +18,9 @@ export interface ApplicationRecord {
   created_at: string;
   updated_at: string;
   country?: string;
+  job_id?: string;
+  application_date?: string;
+  source?: string;
   industry?: string;
   required_skills?: string[];
   matched_skills?: string[];
@@ -30,8 +33,6 @@ export interface ApplicationRecord {
 
 interface AtsResult {
   atsScore: number;
-  interviewProbability?: number;
-  offerProbability?: number;
   matchedSkills: string[];
   missingSkills: string[];
 }
@@ -154,6 +155,46 @@ async function fetchApplications(
  * FUNNEL ENGINE
  * ============================================================
  */
+
+/**
+ * ============================================================
+ * PUBLIC APPLICATION RECORD READER
+ * ============================================================
+ *
+ * Exposes persisted application records to product-facing
+ * consumers without duplicating the Supabase query.
+ * ============================================================
+ */
+
+export async function getApplicationRecords(
+  userId: string
+): Promise<ApplicationRecord[]> {
+
+  return fetchApplications(
+    userId
+  );
+
+}
+export async function getApplicationsPageData(
+  userId: string
+) {
+  const applications =
+    await fetchApplications(
+      userId
+    );
+
+  return {
+    applications,
+    funnel:
+      calculateFunnel(
+        applications
+      ),
+    performance:
+      calculatePerformance(
+        applications
+      ),
+  };
+}
 
 export function calculateFunnel(
   apps: ApplicationRecord[]
@@ -538,3 +579,31 @@ export async function getPerformanceMetrics(
   );
 
 }
+
+export async function getApplicationRecordByJobId(
+  userId: string,
+  jobId: string
+): Promise<ApplicationRecord | null> {
+
+  const {
+    data,
+    error,
+  } = await supabaseServer
+    .from("applications")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("job_id", jobId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(
+      `Failed to fetch application by job: ${error.message}`
+    );
+  }
+
+  return data
+    ? (data as ApplicationRecord)
+    : null;
+}
+
+

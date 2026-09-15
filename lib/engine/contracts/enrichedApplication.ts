@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ============================================================
  * Global Career AI
  * Enriched Application Contract V1.1
@@ -29,8 +29,6 @@ export interface EnrichedApplication
   atsResult: ATSResult;
 
   atsScore: number;
-
-  hiringScore: number;
 
   semanticScore: number;
 }

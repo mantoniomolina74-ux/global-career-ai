@@ -1,4 +1,4 @@
-import { buildATSState } from "@/lib/engine/adapters/intelligence/atsStateAdapter";
+﻿import { buildATSState } from "@/lib/engine/adapters/intelligence/atsStateAdapter";
 
 const result = buildATSState([
   {
@@ -6,9 +6,6 @@ const result = buildATSState([
     keywordScore: 90,
     cvStrengthScore: 80,
     semanticScore: 82,
-    interviewProbability: 0.7,
-    offerProbability: 0.4,
-    hiringScore: 78,
     matchedSkills: [
       "typescript",
       "react",
@@ -17,7 +14,6 @@ const result = buildATSState([
       "aws",
     ],
     recommendation: "Proceed",
-    learningSignal: 0.9,
   },
 ]);
 
@@ -44,5 +40,5 @@ if (
 
 
 console.log(
-  "✅ ATSState adapter validation passed"
+  "âœ… ATSState adapter validation passed"
 );

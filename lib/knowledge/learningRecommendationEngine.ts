@@ -1,47 +1,52 @@
 import {
-  KnowledgeGapResult,
-  LearningRecommendation,
-  LearningPriority,
+KnowledgeGapResult,
+LearningRecommendation,
+LearningPriority,
 } from "./gapAnalysisTypes";
 
 /**
- * ADR-013.5
- * Learning Recommendation Engine
- */
-export function generateLearningRecommendations(
+
+* ADR-013.5
+* Learning Recommendation Engine
+  */
+  export function generateLearningRecommendations(
   analysis: KnowledgeGapResult
-): KnowledgeGapResult {
+  ): KnowledgeGapResult {
 
-  const priorities: LearningPriority[] = analysis.gaps
-    .map((gap) => ({
-      competencyId: gap.competencyId,
-      priorityScore: Math.round(gap.gapScore * gap.importance),
-      estimatedImpact: gap.importance,
-    }))
-    .sort((a, b) => b.priorityScore - a.priorityScore);
+const priorities: LearningPriority[] = analysis.gaps
+.map((gap) => ({
+competencyId: gap.competencyId,
+domainId: gap.domainId,
+priorityScore: Math.round(gap.gapScore * gap.importance),
+estimatedImpact: gap.importance,
+}))
+.sort((a, b) => b.priorityScore - a.priorityScore);
 
-  const recommendations: LearningRecommendation[] = priorities.map(
-    (priority) => ({
-      id: `recommendation-${priority.competencyId}`,
+const recommendations: LearningRecommendation[] = priorities.map(
+(priority) => ({
+id: `recommendation-${priority.competencyId}`,
 
-      title: `Improve ${priority.competencyId}`,
 
-      description:
-        "Recommended to strengthen this competency based on your current knowledge profile.",
+  title: `Improve ${priority.competencyId}`,
 
-      competencyIds: [priority.competencyId],
+  description:
+    "Recommended to strengthen this competency based on your current knowledge profile.",
 
-      domainIds: [],
+  competencyIds: [priority.competencyId],
 
-      estimatedScoreImprovement: priority.estimatedImpact,
+  domainIds: [priority.domainId],
 
-      priority: priority.priorityScore,
-    })
-  );
+  estimatedScoreImprovement: priority.estimatedImpact,
 
-  return {
-    ...analysis,
-    priorities,
-    recommendations,
-  };
+  priority: priority.priorityScore,
+})
+
+
+);
+
+return {
+...analysis,
+priorities,
+recommendations,
+};
 }

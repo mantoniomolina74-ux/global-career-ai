@@ -1,3 +1,4 @@
+
 export type EvidenceType =
   | "experience"
   | "project"
@@ -35,6 +36,8 @@ export type CandidateEvidence = {
   source: EvidenceSource;
 
   relevance: EvidenceRelevance;
+
+  transferableStrength?: "strong" | "moderate";
 
   details?: string;
 
@@ -170,4 +173,3 @@ export type EvidenceAnalyticsResult = {
    */
   evidenceStrength: EvidenceStrength;
 };
-

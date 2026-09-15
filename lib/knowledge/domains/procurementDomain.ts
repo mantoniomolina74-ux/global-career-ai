@@ -1,4 +1,4 @@
-import {
+﻿import {
   KnowledgeDomain
 } from "../knowledgeTypes";
 
@@ -40,7 +40,7 @@ export const procurementDomain: KnowledgeDomain = {
 
     {
       competencyId:
-        "purchase_management",
+        "purchasing",
 
       weight:
         1.0
@@ -49,7 +49,7 @@ export const procurementDomain: KnowledgeDomain = {
 
     {
       competencyId:
-        "negotiation",
+        "negotiation_conflict_resolution",
 
       weight:
         1.2

@@ -1,30 +1,11 @@
-import { getDashboardData } from "@/lib/dashboard/dashboardAdapter.v1";
+﻿import Link from "next/link";
+import {
+  getApplicationsPageData,
+  normalizeApplicationStatus,
+} from "@/lib/engine/applications/applicationInsights";
 import { createSupabaseServerAuth } from "@/lib/supabase/server";
 
-export default async function DashboardPage() {
-  /**
-   * ============================================================
-   * CAREER INTELLIGENCE DASHBOARD V1.1
-   * ============================================================
-   *
-   * Page layer only.
-   *
-   * Business intelligence is composed below this layer through
-   * the Dashboard Adapter / Product Contract.
-   *
-   * Sources:
-   *
-   * - Real CV analysis
-   * - Real Hirebase job matches
-   * - Real application history
-   * - Real persisted ATS results
-   *
-   * No demo data.
-   * No fake scores.
-   * No business logic in the page.
-   * ============================================================
-   */
-
+export default async function ApplicationsPage() {
   const supabase =
     await createSupabaseServerAuth();
 
@@ -35,12 +16,6 @@ export default async function DashboardPage() {
   } =
     await supabase.auth.getUser();
 
-  /**
-   * ============================================================
-   * AUTHENTICATION
-   * ============================================================
-   */
-
   if (!user) {
     return (
       <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6">
@@ -50,168 +25,35 @@ export default async function DashboardPage() {
           </div>
 
           <h1 className="text-3xl font-bold">
-            Career Intelligence
+            Postulaciones
           </h1>
 
           <p className="mt-3 text-slate-400">
             User session required. Please login to access
-            your career intelligence.
+            your applications.
           </p>
         </div>
       </main>
     );
   }
 
-  /**
-   * ============================================================
-   * DASHBOARD CONTRACT
-   * ============================================================
-   */
-
-  const data =
-    await getDashboardData(
+  const {
+    applications,
+    funnel,
+    performance,
+  } =
+    await getApplicationsPageData(
       user.id
     );
 
-  /**
-   * ============================================================
-   * DEBUG
-   * ============================================================
-   */
-
-  console.log(
-    "[DASHBOARD PAGE DEBUG]",
-    {
-      userId: user.id,
-
-      avgATS:
-        data?.analytics?.performance?.avgATS,
-
-      performance:
-        data?.analytics?.performance,
-
-      funnel:
-        data?.analytics?.funnel,
-
-      insights:
-        data?.analytics?.insights,
-    }
-  );
-
-  /**
-   * ============================================================
-   * EMPTY STATE
-   * ============================================================
-   */
-
-  if (
-    !data ||
-    data.empty ||
-    !data.analytics
-  ) {
-    return (
-      <main className="min-h-screen bg-slate-950 text-white p-6 md:p-10">
-        <div className="mx-auto max-w-7xl">
-
-          <div className="mb-10">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-400">
-              Global Career AI
-            </p>
-
-            <h1 className="mt-3 text-4xl font-bold tracking-tight">
-              Career Intelligence
-            </h1>
-
-            <p className="mt-3 max-w-2xl text-slate-400">
-              Your professional intelligence will appear here
-              once the system has real career data to analyze.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-8">
-            <h2 className="text-xl font-semibold">
-              Intelligence not available yet
-            </h2>
-
-            <p className="mt-2 text-slate-400">
-              Upload your CV and interact with real
-              opportunities to generate career intelligence.
-            </p>
-          </div>
-
-        </div>
-      </main>
-    );
-  }
-
-  const analytics =
-    data.analytics;
-
-  const performance =
-    analytics.performance;
-
-  const funnel =
-    analytics.funnel;
-
-  const insights =
-    analytics.insights ?? [];
-
-  /**
-   * ============================================================
-   * SAFE PRESENTATION VALUES
-   * ============================================================
-   *
-   * These are presentation fallbacks only.
-   *
-   * They do NOT create intelligence.
-   */
-
-  const atsScore =
-    performance?.avgATS ?? 0;
-
-  const rankingScore =
-    performance?.avgRanking ?? 0;
-
-  const applications =
-    funnel?.applications ?? 0;
-
-
-  const status =
-    data.ui?.status ?? "UNKNOWN";
-
-  /**
-   * ============================================================
-   * SCORE HELPERS
-   * ============================================================
-   */
-
-  const scoreLabel =
-    (score: number) => {
-      if (score >= 80) return "Strong";
-      if (score >= 60) return "Good";
-      if (score >= 40) return "Developing";
-      return "Needs attention";
-    };
-
-  const scoreBar =
-    (score: number) => {
-      const safeScore =
-        Math.max(
-          0,
-          Math.min(
-            100,
-            score
-          )
-        );
-
-      return `${safeScore}%`;
-    };
-
-  /**
-   * ============================================================
-   * UI
-   * ============================================================
-   */
+  const applicationRows =
+    applications.map((application) => ({
+      ...application,
+      normalizedStatus:
+        normalizeApplicationStatus(
+          application.status
+        ),
+    }));
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -233,19 +75,22 @@ export default async function DashboardPage() {
               </p>
 
               <h1 className="mt-3 text-4xl font-bold tracking-tight md:text-5xl">
-                Career Intelligence
+                Postulaciones
               </h1>
 
               <p className="mt-4 max-w-2xl text-base leading-7 text-slate-400">
-                A real-time view of your CV strength,
-                opportunity alignment, and application activity.
+                Manage your real job applications and track
+                their current progress.
               </p>
 
             </div>
 
-            <div className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-400">
-              Intelligence Status: {status}
-            </div>
+            <Link
+              href="/empleos"
+              className="inline-flex items-center justify-center rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-5 py-3 text-sm font-semibold text-cyan-300 transition hover:bg-cyan-400/20"
+            >
+              EXPLORAR OPORTUNIDADES
+            </Link>
 
           </div>
 
@@ -253,7 +98,7 @@ export default async function DashboardPage() {
 
 
         {/* =====================================================
-            PERFORMANCE
+            PIPELINE SUMMARY
         ===================================================== */}
 
         <section className="mb-8">
@@ -261,122 +106,73 @@ export default async function DashboardPage() {
           <div className="mb-4">
 
             <p className="text-sm font-semibold uppercase tracking-wider text-slate-500">
-              Performance
+              Application Pipeline
             </p>
 
             <h2 className="mt-1 text-2xl font-semibold">
-              Your professional intelligence
+              Your application activity
             </h2>
 
             <p className="mt-1 text-sm text-slate-400">
-              Current intelligence from your latest CV and
-              real job matches.
+              Current status of your real applications.
             </p>
 
           </div>
 
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
 
-          <div className="grid gap-5 md:grid-cols-2">
-
-            {/* ATS */}
-
-            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl">
-
-              <div className="flex items-start justify-between">
-
-                <div>
-
-                  <p className="text-sm font-medium text-slate-400">
-                    ATS Score
-                  </p>
-
-                  <div className="mt-3 flex items-end gap-2">
-
-                    <span className="text-5xl font-bold">
-                      {atsScore}
-                    </span>
-
-                    <span className="mb-2 text-sm text-slate-500">
-                      / 100
-                    </span>
-
-                  </div>
-
-                </div>
-
-                <div className="rounded-xl bg-cyan-400/10 px-3 py-2 text-xs font-semibold text-cyan-400">
-                  {scoreLabel(atsScore)}
-                </div>
-
-              </div>
-
-              <div className="mt-6 h-2 overflow-hidden rounded-full bg-slate-800">
-
-                <div
-                  className="h-full rounded-full bg-cyan-400"
-                  style={{
-                    width:
-                      scoreBar(atsScore),
-                  }}
-                />
-
-              </div>
-
-              <p className="mt-4 text-sm text-slate-400">
-                Based on your latest real CV analysis.
+            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+              <p className="text-sm text-slate-400">
+                Total
               </p>
-
+              <p className="mt-2 text-3xl font-bold">
+                {performance.totalApplications}
+              </p>
             </div>
 
-
-            {/* MATCHING */}
-
-            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl">
-
-              <div className="flex items-start justify-between">
-
-                <div>
-
-                  <p className="text-sm font-medium text-slate-400">
-                    Opportunity Matching
-                  </p>
-
-                  <div className="mt-3 flex items-end gap-2">
-
-                    <span className="text-5xl font-bold">
-                      {rankingScore}
-                    </span>
-
-                    <span className="mb-2 text-sm text-slate-500">
-                      / 100
-                    </span>
-
-                  </div>
-
-                </div>
-
-                <div className="rounded-xl bg-violet-400/10 px-3 py-2 text-xs font-semibold text-violet-400">
-                  {scoreLabel(rankingScore)}
-                </div>
-
-              </div>
-
-              <div className="mt-6 h-2 overflow-hidden rounded-full bg-slate-800">
-
-                <div
-                  className="h-full rounded-full bg-violet-400"
-                  style={{
-                    width:
-                      scoreBar(rankingScore),
-                  }}
-                />
-
-              </div>
-
-              <p className="mt-4 text-sm text-slate-400">
-                Based on your strongest real job matches.
+            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+              <p className="text-sm text-slate-400">
+                Saved
               </p>
+              <p className="mt-2 text-3xl font-bold">
+                {funnel.saved}
+              </p>
+            </div>
 
+            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+              <p className="text-sm text-slate-400">
+                Applied
+              </p>
+              <p className="mt-2 text-3xl font-bold">
+                {funnel.applied}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+              <p className="text-sm text-slate-400">
+                In Review
+              </p>
+              <p className="mt-2 text-3xl font-bold">
+                {funnel.in_review}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+              <p className="text-sm text-slate-400">
+                Interview
+              </p>
+              <p className="mt-2 text-3xl font-bold">
+                {funnel.interview}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+              <p className="text-sm text-slate-400">
+                Offers
+              </p>
+              <p className="mt-2 text-3xl font-bold">
+                {funnel.offer}
+              </p>
             </div>
 
           </div>
@@ -385,340 +181,180 @@ export default async function DashboardPage() {
 
 
         {/* =====================================================
-            MAIN INTELLIGENCE GRID
+            APPLICATION LIST
         ===================================================== */}
 
-        <section className="grid gap-8 lg:grid-cols-3">
+        <section>
+
+          <div className="mb-5">
+
+            <p className="text-sm font-semibold uppercase tracking-wider text-slate-500">
+              Your Applications
+            </p>
+
+            <h2 className="mt-1 text-2xl font-semibold">
+              Application history
+            </h2>
+
+          </div>
 
 
-          {/* ===================================================
-              PROFESSIONAL STRENGTHS
-          =================================================== */}
+          {applicationRows.length > 0 ? (
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl">
+            <div className="space-y-4">
 
-            <div className="mb-5">
+              {applicationRows.map(
+                (application) => (
 
-              <p className="text-sm font-semibold uppercase tracking-wider text-slate-500">
-                Professional Strengths
-              </p>
-
-              <h2 className="mt-1 text-xl font-semibold">
-                Your capabilities
-              </h2>
-
-              <p className="mt-2 text-sm text-slate-400">
-                Skills identified from your latest CV analysis.
-              </p>
-
-            </div>
-
-
-            <div className="flex flex-wrap gap-2">
-
-              {(analytics?.ats?.strengths ?? []).map(
-                (
-                  skill: string,
-                  index: number
-                ) => (
-
-                  <span
-                    key={`${skill}-${index}`}
-                    className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-200"
+                  <article
+                    key={application.id}
+                    className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl"
                   >
-                    {skill}
-                  </span>
+
+                    <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+
+                      <div className="min-w-0">
+
+                        <h3 className="text-xl font-semibold text-white">
+                          {application.position}
+                        </h3>
+
+                        <p className="mt-2 text-sm text-slate-300">
+                          {application.company}
+                          {application.country
+                            ? ` · ${application.country}`
+                            : ""}
+                        </p>
+
+                        <div className="mt-4 flex flex-wrap items-center gap-2">
+
+                          <span className="rounded-lg border border-violet-400/20 bg-violet-400/10 px-3 py-1.5 text-xs font-semibold text-violet-300">
+                            {application.normalizedStatus ??
+                              application.status}
+                          </span>
+
+                          {application.application_date && (
+                            <span className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs text-slate-400">
+                              {application.application_date}
+                            </span>
+                          )}
+
+                          {application.source && (
+                            <span className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs text-slate-400">
+                              {application.source}
+                            </span>
+                          )}
+
+                        </div>
+
+                      </div>
+
+
+                      <div className="flex shrink-0 items-center">
+
+                        {application.job_id ? (
+
+                          <div className="flex flex-wrap items-center justify-end gap-2">
+
+                            <Link
+                              href={`/empleos/${application.job_id}`}
+                              className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm font-semibold text-slate-200 transition hover:border-cyan-400/40 hover:text-cyan-300"
+                            >
+                              VER OPORTUNIDAD
+                            </Link>
+
+                            <Link
+                              href={`/dashboard/premium?jobId=${encodeURIComponent(application.job_id)}`}
+                              className="inline-flex items-center justify-center rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+                            >
+                              ANALIZAR CON PREMIUM ATS
+                            </Link>
+
+                          </div>
+
+                        ) : (
+
+                          <span className="text-xs text-slate-600">
+                            Opportunity unavailable
+                          </span>
+
+                        )}
+
+                      </div>
+
+                    </div>
+
+                  </article>
 
                 )
               )}
 
             </div>
 
-          </div>
+          ) : (
 
+            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-8">
 
-          {/* ===================================================
-              OPPORTUNITY ALIGNMENT
-          =================================================== */}
+              <h3 className="text-xl font-semibold">
+                No applications yet
+              </h3>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl lg:col-span-2">
-
-            <div className="mb-5">
-
-              <p className="text-sm font-semibold uppercase tracking-wider text-slate-500">
-                Opportunity Alignment
+              <p className="mt-2 max-w-xl text-sm leading-6 text-slate-400">
+                Explore real opportunities and save an
+                application when you find a position worth pursuing.
               </p>
 
-              <h2 className="mt-1 text-xl font-semibold">
-                Real opportunities identified
-              </h2>
-
-              <p className="mt-2 text-sm text-slate-400">
-                Opportunities identified by the Matching Engine.
-              </p>
+              <Link
+                href="/empleos"
+                className="mt-6 inline-flex items-center justify-center rounded-xl bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+              >
+                EXPLORAR OPORTUNIDADES
+              </Link>
 
             </div>
 
-
-            <div className="grid gap-6 md:grid-cols-2">
-
-
-              {/* TARGET ROLES */}
-
-              <div>
-
-                <h3 className="mb-3 text-sm font-semibold text-slate-300">
-                  Target Roles
-                </h3>
-
-                <div className="space-y-2">
-
-                  {(analytics?.matching?.targetRoles ?? []).map(
-                    (
-                      role: string,
-                      index: number
-                    ) => (
-
-                      <div
-                        key={`${role}-${index}`}
-                        className="rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3"
-                      >
-                        <p className="text-sm font-medium text-slate-200">
-                          {role}
-                        </p>
-                      </div>
-
-                    )
-                  )}
-
-                </div>
-
-              </div>
-
-
-              {/* MATCHING FACTORS */}
-
-              <div>
-
-                <h3 className="mb-3 text-sm font-semibold text-slate-300">
-                  Matching Factors
-                </h3>
-
-                <div className="flex flex-wrap gap-2">
-
-                  {(analytics?.matching?.alignmentFactors ?? []).map(
-                    (
-                      factor: string,
-                      index: number
-                    ) => (
-
-                      <span
-                        key={`${factor}-${index}`}
-                        className="rounded-lg bg-violet-400/10 px-3 py-2 text-sm text-violet-300"
-                      >
-                        {factor}
-                      </span>
-
-                    )
-                  )}
-
-                </div>
-
-              </div>
-
-            </div>
-
-          </div>
-
+          )}
 
         </section>
 
 
         {/* =====================================================
-            APPLICATION ACTIVITY
+            PIPELINE STATUS
         ===================================================== */}
 
-        <section className="mt-8">
+        <section className="mt-8 grid gap-6 md:grid-cols-2">
 
-          <div className="mb-4">
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
 
             <p className="text-sm font-semibold uppercase tracking-wider text-slate-500">
-              Application Activity
+              Active Pipeline
             </p>
 
-            <h2 className="mt-1 text-2xl font-semibold">
-              Your career pipeline
-            </h2>
+            <p className="mt-2 text-4xl font-bold">
+              {performance.activePipeline}
+            </p>
 
-            <p className="mt-1 text-sm text-slate-400">
-              Current activity from your real application history.
+            <p className="mt-2 text-sm text-slate-400">
+              Applications currently moving through the
+              application process.
             </p>
 
           </div>
 
 
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
 
-
-            {/* APPLICATIONS */}
-
-            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl">
-
-              <p className="text-sm text-slate-400">
-                Applications
-              </p>
-
-              <p className="mt-3 text-4xl font-bold">
-                {applications}
-              </p>
-
-              <p className="mt-2 text-xs text-slate-500">
-                Total applications recorded
-              </p>
-
-            </div>
-
-
-            {/* ACTIVE PIPELINE */}
-
-            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl">
-
-              <p className="text-sm text-slate-400">
-                Active Pipeline
-              </p>
-
-              <p className="mt-3 text-4xl font-bold">
-                {analytics?.application?.activePipeline ?? 0}
-              </p>
-
-              <p className="mt-2 text-xs text-slate-500">
-                Applications currently active
-              </p>
-
-            </div>
-
-
-            {/* RESPONSE RATE */}
-
-            <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl">
-
-              <p className="text-sm text-slate-400">
-                Response Rate
-              </p>
-
-              <p className="mt-3 text-4xl font-bold">
-                {(
-                  (analytics?.application?.responseRate ?? 0) *
-                  100
-                ).toFixed(1)}
-                %
-              </p>
-
-              <p className="mt-2 text-xs text-slate-500">
-                Based on recorded application responses
-              </p>
-
-            </div>
-
-
-
-          </div>
-
-        </section>
-
-
-        {/* =====================================================
-            CAREER INSIGHTS
-        ===================================================== */}
-
-        <section className="mt-8 grid gap-8 lg:grid-cols-3">
-
-
-          {/* INSIGHTS */}
-
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl lg:col-span-2">
-
-            <div className="mb-5">
-
-              <p className="text-sm font-semibold uppercase tracking-wider text-slate-500">
-                Career Insights
-              </p>
-
-              <h2 className="mt-1 text-xl font-semibold">
-                Professional areas identified
-              </h2>
-
-              <p className="mt-2 text-sm text-slate-400">
-                Areas currently supported by your real career data.
-              </p>
-
-            </div>
-
-
-            {insights.length > 0 ? (
-
-              <ul className="space-y-3">
-
-                {insights.map(
-                  (
-                    insight: string,
-                    index: number
-                  ) => (
-
-                    <li
-                      key={index}
-                      className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3"
-                    >
-
-                      <span className="h-2 w-2 rounded-full bg-cyan-400" />
-
-                      <span className="text-sm text-slate-200">
-                        {insight}
-                      </span>
-
-                    </li>
-
-                  )
-                )}
-
-              </ul>
-
-            ) : (
-
-              <p className="text-sm text-slate-500">
-                No additional insights are available yet.
-              </p>
-
-            )}
-
-          </div>
-
-
-          {/* STATUS */}
-
-          <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-6">
-
-            <p className="text-sm font-semibold uppercase tracking-wider text-emerald-400">
-              Intelligence Status
+            <p className="text-sm font-semibold uppercase tracking-wider text-slate-500">
+              Response Rate
             </p>
 
-            <h2 className="mt-3 text-2xl font-bold">
-              {status}
-            </h2>
-
-            <p className="mt-3 text-sm leading-6 text-slate-400">
-              Current state of the dashboard data pipeline.
+            <p className="mt-2 text-4xl font-bold">
+              {(performance.responseRate * 100).toFixed(1)}%
             </p>
 
-            <div className="mt-6 flex items-center gap-2">
-
-              <span className="h-3 w-3 rounded-full bg-emerald-400" />
-
-              <span className="text-sm font-medium text-emerald-400">
-                Real intelligence available
-              </span>
-
-            </div>
+            <p className="mt-2 text-sm text-slate-400">
+              Based on recorded application responses.
+            </p>
 
           </div>
 
@@ -732,7 +368,7 @@ export default async function DashboardPage() {
         <footer className="mt-12 border-t border-slate-800 pt-6">
 
           <p className="text-xs text-slate-600">
-            Global Career AI · Career Intelligence Dashboard V1.1
+            Global Career AI · Application Management V1.0
           </p>
 
         </footer>

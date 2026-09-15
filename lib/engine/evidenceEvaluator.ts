@@ -1,3 +1,4 @@
+
 import { EVIDENCE_WEIGHTS } from "./weights";
 import {
   CandidateEvidence,
@@ -44,11 +45,26 @@ function getConfidenceMultiplier(
   }
 }
 
+function getRelevanceWeight(
+  evidence: CandidateEvidence
+): number {
+  if (
+    evidence.relevance === "transferable" &&
+    evidence.transferableStrength
+  ) {
+    return evidence.transferableStrength === "strong"
+      ? 0.70
+      : 0.35;
+  }
+
+  return EVIDENCE_WEIGHTS.relevance[evidence.relevance];
+}
+
 export function evaluateEvidence(
   evidence: CandidateEvidence
 ): EvidenceEvaluationResult {
   const relevanceWeight =
-  EVIDENCE_WEIGHTS.relevance[evidence.relevance];
+    getRelevanceWeight(evidence);
 
   const experienceMultiplier =
     calculateExperienceMultiplier(

@@ -1,4 +1,4 @@
-import { supabaseServer } from "@/lib/supabase-server";
+﻿import { supabaseServer } from "@/lib/supabase-server";
 
 /**
  * =========================================================
@@ -8,10 +8,6 @@ import { supabaseServer } from "@/lib/supabase-server";
 
 export type ATSResult = {
   atsScore: number;
-
-  interviewProbability: number;
-
-  offerProbability: number;
 
   matchedSkills: string[];
 
@@ -30,16 +26,6 @@ function mapATSResult(data: any): ATSResult {
     atsScore:
       typeof data.ats_score === "number"
         ? data.ats_score
-        : 0,
-
-    interviewProbability:
-      typeof data.interview_probability === "number"
-        ? data.interview_probability
-        : 0,
-
-    offerProbability:
-      typeof data.offer_probability === "number"
-        ? data.offer_probability
         : 0,
 
     matchedSkills:
@@ -87,12 +73,6 @@ export async function saveATSResult(
 
           ats_score:
             ats.atsScore,
-
-          interview_probability:
-            ats.interviewProbability,
-
-          offer_probability:
-            ats.offerProbability,
 
           matched_skills:
             ats.matchedSkills,
@@ -256,10 +236,6 @@ export async function getLatestCVATSResult(
         ? data.ats_score
         : 0,
 
-    interviewProbability: 0,
-
-    offerProbability: 0,
-
     matchedSkills:
       Array.isArray(data.skills)
         ? data.skills.filter(
@@ -337,9 +313,9 @@ export async function getATSResultsByUser(
  *
  * Example:
  *
- * Application 10 → 13
- * Application 11 → 72
- * Application 12 → 81
+ * Application 10 â†’ 13
+ * Application 11 â†’ 72
+ * Application 12 â†’ 81
  *
  * Average:
  *
@@ -391,28 +367,6 @@ export async function getAverageATSResult(
     );
 
 
-  const interviewProbability =
-    Math.round(
-      average(
-        results.map(
-          (result) =>
-            result.interviewProbability
-        )
-      )
-    );
-
-
-  const offerProbability =
-    Math.round(
-      average(
-        results.map(
-          (result) =>
-            result.offerProbability
-        )
-      )
-    );
-
-
   const matchedSkills =
     Array.from(
       new Set(
@@ -438,12 +392,9 @@ export async function getAverageATSResult(
   return {
     atsScore,
 
-    interviewProbability,
-
-    offerProbability,
-
     matchedSkills,
 
     missingSkills,
   };
 }
+

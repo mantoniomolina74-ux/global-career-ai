@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   MatchingResult,
 } from "./matchingContracts";
 
@@ -54,7 +54,6 @@ export interface CareerApplication {
 
   country?: string;
 
-
   category?: string;
 
   tags?: string;
@@ -69,7 +68,6 @@ export interface CareerApplication {
 
   jobDescription?: string;
 
-
   /**
    * ============================================================
    * CV / ATS INPUT
@@ -77,7 +75,6 @@ export interface CareerApplication {
    */
 
   cvStrengthScore?: number;
-
 
   /**
    * ============================================================
@@ -87,8 +84,6 @@ export interface CareerApplication {
 
   atsScore?: number;
 
-  hiringScore?: number;
-
   semanticScore?: number;
 }
 
@@ -96,6 +91,91 @@ export interface CareerApplication {
 // ============================
 // ATS DOMAIN
 // ============================
+
+export type ATSMatchType =
+  | "direct"
+  | "related"
+  | "transferable"
+  | "missing";
+
+
+export type ATSCriticality =
+  | "critical"
+  | "important"
+  | "supporting";
+
+  export type ATSRequirementCategory =
+  | "technical"
+  | "experience"
+  | "education"
+  | "domain"
+  | "responsibility"
+  | "language"
+  | "certification"
+  | "soft_skill";
+
+
+export interface ATSRequirement {
+  /**
+   * Requirement as expressed or normalized from the real job.
+   */
+  requirement: string;
+
+  /**
+   * Functional category of the requirement.
+   */
+  category: ATSRequirementCategory;
+
+  /**
+   * Importance of the requirement for the opportunity.
+   */
+  criticality: ATSCriticality;
+
+  /**
+   * Type of evidence that should be evaluated.
+   */
+  evidenceRequired: string[];
+
+  /**
+   * Relevant job context in which the requirement was detected.
+   */
+  context: string;
+}
+
+
+export interface ATSEvidence {
+  /**
+   * Real requirement extracted from the job.
+   */
+  requirement: string;
+
+  /**
+   * Evidence found in the candidate's profile/CV.
+   * Null when the requirement has no supporting evidence.
+   */
+  evidence: string | null;
+
+  /**
+   * Nature of the candidate-to-requirement relationship.
+   */
+  matchType: ATSMatchType;
+
+  /**
+   * Strength of the evidence, normalized to 0..1.
+   */
+  strength: number;
+
+  /**
+   * Confidence in the evidence evaluation, normalized to 0..1.
+   */
+  confidence: number;
+
+  /**
+   * Importance of the requirement for the opportunity.
+   */
+  criticality: ATSCriticality;
+}
+
 
 export interface ATSResult {
   atsScore: number;
@@ -106,19 +186,19 @@ export interface ATSResult {
 
   semanticScore: number;
 
-  interviewProbability: number;
-
-  offerProbability: number;
-
-  hiringScore: number;
-
   matchedSkills: string[];
 
   missingSkills: string[];
 
   recommendation: string;
 
-  learningSignal: number;
+  /**
+   * Evidence-based Premium ATS enrichment.
+   *
+   * Optional during the migration so existing ATS consumers
+   * remain compatible while the ATS engine is upgraded.
+   */
+  evidence?: ATSEvidence[];
 }
 
 
@@ -292,7 +372,6 @@ export interface ApplicationInsightsResult {
 
     successRate: number;
   };
-
 
   performance: {
 

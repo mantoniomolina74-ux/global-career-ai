@@ -1,109 +1,120 @@
 /**
- * ADR-013.5
- * Knowledge Gap Analysis & Learning Recommendations
- */
+
+* ADR-013.5
+* Knowledge Gap Analysis & Learning Recommendations
+  */
 
 /**
- * Knowledge proficiency level.
- */
-export type KnowledgeLevel =
+
+* Knowledge proficiency level.
+  */
+  export type KnowledgeLevel =
   | "beginner"
   | "intermediate"
   | "advanced"
   | "expert";
 
 /**
- * Strong knowledge domain.
- */
-export interface KnowledgeStrength {
+
+* Strong knowledge domain.
+  */
+  export interface KnowledgeStrength {
   domainId: string;
   domainName: string;
   score: number;
   level: KnowledgeLevel;
-}
+  }
 
 /**
- * Weak knowledge domain.
- */
-export interface KnowledgeWeakness {
+
+* Weak knowledge domain.
+  */
+  export interface KnowledgeWeakness {
   domainId: string;
   domainName: string;
   score: number;
   level: KnowledgeLevel;
-}
+  }
 
 /**
- * Missing or underdeveloped competency.
- */
-export interface KnowledgeGap {
+
+* Missing or underdeveloped competency.
+  */
+  export interface KnowledgeGap {
   competencyId: string;
   competencyName: string;
 
-  domainId: string;
+domainId: string;
 
-  importance: number;
+importance: number;
 
-  currentScore: number;
+currentScore: number;
 
-  targetScore: number;
+targetScore: number;
 
-  gapScore: number;
+gapScore: number;
 }
 
 /**
- * Learning priority ranking.
- */
-export interface LearningPriority {
+
+* Learning priority ranking.
+  */
+  export interface LearningPriority {
   competencyId: string;
 
-  priorityScore: number;
+domainId: string;
 
-  estimatedImpact: number;
+priorityScore: number;
+
+estimatedImpact: number;
 }
 
 /**
- * Personalized recommendation.
- */
-export interface LearningRecommendation {
+
+* Personalized recommendation.
+  */
+  export interface LearningRecommendation {
   id: string;
 
-  title: string;
+title: string;
 
-  description: string;
+description: string;
 
-  competencyIds: string[];
+competencyIds: string[];
 
-  domainIds: string[];
+domainIds: string[];
 
-  estimatedScoreImprovement: number;
+estimatedScoreImprovement: number;
 
-  priority: number;
+priority: number;
 }
 
 /**
- * Overall improvement estimation.
- */
-export interface KnowledgeImprovementEstimate {
+
+* Overall improvement estimation.
+  */
+  export interface KnowledgeImprovementEstimate {
   currentScore: number;
 
-  projectedScore: number;
+projectedScore: number;
 
-  improvement: number;
+improvement: number;
 }
 
 /**
- * Complete knowledge gap analysis result.
- */
-export interface KnowledgeGapResult {
+
+* Complete knowledge gap analysis result.
+  */
+  export interface KnowledgeGapResult {
   strengths: KnowledgeStrength[];
 
-  weaknesses: KnowledgeWeakness[];
+weaknesses: KnowledgeWeakness[];
 
-  gaps: KnowledgeGap[];
+gaps: KnowledgeGap[];
 
-  priorities: LearningPriority[];
+priorities: LearningPriority[];
 
-  recommendations: LearningRecommendation[];
+recommendations: LearningRecommendation[];
 
-  improvement: KnowledgeImprovementEstimate;
+improvement: KnowledgeImprovementEstimate;
 }

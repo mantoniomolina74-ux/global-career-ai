@@ -1,3 +1,4 @@
+
 import { pushLearningEvent } from "./learningMemory.store";
 import { EventEmitter } from "events";
 import type { LearningDomainEvent } from "./learningTypes";
@@ -14,6 +15,12 @@ import type { LearningDomainEvent } from "./learningTypes";
 
 class LearningEventBus extends EventEmitter {
   emitLearning(event: LearningDomainEvent): boolean {
+    console.log("[Learning Bus] emitLearning()", {
+      instance: this,
+      action: event.context?.action,
+      userId: event.userId,
+    });
+
     // 1. Runtime learning memory
     pushLearningEvent(event);
 
@@ -30,6 +37,11 @@ class LearningEventBus extends EventEmitter {
       event: LearningDomainEvent
     ) => void | Promise<void>
   ): this {
+    console.log("[Learning Bus] onEvent()", {
+      instance: this,
+      eventType,
+    });
+
     super.on(eventType, handler);
     return this;
   }

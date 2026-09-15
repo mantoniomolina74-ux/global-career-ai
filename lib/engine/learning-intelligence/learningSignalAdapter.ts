@@ -14,7 +14,7 @@ function resolveSource(
 ): LearningSignalSource {
   switch (event.metadata?.source) {
     case "ATS":
-  return "MATCHING";
+      return "MATCHING";
 
     case "RANKING":
       return "MATCHING";
@@ -29,7 +29,7 @@ function resolveSource(
       return "KNOWLEDGE";
 
     default:
-      return "FEEDBACK";
+      return "EVIDENCE";
   }
 }
 
@@ -37,17 +37,88 @@ function resolveSource(
 function resolveStrength(
   event: LearningDomainEvent,
 ): LearningSignalStrength {
-  if (event.metadata?.confidence) {
-    if (event.metadata.confidence >= 0.8) {
+  const confidence =
+    event.metadata?.confidence;
+
+  if (typeof confidence === "number") {
+    if (confidence >= 0.8) {
       return "HIGH";
     }
 
-    if (event.metadata.confidence >= 0.5) {
+    if (confidence >= 0.5) {
       return "MEDIUM";
     }
   }
 
   return "LOW";
+}
+
+
+function resolveSignalType(
+  event: LearningDomainEvent,
+): string {
+  switch (event.type) {
+    case "ATS_EVALUATED":
+      return "PROFILE_EVALUATED";
+
+    case "RANKING_GENERATED":
+      return "COMPETITIVE_POSITION_EVALUATED";
+
+    case "RECOMMENDATION_CREATED":
+      return "CAREER_RECOMMENDATION";
+
+    case "DECISION_CREATED":
+      return "CAREER_DECISION";
+
+    case "APPLICATION_SUBMITTED":
+      return "APPLICATION_SUBMITTED";
+
+    case "INTERVIEW_RECEIVED":
+      return "INTERVIEW_RECEIVED";
+
+    case "OFFER_RECEIVED":
+      return "OFFER_RECEIVED";
+
+    case "REJECTION_RECEIVED":
+      return "REJECTION_RECEIVED";
+
+    default:
+      return "LEARNING_EVIDENCE";
+  }
+}
+
+
+function resolveDescription(
+  event: LearningDomainEvent,
+): string {
+  switch (event.type) {
+    case "ATS_EVALUATED":
+      return "Profile evaluated against an opportunity.";
+
+    case "RANKING_GENERATED":
+      return "Competitive position evaluated against an opportunity.";
+
+    case "RECOMMENDATION_CREATED":
+      return "Career recommendation generated from profile evidence.";
+
+    case "DECISION_CREATED":
+      return "Career decision generated from evaluation evidence.";
+
+    case "APPLICATION_SUBMITTED":
+      return "Application submitted for an opportunity.";
+
+    case "INTERVIEW_RECEIVED":
+      return "Interview received for an application.";
+
+    case "OFFER_RECEIVED":
+      return "Offer received for an application.";
+
+    case "REJECTION_RECEIVED":
+      return "Application rejection received.";
+
+    default:
+      return event.context.action;
+  }
 }
 
 
@@ -59,20 +130,29 @@ export function adaptLearningEventToSignal(
       event.id ??
       `signal-${Date.now()}`,
 
-    source: resolveSource(event),
+    source:
+      resolveSource(event),
 
-    type: event.type,
+    type:
+      resolveSignalType(event),
 
     description:
-      event.context.action,
+      resolveDescription(event),
 
     strength:
       resolveStrength(event),
 
     context: {
-      userId: event.userId,
+      userId:
+        event.userId,
 
-       tenantId: event.tenantId,
+      tenantId:
+        event.tenantId,
+
+      careerGoal:
+        typeof event.context.careerGoal === "string"
+          ? event.context.careerGoal
+          : undefined,
 
       industry:
         typeof event.context.industry === "string"
@@ -82,6 +162,11 @@ export function adaptLearningEventToSignal(
       country:
         typeof event.context.country === "string"
           ? event.context.country
+          : undefined,
+
+      role:
+        typeof event.context.role === "string"
+          ? event.context.role
           : undefined,
     },
 

@@ -359,6 +359,7 @@ export async function POST(req: Request) {
         .from("cv_analyses")
         .insert({
           user_id,
+          file_url: fileUrl,
           ats_score: atsScore,
           skills,
           industries,
@@ -366,7 +367,7 @@ export async function POST(req: Request) {
           cv_preview: text.slice(0, 1000),
         })
         .select(
-          "id, user_id, ats_score, skills, industries, recommendations, cv_preview, created_at"
+          "id, user_id, file_url, ats_score, skills, industries, recommendations, cv_preview, created_at"
         )
         .single();
 
@@ -407,3 +408,4 @@ export async function POST(req: Request) {
     );
   }
 }
+

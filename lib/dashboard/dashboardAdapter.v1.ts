@@ -7,13 +7,15 @@
  * Compatibility adapter between:
  *
  * Dashboard Experience
- *        ↓
+ *        ?
  * Dashboard Aggregation Layer
  *
  * Maintains backward compatibility
  * with previous dashboard consumers.
  *
  * Supports CareerState intelligence injection.
+ *
+ * Analytics V1.0 is exposed as an additive read model.
  * ============================================================
  */
 
@@ -24,6 +26,10 @@ import type {
 import {
   aggregateDashboard,
 } from "./aggregation/dashboardAggregator";
+
+import {
+  buildAnalytics,
+} from "@/lib/analytics/analyticsEngine.v1";
 
 
 export async function getDashboardData(
@@ -39,7 +45,6 @@ export async function getDashboardData(
   careerState?: CareerState
 
 ) {
-
 
   const dashboard =
     await aggregateDashboard({
@@ -57,15 +62,21 @@ export async function getDashboardData(
     });
 
 
-
   const ats =
     dashboard.intelligence.ats;
 
 
+  const analyticsV1 =
+    buildAnalytics(dashboard);
+
+
   console.log("[DASHBOARD ADAPTER DEBUG]", {
     userId,
-    dashboardATS: dashboard.intelligence.ats,
-    avgATS: dashboard.intelligence.ats?.score,
+    dashboardATS:
+      dashboard.intelligence.ats,
+    avgATS:
+      dashboard.intelligence.ats?.score,
+    analyticsV1,
     partialData:
       dashboard.diagnostics.dataQuality.partialData,
   });
@@ -73,10 +84,6 @@ export async function getDashboardData(
 
   const matching =
     dashboard.intelligence.matching;
-
-
-  const decision =
-    dashboard.intelligence.decision;
 
 
   const learning =
@@ -87,12 +94,9 @@ export async function getDashboardData(
     dashboard.intelligence.application;
 
 
-
   return {
 
-
     userId,
-
 
     /**
      * V1.1 CONTRACT
@@ -100,79 +104,65 @@ export async function getDashboardData(
     dashboard,
 
 
+    /**
+     * ANALYTICS V1.0
+     *
+     * New analytical read model built from
+     * the existing DashboardContract.
+     */
+    analyticsV1,
+
 
     /**
      * LEGACY COMPATIBILITY
      */
     empty: false,
 
-
-
     analytics: {
 
-
       performance: {
-
 
         avgATS:
           ats.score,
 
-
         avgRanking:
           matching.matchScore,
 
-
       },
 
-
-
       funnel: {
+
         applications:
           application.totalApplications,
 
       },
 
-
-
       ats:
         ats,
-
-
 
       matching:
         matching,
 
-
-
       application:
         application,
 
-
-
       insights: [
-
 
         ...ats.improvements,
 
-
         ...matching.alignmentFactors,
-
 
         ...learning.recommendedActions,
 
-
       ],
 
-
     },
-
 
 
     /**
      * UI STATUS
      */
     ui: {
-
 
       status:
 
@@ -182,9 +172,7 @@ export async function getDashboardData(
 
           : "PARTIAL",
 
-
     },
-
 
   };
 

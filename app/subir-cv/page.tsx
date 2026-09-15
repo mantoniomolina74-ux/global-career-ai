@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
@@ -25,6 +26,8 @@ type AnalysisResult = {
 export default function SubirCVPage() {
   const supabase = createSupabaseBrowserClient();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const jobId = searchParams.get("jobId");
 
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -150,7 +153,7 @@ export default function SubirCVPage() {
 
       // 3. El análisis terminó correctamente.
       //    El siguiente paso del flujo V1.0 es Dashboard.
-      router.push("/dashboard");
+      router.push(jobId ? `/premium/demo?jobId=${encodeURIComponent(jobId)}` : "/premium/demo");
     } catch (err: unknown) {
       console.error(err);
 
@@ -165,33 +168,93 @@ export default function SubirCVPage() {
   };
 
   return (
-    <main style={{ padding: 20 }}>
-      <h1>Subir CV</h1>
+    <main className="min-h-screen bg-slate-950 px-6 py-10 text-slate-100">
+      <div className="mx-auto max-w-3xl">
+        <div className="mb-8">
+          <p className="text-sm font-medium uppercase tracking-[0.18em] text-slate-500">
+            Professional Profile
+          </p>
 
-      <input
-        type="file"
-        accept="application/pdf"
-        onChange={(e) =>
-          setFile(e.target.files?.[0] || null)
-        }
-      />
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight">
+            Mi CV
+          </h1>
 
-      <button
-        onClick={handleSubmit}
-        disabled={loading}
-      >
-        {loading
-          ? "Procesando..."
-          : "Subir y analizar CV"}
-      </button>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">
+            Sube tu CV para analizar y actualizar tu perfil profesional
+            con información real de tu experiencia.
+          </p>
+        </div>
 
-      {error && (
-        <p style={{ color: "red" }}>
-          {error}
-        </p>
-      )}
+        <section className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-sm">
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold">
+              Actualizar CV
+            </h2>
 
-      {(result?.matchResults?.length ?? 0) > 0 && (
+            <p className="mt-1 text-sm text-slate-500">
+              Formato aceptado: PDF
+            </p>
+          </div>
+
+          <label
+            htmlFor="cv-file"
+            className="flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-slate-700 bg-slate-950 px-6 py-10 text-center transition hover:border-slate-500 hover:bg-slate-900"
+          >
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-slate-700 bg-slate-900 text-xl">
+              +
+            </div>
+
+            <span className="text-base font-medium text-slate-200">
+              Selecciona tu CV
+            </span>
+
+            <span className="mt-2 text-sm text-slate-500">
+              Haz clic aquí para seleccionar un archivo PDF
+            </span>
+
+            <input
+              id="cv-file"
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              onChange={(e) =>
+                setFile(e.target.files?.[0] || null)
+              }
+            />
+          </label>
+
+          {file && (
+            <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950 px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-slate-500">
+                CV seleccionado
+              </p>
+
+              <p className="mt-1 truncate text-sm font-medium text-slate-200">
+                {file.name}
+              </p>
+            </div>
+          )}
+
+          {error && (
+            <div className="mt-4 rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3">
+              <p className="text-sm text-red-300">
+                {error}
+              </p>
+            </div>
+          )}
+
+          <button
+            onClick={handleSubmit}
+            disabled={loading || !file}
+            className="mt-6 w-full rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {loading
+              ? "PROCESANDO..."
+              : "ANALIZAR CV"}
+          </button>
+        </section>
+
+        {(result?.matchResults?.length ?? 0) > 0 && (
         <div style={{ marginTop: 40 }}>
           <h2
             style={{
@@ -321,8 +384,11 @@ export default function SubirCVPage() {
               );
             }
           )}
-        </div>
+                </div>
       )}
+      </div>
     </main>
   );
 }
+
+
