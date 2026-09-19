@@ -1,70 +1,68 @@
 /**
  * ============================================================
  * Global Career AI
- * Application State Adapter V1.1
+ * Application State Adapter V1.2
  * ============================================================
  *
- * Transforms Application Intelligence output into
- * Application domain state.
+ * Domain adapter between Application Intelligence
+ * and CareerState.
  *
- * Responsibilities:
- * - Normalize application insights
- * - Build ApplicationState contract
- * - Preserve domain boundaries
- *
- * No dashboard logic.
+ * No business logic.
  * No persistence.
  * No engine execution.
+ *
+ * Responsibility:
+ * Adapt ApplicationInsightsResult into ApplicationState.
  * ============================================================
  */
+
+import type {
+  ApplicationInsightsResult,
+} from "@/lib/engine/contracts/engineContracts";
 
 import type {
   ApplicationState,
 } from "@/lib/engine/contracts/intelligence/applicationState";
 
-
-type ApplicationInsightsInput = {
-  funnel: {
-    total: number;
-    conversionRate: number;
-    offerRate: number;
-    successRate: number;
-  };
-
-  performance: {
-    totalApplications: number;
-    activePipeline: number;
-    responseRate: number;
-    rejectionRate: number;
-  };
-};
-
-
 export function buildApplicationState(
-  insights: ApplicationInsightsInput
+  result: ApplicationInsightsResult
 ): ApplicationState {
 
   return {
+
     totalApplications:
-      insights.performance.totalApplications,
+      result.performance.totalApplications,
 
     activePipeline:
-      insights.performance.activePipeline,
+      result.performance.activePipeline,
 
     responseRate:
-      insights.performance.responseRate,
+      result.performance.responseRate,
 
     rejectionRate:
-      insights.performance.rejectionRate,
+      result.performance.rejectionRate,
 
     conversionRate:
-      insights.funnel.conversionRate,
+      result.funnel.conversionRate,
 
     offerRate:
-      insights.funnel.offerRate,
+      result.funnel.offerRate,
 
     successRate:
-      insights.funnel.successRate,
+      result.funnel.successRate,
+
+    statusBreakdown:
+      result.statusBreakdown,
+
+    applicationScores:
+      result.applicationScores,
+
+    applicationIntelligence:
+      result.applicationIntelligence,
+
+    meta:
+      result.meta,
 
   };
+
 }

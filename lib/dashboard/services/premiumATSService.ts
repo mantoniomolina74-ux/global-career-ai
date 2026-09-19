@@ -13,6 +13,9 @@ import {
   buildPremiumAnalyticsInsight,
 } from "./premiumAnalyticsService";
 
+import { buildCareerEvolutionInsight } from "./careerEvolutionService";
+import type { CareerEvolutionInsight } from "../contracts/careerEvolutionContract";
+
 import type { ATSState } from "@/lib/engine/contracts/intelligence/atsState";
 import type { CareerState } from "@/lib/engine/contracts/careerState";
 
@@ -20,6 +23,14 @@ import type {
   CareerApplication,
   CareerOrchestratorInput,
 } from "@/lib/engine/contracts/engineContracts";
+
+import type {
+  PremiumRecommendationInsight,
+} from "../contracts/premiumRecommendationContract";
+
+import {
+  runRecommendationEngine,
+} from "@/lib/engine/recommendations/recommendationEngine";
 
 import {
   getApplicationRecords,
@@ -108,6 +119,10 @@ export interface PremiumATSData {
 
   analytics: PremiumAnalyticsInsight;
 
+  careerEvolution: CareerEvolutionInsight;
+
+  recommendations: PremiumRecommendationInsight;
+
   careerStateAvailable: boolean;
 
   applicationsProcessed: number;
@@ -165,6 +180,7 @@ function normalizeStringArray(
     }
 
   }
+   
 
   return [];
 
@@ -767,12 +783,50 @@ export async function getPremiumDashboardData(
           },
         };
 
+  const careerEvolution =
+    careerState
+      ? buildCareerEvolutionInsight(
+          careerState,
+          knowledge
+        )
+      : {
+          currentPosition: {
+            careerLevel: "",
+            marketFit: 0,
+            readinessScore: 0,
+          },
+          careerDirection: {
+            nextCareerStep: "",
+            targetRoles: [],
+            targetIndustries: [],
+          },
+          strengths: [],
+          developmentAreas: [],
+          prioritySkills: [],
+          recommendedActions: [],
+        };
+
+  const recommendations =
+    careerState
+      ? runRecommendationEngine(
+          careerState
+        )
+      : {
+          recommendations: [],
+          skillGaps: [],
+          opportunities: [],
+          strategy: "No recommendation data available.",
+          generatedAt: new Date().toISOString(),
+        };
+
   return {
   insight,
   careerHealth,
   marketReadiness,
   knowledge,
   analytics,
+  careerEvolution,
+  recommendations,
   careerState,
   careerStateAvailable: Boolean(careerState),
   applicationsProcessed,

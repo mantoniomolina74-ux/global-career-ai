@@ -50,6 +50,8 @@ export default async function PremiumDashboardPage({
   const marketReadiness = premiumData.marketReadiness;
   const knowledge = premiumData.knowledge;
   const analytics = premiumData.analytics;
+  const careerEvolution = premiumData.careerEvolution;
+  const recommendations = premiumData.recommendations;
 
   const {
     overview,
@@ -427,6 +429,142 @@ export default async function PremiumDashboardPage({
           </div>
         </section>
 
+                 <section className="space-y-4">
+          <div>
+            <h2 className="text-xl font-semibold">
+              Career Evolution
+            </h2>
+
+            <p className="text-sm text-muted-foreground">
+              Your current career position, direction, strengths, development
+              areas, and next professional actions based on your real career
+              intelligence.
+            </p>
+          </div>
+
+          <div className="space-y-6">
+            <div>
+              <h3 className="mb-3 text-lg font-semibold">
+                Current Position
+              </h3>
+
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+
+                <div className="rounded-xl border bg-card p-5 shadow-sm">
+                    <p className="text-sm text-muted-foreground">
+                        Career Level
+                      </p>            
+
+                    <p className="mt-2 text-2xl font-semibold">
+                     {careerEvolution.currentPosition.careerLevel || "Not available"}
+                      </p>
+                    </div>
+
+                <MetricCard
+                  label="Market Fit"
+                  value={Math.round(
+                    careerEvolution.currentPosition.marketFit
+                  )}
+                />
+
+                <MetricCard
+                  label="Readiness Score"
+                  value={Math.round(
+                    careerEvolution.currentPosition.readinessScore
+                  )}
+                />
+              </div>
+            </div>
+
+            <div>
+              <h3 className="mb-3 text-lg font-semibold">
+                Career Direction
+              </h3>
+
+              <div className="space-y-4">
+                <div className="rounded-xl border bg-card p-5 shadow-sm">
+                  <p className="text-sm text-muted-foreground">
+                    Next Career Step
+                  </p>
+
+                  <p className="mt-2 font-medium">
+                    {careerEvolution.careerDirection.nextCareerStep || "Not available"}
+                  </p>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <ListCard
+                    title="Target Roles"
+                    items={careerEvolution.careerDirection.targetRoles}
+                  />
+
+                  <ListCard
+                    title="Target Industries"
+                    items={careerEvolution.careerDirection.targetIndustries}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <ListCard
+                title="Strengths"
+                items={careerEvolution.strengths}
+              />
+
+              <ListCard
+                title="Development Areas"
+                items={careerEvolution.developmentAreas}
+              />
+
+              <ListCard
+                title="Priority Skills"
+                items={careerEvolution.prioritySkills}
+              />
+
+              <ListCard
+                title="Recommended Actions"
+                items={careerEvolution.recommendedActions}
+              />
+            </div>
+          </div>
+        </section>
+              <section className="space-y-4">
+          <div>
+            <h2 className="text-xl font-semibold">
+              Recommendations
+            </h2>
+
+            <p className="text-sm text-muted-foreground">
+              Actionable career recommendations based on your real
+              professional intelligence.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <ListCard
+              title="Priority Recommendations"
+              items={recommendations.recommendations.map(
+                (recommendation) =>
+                  `${recommendation.title}: ${recommendation.description}`
+              )}
+            />
+
+            <ListCard
+              title="Skill Gaps"
+              items={recommendations.skillGaps}
+            />
+
+            <ListCard
+              title="Opportunity Strategy"
+              items={
+                recommendations.strategy
+                  ? [recommendations.strategy]
+                  : []
+              }
+            />
+          </div>
+        </section>
         <section className="space-y-4">
           <div>
             <h2 className="text-xl font-semibold">

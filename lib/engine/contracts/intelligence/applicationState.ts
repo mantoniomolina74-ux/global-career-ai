@@ -1,7 +1,7 @@
 /**
  * ============================================================
  * Global Career AI
- * Application Intelligence State V1.1
+ * Application Intelligence State V1.2
  * ============================================================
  *
  * Domain contract representing application intelligence state.
@@ -29,4 +29,22 @@ export interface ApplicationState {
 
   successRate: number;
 
+  statusBreakdown: Record<string, number>;
+
+  applicationScores: Record<string, number>;
+
+  applicationIntelligence: Record<
+    string,
+    {
+      atsScore: number | null;
+      riskLevel: "low" | "medium" | "high" | null;
+      matchedSkills: string[];
+      missingSkills: string[];
+    }
+  >;
+
+  meta: {
+    generatedAt: string;
+    source: string;
+  };
 }

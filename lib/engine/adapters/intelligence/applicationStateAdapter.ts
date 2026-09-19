@@ -1,7 +1,7 @@
 /**
  * ============================================================
  * Global Career AI
- * Application State Adapter V1.1
+ * Application State Adapter V1.2
  * ============================================================
  *
  * Domain adapter between Application Intelligence
@@ -50,6 +50,18 @@ export function buildApplicationState(
 
     successRate:
       result.funnel.successRate,
+
+    statusBreakdown:
+      result.statusBreakdown,
+
+    applicationScores:
+      result.applicationScores,
+
+    applicationIntelligence:
+      result.applicationIntelligence,
+
+    meta:
+      result.meta,
 
   };
 

@@ -383,6 +383,25 @@ export interface ApplicationInsightsResult {
 
     rejectionRate: number;
   };
+
+  statusBreakdown: Record<string, number>;
+
+  applicationScores: Record<number, number>;
+
+  applicationIntelligence: Record<
+    number,
+    {
+      atsScore: number | null;
+      riskLevel: "low" | "medium" | "high" | null;
+      matchedSkills: string[];
+      missingSkills: string[];
+    }
+  >;
+
+  meta: {
+    generatedAt: string;
+    source: string;
+  };
 }
 
 

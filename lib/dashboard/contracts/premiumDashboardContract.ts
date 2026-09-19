@@ -1,4 +1,6 @@
 import type { PremiumAnalyticsInsight } from "./premiumAnalyticsContract";
+import type { CareerEvolutionInsight } from "./careerEvolutionContract";
+import type { PremiumRecommendationInsight } from "./premiumRecommendationContract";
 
 export interface PremiumDashboardIntelligence {
 
@@ -11,6 +13,10 @@ export interface PremiumDashboardIntelligence {
   knowledge: PremiumKnowledgeInsight;
 
   analytics: PremiumAnalyticsInsight;
+
+  careerEvolution: CareerEvolutionInsight;
+
+  recommendations: PremiumRecommendationInsight;
 
 }
 
