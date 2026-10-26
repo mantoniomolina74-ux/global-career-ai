@@ -91,7 +91,10 @@
     },
     {
       requirement: "ai transformation",
-      patterns: ["ai transformation", "artificial intelligence transformation"],
+      patterns: [
+        "ai transformation",
+        "artificial intelligence transformation",
+      ],
     },
     {
       requirement: "strategy",
@@ -111,7 +114,11 @@
     },
     {
       requirement: "communication",
-      patterns: ["communication skills", "strong communication", "communication"],
+      patterns: [
+        "communication skills",
+        "strong communication",
+        "communication",
+      ],
     },
     {
       requirement: "english",
@@ -165,7 +172,26 @@
         );
       }
 
-      return text.includes(normalizedPattern);
+      /*
+       * Match complete terms instead of arbitrary substrings.
+       *
+       * This prevents false positives such as:
+       * - "erp" matching "enterprise"
+       * - "sap" matching another larger word
+       *
+       * Multi-word concepts continue to work normally.
+       */
+      const escapedPattern = normalizedPattern.replace(
+        /[.*+?^${}()|[\]\\]/g,
+        "\\$&"
+      );
+
+      const patternRegex = new RegExp(
+        `(^|[^\\p{L}\\p{N}])${escapedPattern}([^\\p{L}\\p{N}]|$)`,
+        "u"
+      );
+
+      return patternRegex.test(text);
     });
 
     if (matched) {

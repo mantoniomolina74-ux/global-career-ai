@@ -51,7 +51,9 @@ function uniqueRequirements(
   const result: ATSRequirement[] = [];
 
   for (const requirement of requirements) {
-    const key = normalizeText(requirement.requirement);
+    const key = canonicalRequirement(
+      requirement.requirement
+    );
 
     if (!key || seen.has(key)) {
       continue;
@@ -85,6 +87,13 @@ function canonicalRequirement(
     normalized === "stakeholder management"
   ) {
     return "stakeholder management";
+  }
+
+  if (
+    normalized === "practical ai fluency" ||
+    normalized === "ai fluency"
+  ) {
+    return "artificial intelligence";
   }
 
   return normalized;
@@ -150,18 +159,17 @@ function classifyCategory(
     return "certification";
   }
 
-  if (
+    if (
     normalizedRequirement === "artificial intelligence" ||
     normalizedRequirement === "practical ai fluency" ||
     normalizedRequirement === "technology" ||
     normalizedRequirement === "ai transformation" ||
-    /\b(machine learning|software|technical|data|analytics|digital|sap|erp)\b/.test(
+    /\b(aws|azure|databricks|kubernetes|docker|python|javascript|typescript|react|nextjs|nodejs|sql|machine learning|software|technical|data|analytics|digital|sap|erp|testing|implementation)\b/.test(
       normalizedRequirement
     )
   ) {
     return "technical";
   }
-
   if (
     normalizedRequirement === "stakeholder management" ||
     normalizedRequirement === "senior stakeholder management" ||
@@ -531,6 +539,96 @@ function findRequirementLine(
 }
 
 /* =========================================================
+   BASELINE REQUIREMENT VALIDATION
+========================================================= */
+
+function hasRequirementSignal(
+  context: string,
+  section: string
+): boolean {
+  const contextText = normalizeText(context);
+  const sectionText = normalizeText(section);
+
+  /*
+   * A formal Requirements / Qualifications section is
+   * sufficient evidence that its contents describe
+   * candidate requirements.
+   */
+  if (isRequirementsSection(sectionText)) {
+    return true;
+  }
+
+  const requirementSignals = [
+    "required",
+    "must have",
+    "must",
+    "minimum",
+    "essential",
+    "mandatory",
+    "preferred",
+    "desired",
+    "nice to have",
+    "ideally",
+    "experience in",
+    "experience with",
+    "proficiency in",
+    "proficient in",
+    "knowledge of",
+    "skills in",
+    "skills with",
+    "ability to",
+    "ability for",
+    "strong skills",
+    "strong experience",
+    "background in",
+    "degree in",
+    "bachelor",
+    "master",
+    "certification in",
+    "certified",
+    "fluent in",
+    "fluency in",
+  ];
+
+  return requirementSignals.some((signal) =>
+    contextText.includes(signal)
+  );
+}
+
+function shouldIncludeBaselineRequirement(
+  lines: string[],
+  requirement: string,
+  matchingIndex: number
+): boolean {
+  /*
+   * If no location was found, preserve the baseline
+   * extractor behavior. This avoids silently removing
+   * existing ATS concepts whose source line cannot be
+   * resolved after normalization.
+   */
+  if (matchingIndex < 0) {
+    return true;
+  }
+
+  const section =
+    getSectionForLine(
+      lines,
+      matchingIndex
+    );
+
+  const context =
+    getContext(
+      lines,
+      matchingIndex
+    );
+
+  return hasRequirementSignal(
+    context,
+    section
+  );
+}
+
+/* =========================================================
    CONTEXTUAL REQUIREMENT PATTERNS
 ========================================================= */
 
@@ -615,13 +713,17 @@ const contextualPatterns: RequirementPattern[] = [
       /\blearning agile\b/i,
     ],
   },
-  {
+     {
     requirement: "ownership mindset",
     category: "soft_skill",
     patterns: [
       /\bownership mindset\b/i,
       /\bproactive ownership\b/i,
-      /\bownership\b/i,
+      /\bstrong sense of ownership\b/i,
+      /\btake ownership\b/i,
+      /\btakes ownership\b/i,
+      /\btaking ownership\b/i,
+      /\bown(?:er|ership)?\s+(?:your|their|the)\s+(?:work|responsibilities|projects|outcomes)\b/i,
     ],
   },
   {
@@ -687,10 +789,11 @@ export function extractPremiumATSRequirements(
     return [];
   }
 
+
   const lines = plainText
-    .split(/\n+/)
-    .map((line) => cleanRequirement(line))
-    .filter(Boolean);
+    .split(/\n/)
+    .map((line) => cleanRequirement(line));
+
 
   const requirements: ATSRequirement[] = [];
 
@@ -702,14 +805,24 @@ export function extractPremiumATSRequirements(
     extractJobRequirements(jobDescription);
 
   for (const requirement of baselineRequirements) {
-    const category =
-      classifyCategory(requirement);
-
     const matchingIndex =
       findRequirementLine(
         lines,
         requirement
       );
+
+    if (
+      !shouldIncludeBaselineRequirement(
+        lines,
+        requirement,
+        matchingIndex
+      )
+    ) {
+      continue;
+    }
+
+    const category =
+      classifyCategory(requirement);
 
     const context =
       matchingIndex >= 0
@@ -821,6 +934,5 @@ export function extractPremiumATSRequirements(
       context,
     });
   }
-
   return uniqueRequirements(requirements);
 }
