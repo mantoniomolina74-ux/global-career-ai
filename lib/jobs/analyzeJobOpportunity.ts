@@ -1,5 +1,7 @@
 ﻿import type { JobDetail } from "@/lib/jobs/getJobById";
 import { extractJobRequirements } from "@/lib/engine/applications/jobRequirementExtractor";
+import { buildJobIntelligence } from "@/lib/engine/intelligence/jobIntelligenceBuilder";
+import type { JobIntelligence } from "@/lib/engine/contracts/intelligence/jobIntelligence";
 
 export type JobOpportunityAnalysis = {
   title: string | null;
@@ -9,6 +11,7 @@ export type JobOpportunityAnalysis = {
   category: string | null;
   requirements: string[];
   description: string | null;
+  intelligence: JobIntelligence;
 };
 
 export function analyzeJobOpportunity(
@@ -24,5 +27,6 @@ export function analyzeJobOpportunity(
     category: job.category,
     requirements: extractJobRequirements(description ?? ""),
     description,
+    intelligence: buildJobIntelligence(job),
   };
 }
