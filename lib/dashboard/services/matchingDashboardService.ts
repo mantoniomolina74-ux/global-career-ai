@@ -8,10 +8,13 @@
  *
  * cv_analyses
  *      +
+ * certifications
+ *      +
  * public.jobs (Hirebase)
  *
  * Responsibilities:
  * - Load the user's latest real CV analysis
+ * - Load the user's active and valid certifications
  * - Load real Hirebase jobs
  * - Execute the Matching Engine
  * - Transform Matching Engine output into Dashboard contract
@@ -136,6 +139,105 @@ export async function getMatchingDashboardInsight(
 
   /**
    * ============================================================
+   * STEP 1.1 — Candidate certifications
+   * ============================================================
+   *
+   * Only active and non-expired certifications are considered.
+   * Ownership is explicitly restricted to the current user.
+   *
+   * The validity criteria match Premium ATS.
+   */
+
+  const {
+    data: certificationRecords,
+    error: certificationsError,
+  } = await supabaseServer
+    .from("certifications")
+    .select("name, status, expiry_date")
+    .eq(
+      "user_id",
+      context.userId
+    );
+
+
+  if (certificationsError) {
+
+    throw new Error(
+      `Error obteniendo certificaciones para Matching: ${certificationsError.message}`
+    );
+
+  }
+
+
+  const today =
+    new Date().toISOString().slice(0, 10);
+
+
+  const uniqueCertifications =
+    new Map<string, string>();
+
+
+  for (const certification of certificationRecords ?? []) {
+
+    const name =
+      typeof certification.name === "string"
+        ? certification.name.trim()
+        : "";
+
+
+    const status =
+      typeof certification.status === "string"
+        ? certification.status.trim().toLowerCase()
+        : "";
+
+
+    const expiryDate =
+      certification.expiry_date;
+
+
+    const isNotExpired =
+      expiryDate == null ||
+      (
+        typeof expiryDate === "string" &&
+        expiryDate >= today
+      );
+
+
+    if (
+      name.length === 0 ||
+      status !== "active" ||
+      !isNotExpired
+    ) {
+
+      continue;
+
+    }
+
+
+    const normalizedName =
+      name.toLowerCase();
+
+
+    if (!uniqueCertifications.has(normalizedName)) {
+
+      uniqueCertifications.set(
+        normalizedName,
+        name
+      );
+
+    }
+
+  }
+
+
+  const candidateCertifications =
+    Array.from(
+      uniqueCertifications.values()
+    );
+
+
+  /**
+   * ============================================================
    * STEP 2 — Real Hirebase jobs
    * ============================================================
    */
@@ -208,6 +310,7 @@ export async function getMatchingDashboardInsight(
       {
         skills,
         industries,
+        candidateCertifications,
       }
     );
 

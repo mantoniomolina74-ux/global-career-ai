@@ -31,14 +31,32 @@ type MatchJobInput = {
   requires_first_aid?: boolean;
 };
 
-
 type MatchCvInput = {
   skills?: string[];
   industries?: string[];
+  candidateCertifications?: string[];
 };
 
 
+const CERTIFICATION_ALIASES = {
+  whmis: [
+    "whmis",
+    "whmis 2015",
+    "workplace hazardous materials information system",
+  ],
 
+  csts: [
+    "csts",
+    "csts 2020",
+    "construction safety training system",
+  ],
+
+  firstAid: [
+    "first aid",
+    "standard first aid",
+    "emergency first aid",
+  ],
+} as const;
 
 
 function findMatchingField(
@@ -111,6 +129,39 @@ function findMatchingField(
 }
 
 
+function hasCandidateCertification(
+  candidateCertifications: string[],
+  aliases: readonly string[]
+): boolean {
+
+  const normalizedAliases =
+    new Set(
+      aliases.map(
+        (alias) => normalizeText(alias)
+      )
+    );
+
+
+  return candidateCertifications.some(
+    (certification) => {
+
+      if (
+        typeof certification !== "string" ||
+        certification.trim().length === 0
+      ) {
+        return false;
+      }
+
+      return normalizedAliases.has(
+        normalizeText(certification)
+      );
+
+    }
+  );
+
+}
+
+
 export function buildMatchReasons(
   job: MatchJobInput,
   cv: MatchCvInput
@@ -128,6 +179,12 @@ export function buildMatchReasons(
   const industries =
     Array.isArray(cv.industries)
       ? cv.industries
+      : [];
+
+
+  const candidateCertifications =
+    Array.isArray(cv.candidateCertifications)
+      ? cv.candidateCertifications
       : [];
 
 
@@ -202,15 +259,72 @@ export function buildMatchReasons(
 
   /**
    * ============================================================
+   * VERIFIED CERTIFICATION REASONS
+   * ============================================================
+   *
+   * A reason is generated only when:
+   *
+   * 1. The job explicitly requires the certification.
+   * 2. The candidate has a matching certification.
+   *
+   * Candidate validity is checked by the dashboard service.
+   * Alias matching mirrors the scoring engine.
+   */
+
+  if (
+    job.requires_whmis === true &&
+    hasCandidateCertification(
+      candidateCertifications,
+      CERTIFICATION_ALIASES.whmis
+    )
+  ) {
+
+    reasons.push(
+      "Certificación coincidente: WHMIS requerida por el empleo y acreditada por el candidato."
+    );
+
+  }
+
+
+  if (
+    job.requires_csts === true &&
+    hasCandidateCertification(
+      candidateCertifications,
+      CERTIFICATION_ALIASES.csts
+    )
+  ) {
+
+    reasons.push(
+      "Certificación coincidente: CSTS requerida por el empleo y acreditada por el candidato."
+    );
+
+  }
+
+
+  if (
+    job.requires_first_aid === true &&
+    hasCandidateCertification(
+      candidateCertifications,
+      CERTIFICATION_ALIASES.firstAid
+    )
+  ) {
+
+    reasons.push(
+      "Certificación coincidente: First Aid requerida por el empleo y acreditada por el candidato."
+    );
+
+  }
+
+
+  /**
+   * ============================================================
    * SCORE CONSISTENCY
    * ============================================================
    *
-   * Certifications and geography are intentionally excluded.
+   * Geography remains excluded.
    *
-   * They may be useful metadata for the opportunity, but they
-   * do not currently contribute points to the official
-   * match_score and therefore must not be presented as reasons
-   * for the score.
+   * Certification reasons require verified candidate evidence
+   * and an explicit job requirement.
    */
 
   return [

@@ -25,6 +25,7 @@ type JobMatchInput = {
 type CandidateProfile = {
   skills?: string[];
   industries?: string[];
+  candidateCertifications?: string[];
 };
 
 export function runJobMatchEngine(
@@ -34,6 +35,8 @@ export function runJobMatchEngine(
   const items = scoreJobs(jobs, {
     skills: candidate.skills ?? [],
     industries: candidate.industries ?? [],
+    candidateCertifications:
+      candidate.candidateCertifications ?? [],
   });
 
   return {

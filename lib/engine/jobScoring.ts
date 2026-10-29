@@ -27,9 +27,56 @@ type JobScoreInput = {
 type CvScoreInput = {
   skills?: string[];
   industries?: string[];
+
   candidateCertifications?: string[];
   professionalText?: string;
 };
+
+
+const CERTIFICATION_ALIASES = {
+  whmis: [
+    "whmis",
+    "whmis 2015",
+    "workplace hazardous materials information system",
+  ],
+
+  csts: [
+    "csts",
+    "csts 2020",
+    "construction safety training system",
+  ],
+
+  firstAid: [
+    "first aid",
+    "standard first aid",
+    "emergency first aid",
+  ],
+} as const;
+
+
+function hasCandidateCertification(
+  candidateCertifications: string[],
+  aliases: readonly string[]
+): boolean {
+  const normalizedAliases =
+    new Set(
+      aliases.map((alias) => normalizeText(alias))
+    );
+
+  return candidateCertifications.some((certification) => {
+    if (
+      typeof certification !== "string" ||
+      certification.trim().length === 0
+    ) {
+      return false;
+    }
+
+    return normalizedAliases.has(
+      normalizeText(certification)
+    );
+  });
+}
+
 
 export function scoreJobs(
   jobs: JobScoreInput[],
@@ -42,6 +89,11 @@ export function scoreJobs(
   const industries = Array.isArray(cv.industries)
     ? cv.industries
     : [];
+
+  const candidateCertifications =
+    Array.isArray(cv.candidateCertifications)
+      ? cv.candidateCertifications
+      : [];
 
   const candidateEvidences =
     buildCandidateEvidence(cv);
@@ -212,14 +264,57 @@ export function scoreJobs(
       );
 
       /**
-       * Certifications and geography are intentionally excluded
-       * until candidate-side evidence is available.
+       * ========================================================
+       * VERIFIED CERTIFICATION MATCHING
+       * ========================================================
        *
-       * We must never award points merely because a job:
-       * - requires a certification, or
-       * - has a country.
+       * Certification points are awarded only when:
        *
-       * Matching scores must be based on verified candidate evidence.
+       * 1. The real job explicitly requires the certification.
+       * 2. The candidate has a matching active certification.
+       *
+       * Candidate certification validity is checked upstream.
+       *
+       * Exact normalized aliases are used to avoid awarding
+       * points for unrelated or ambiguous certifications.
+       */
+
+      if (
+        job.requires_whmis === true &&
+        hasCandidateCertification(
+          candidateCertifications,
+          CERTIFICATION_ALIASES.whmis
+        )
+      ) {
+        score += SCORING_WEIGHTS.certifications.whmis;
+      }
+
+      if (
+        job.requires_csts === true &&
+        hasCandidateCertification(
+          candidateCertifications,
+          CERTIFICATION_ALIASES.csts
+        )
+      ) {
+        score += SCORING_WEIGHTS.certifications.csts;
+      }
+
+      if (
+        job.requires_first_aid === true &&
+        hasCandidateCertification(
+          candidateCertifications,
+          CERTIFICATION_ALIASES.firstAid
+        )
+      ) {
+        score += SCORING_WEIGHTS.certifications.firstAid;
+      }
+
+      /**
+       * Geography remains excluded from scoring.
+       *
+       * A job requirement alone never constitutes candidate
+       * evidence. Certification points require both the
+       * explicit job requirement and verified candidate data.
        */
 
       return {
