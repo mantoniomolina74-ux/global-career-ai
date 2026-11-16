@@ -10,7 +10,7 @@ export type LearningWeights = {
   decisionSensitivity: number;
 };
 
-let cachedWeights: LearningWeights = {
+const cachedWeights: LearningWeights = {
   atsMultiplier: 1,
   rankingMultiplier: 1,
   decisionSensitivity: 1,

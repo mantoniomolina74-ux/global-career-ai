@@ -1,7 +1,7 @@
 /**
  * ============================================================
  * Global Career AI
- * Career State Builder V1.1
+ * Career State Builder V1.2
  * ============================================================
  *
  * Domain adapter between OrchestratorResult and CareerState.
@@ -11,7 +11,8 @@
  * No engine execution.
  *
  * Responsibility:
- * Compose the Career Intelligence domain state.
+ * Compose the Career Intelligence domain state
+ * from verified engine outputs.
  * ============================================================
  */
 
@@ -69,6 +70,106 @@ export function buildCareerState(
         ).profile
       : undefined;
 
+  const atsState =
+    buildATSState(
+      result.ats
+    );
+
+  const matchingState =
+    buildMatchingState(
+      result.matching.items
+    );
+
+  const competencyState =
+    competencyProfile
+      ? buildCompetencyState(
+          competencyProfile
+        )
+      : undefined;
+
+  const knowledgeState =
+    knowledgeProfile
+      ? buildKnowledgeState(
+          knowledgeProfile
+        )
+      : undefined;
+
+  const applicationState =
+    result.applicationInsights
+      ? buildApplicationState(
+          result.applicationInsights
+        )
+      : undefined;
+
+  const matchedSkills = [
+    ...new Set(
+      atsState.matchedSkills.filter(
+        (skill) =>
+          typeof skill === "string" &&
+          skill.trim().length > 0
+      )
+    ),
+  ];
+
+  const missingSkills = [
+    ...new Set([
+      ...atsState.missingSkills,
+      ...(competencyState?.gaps ?? []),
+    ].filter(
+      (skill) =>
+        typeof skill === "string" &&
+        skill.trim().length > 0
+    )),
+  ];
+
+  const recommendations = [
+    ...new Set([
+      atsState.recommendation,
+      ...matchingState.recommendations,
+    ].filter(
+      (recommendation) =>
+        typeof recommendation === "string" &&
+        recommendation.trim().length > 0
+    )),
+  ];
+
+  const requiredCertifications = [
+    ...new Set(
+      matchingState.opportunities.flatMap(
+        (opportunity) =>
+          opportunity.jobIntelligence
+            ?.certificationRequirements ?? []
+      ).filter(
+        (certification) =>
+          typeof certification === "string" &&
+          certification.trim().length > 0
+      )
+    ),
+  ];
+
+  const improvementAreas = [
+    ...new Set([
+      ...atsState.missingSkills,
+      ...(competencyState?.gaps ?? []),
+    ].filter(
+      (area) =>
+        typeof area === "string" &&
+        area.trim().length > 0
+    )),
+  ];
+
+  const averageMatch =
+    result.matching.items.length > 0
+      ? Math.round(
+          result.matching.items.reduce(
+            (sum, item) =>
+              sum + (item.match_score || 0),
+            0
+          ) /
+          result.matching.items.length
+        )
+      : 0;
+
   return {
 
     readiness: {
@@ -83,83 +184,77 @@ export function buildCareerState(
 
       atsScore: result.summary.averageATS,
 
-      skillCount: 0,
+      skillCount:
+        matchedSkills.length,
 
-      certificationCount: 0,
+      certificationCount:
+      result.candidateCertificationCount,
 
-      recommendations: [],
+      recommendations,
     },
 
     metrics: {
-      averageMatch:
-        result.matching.items.length > 0
-    ? Math.round(
-        result.matching.items.reduce(
-          (sum, item) => sum + (item.match_score || 0),
-          0
-        ) / result.matching.items.length
-      )
-    : 0,
+      averageMatch,
 
-      topMatches: result.summary.topScore,
+      topMatches:
+        result.summary.topScore,
 
-      skillsCount: 0,
+      skillsCount:
+        matchedSkills.length,
 
-      atsScore: result.summary.averageATS,
+      atsScore:
+        result.summary.averageATS,
     },
 
     gapAnalysis: {
-      readiness: "UNKNOWN",
+      readiness:
+        result.summary.averageATS >= 80
+          ? "HIGH"
+          : result.summary.averageATS >= 60
+          ? "MEDIUM"
+          : "LOW",
 
-      nextCareerStep: "UNKNOWN",
+      nextCareerStep:
+        "UNKNOWN",
 
-      missingSkills: [],
+      missingSkills,
 
-      recommendedCertifications: [],
+      recommendedCertifications:
+        requiredCertifications,
     },
 
     profileIntelligence: {
-      careerLevel: "UNKNOWN",
+      careerLevel:
+        "UNKNOWN",
 
-      marketFit: 0,
+      marketFit:
+        matchingState.score,
 
-      improvementAreas: [],
+      improvementAreas,
     },
 
     intelligence: {
 
-      ats: buildATSState(
-        result.ats
-      ),
+      ats:
+        atsState,
 
-      matching: buildMatchingState(
-        result.matching.items
-      ),
+      matching:
+        matchingState,
 
       competency:
-        competencyProfile
-          ? buildCompetencyState(
-              competencyProfile
-            )
-          : undefined,
+        competencyState,
 
       knowledge:
-        knowledgeProfile
-          ? buildKnowledgeState(
-              knowledgeProfile
-            )
-          : undefined,
+        knowledgeState,
 
       application:
-        result.applicationInsights
-          ? buildApplicationState(
-              result.applicationInsights
-            )
-          : undefined,
+        applicationState,
 
-      decision: result.decision,
+      decision:
+        result.decision,
 
-      learning: result.context,
+      learning:
+        result.context,
     },
 
   };

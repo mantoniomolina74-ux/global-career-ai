@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -9,20 +10,21 @@ export default function TestEvidenceAccumulationPage() {
 
   function runTest() {
     const evidences: CandidateEvidence[] = [
-      
-        {
-  skill: "welding",
-  evidenceType: "experience",
-  source: "work_experience",
-  details: "5 years welding experience",
-  yearsOfExperience: 5,
-  role: "welder",
-  confidence: "high",
-  relevance: "direct",
-},
+      {
+        skill: "welding",
+        evidenceType: "experience",
+        evidenceLevel: "experience_backed",
+        source: "work_experience",
+        details: "5 years welding experience",
+        yearsOfExperience: 5,
+        role: "welder",
+        confidence: "high",
+        relevance: "direct",
+      },
       {
         skill: "welding",
         evidenceType: "certification",
+        evidenceLevel: "declared",
         source: "certifications",
         details: "Welding certification",
         confidence: "medium",
@@ -31,11 +33,12 @@ export default function TestEvidenceAccumulationPage() {
       {
         skill: "welding",
         evidenceType: "keyword",
+        evidenceLevel: "declared",
         source: "other",
         details: "Mentioned welding keyword",
         confidence: "low",
         relevance: "direct",
-      }
+      },
     ];
 
     const evaluation = accumulateEvidence(

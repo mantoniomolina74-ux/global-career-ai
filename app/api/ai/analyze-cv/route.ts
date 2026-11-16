@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
-
-import { extractCVText } from "@/lib/extract-cv";
+import {
+  extractPrivateCVText,
+  PrivateCVError,
+} from "@/lib/cv/privateCVService";
 import { supabaseServer } from "@/lib/supabase-server";
 import { resolveRuntimeTenant } from "@/lib/saas/runtimeTenant";
+import { createSupabaseServerAuth } from "@/lib/supabase/server";
+import { getPremiumAccess } from "@/lib/billing/premiumAccess";
 
 export const runtime = "nodejs";
 
@@ -290,51 +294,120 @@ function calculateAtsScore(
 
 export async function POST(req: Request) {
   try {
-    const { fileUrl, user_id } = await req.json();
+    let body: unknown;
 
-    if (!fileUrl || !user_id) {
+    try {
+      body = await req.json();
+    } catch {
       return NextResponse.json(
         {
-          error: "fileUrl y user_id son requeridos",
+          success: false,
+          error: "Solicitud JSON inválida",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
-    const runtimeTenant = resolveRuntimeTenant(user_id);
+    if (
+      typeof body !== "object" ||
+      body === null ||
+      !("storagePath" in body) ||
+      typeof body.storagePath !== "string" ||
+      body.storagePath.length === 0 ||
+      body.storagePath.length > 512
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "storagePath es requerido",
+        },
+        { status: 400 }
+      );
+    }
 
-    console.log(
-      "[Runtime Tenant Context]",
-      runtimeTenant
-    );
+    const storagePath = body.storagePath;
 
-    console.log(
-      "Procesando CV:",
-      user_id
-    );
+    const supabase = await createSupabaseServerAuth();
 
-    const text = await extractCVText(fileUrl);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Autenticación requerida",
+        },
+        { status: 401 }
+      );
+    }
+
+    const premiumAccess = await getPremiumAccess(user.id);
+
+    if (!premiumAccess.hasAccess) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Premium access required",
+        },
+        { status: 403 }
+      );
+    }
+
+    const pathSegments = storagePath.split("/");
+
+    const validFilename =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.pdf$/i;
+
+    if (
+      pathSegments.length !== 2 ||
+      pathSegments[0] !== user.id ||
+      !validFilename.test(pathSegments[1])
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Ruta de CV inválida",
+        },
+        { status: 400 }
+      );
+    }
+
+    resolveRuntimeTenant(user.id);
+
+    let text: string;
+
+    try {
+      text = await extractPrivateCVText(
+        user.id,
+        storagePath
+      );
+    } catch (error: unknown) {
+      if (error instanceof PrivateCVError) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "No se pudo procesar el CV almacenado",
+          },
+          { status: 422 }
+        );
+      }
+
+      throw error;
+    }
 
     if (!text || text.trim().length === 0) {
       return NextResponse.json(
         {
+          success: false,
           error: "No se pudo extraer texto del CV",
         },
-        {
-          status: 400,
-        }
+        { status: 400 }
       );
     }
 
-    console.log(
-      "Texto extraído:",
-      text.length
-    );
-
     const skills = detectSkills(text);
-
     const industries = detectIndustries(text);
 
     const atsScore = calculateAtsScore(
@@ -343,23 +416,13 @@ export async function POST(req: Request) {
       industries
     );
 
-    console.log(
-      "[CV ANALYSIS DEBUG]",
-      {
-        userId: user_id,
-        textLength: text.length,
-        skills,
-        industries,
-        atsScore,
-      }
-    );
-
     const { data: cvAnalysis, error: cvError } =
       await supabaseServer
         .from("cv_analyses")
         .insert({
-          user_id,
-          file_url: fileUrl,
+          user_id: user.id,
+          storage_path: storagePath,
+          file_url: null,
           ats_score: atsScore,
           skills,
           industries,
@@ -367,19 +430,24 @@ export async function POST(req: Request) {
           cv_preview: text.slice(0, 1000),
         })
         .select(
-          "id, user_id, file_url, ats_score, skills, industries, recommendations, cv_preview, created_at"
+          "id, user_id, storage_path, file_url, ats_score, skills, industries, recommendations, cv_preview, created_at"
         )
         .single();
 
     if (cvError) {
+      console.error(
+        "Error guardando análisis del CV:",
+        cvError.code
+      );
+
       throw new Error(
-        `Error guardando análisis del CV: ${cvError.message}`
+        "No se pudo guardar el análisis del CV."
       );
     }
 
     return NextResponse.json({
       success: true,
-      user_id,
+      user_id: user.id,
       cvAnalysis,
       atsScore,
       skills,
@@ -390,22 +458,17 @@ export async function POST(req: Request) {
   } catch (error: unknown) {
     console.error(
       "ERROR analyze-cv:",
-      error
-    );
-
-    const message =
       error instanceof Error
         ? error.message
-        : "Error interno";
+        : "Error desconocido"
+    );
 
     return NextResponse.json(
       {
-        error: message,
+        success: false,
+        error: "Error interno al analizar el CV",
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }
-

@@ -1,3 +1,4 @@
+
 import { supabaseServer } from "@/lib/supabase-server";
 import { LearningDomainEvent, LearningEventType } from "./learningTypes";
 
@@ -12,8 +13,8 @@ import { LearningDomainEvent, LearningEventType } from "./learningTypes";
  * Responsibilities:
  * - Read historical events from learning_events
  * - Isolate events by user and tenant
- * - Convert persisted action values into canonical event types
- * - Preserve the persisted learning context
+ * - Restore original event trace when available
+ * - Preserve compatibility with historical records
  *
  * Does not modify learning behavior.
  * Does not write to the database.
@@ -29,17 +30,66 @@ interface LearningEventRow {
   created_at: string;
 }
 
+interface PersistedEventMetadata {
+  source:
+    | "ATS"
+    | "RANKING"
+    | "RECOMMENDATION"
+    | "DECISION"
+    | "ORCHESTRATOR"
+    | "USER"
+    | "KNOWLEDGE";
+  confidence?: number;
+  traceId?: string;
+}
 
-/**
- * Convert persisted database actions
- * into canonical LearningEventType values.
- */
+function isLearningEventType(
+  value: unknown
+): value is LearningEventType | "LEARNING_EVENT" {
+  return (
+    typeof value === "string" &&
+    [
+      "ATS_EVALUATED",
+      "RANKING_GENERATED",
+      "RECOMMENDATION_CREATED",
+      "DECISION_CREATED",
+      "APPLICATION_SUBMITTED",
+      "INTERVIEW_RECEIVED",
+      "OFFER_RECEIVED",
+      "REJECTION_RECEIVED",
+      "LEARNING_EVENT",
+    ].includes(value)
+  );
+}
+
+function isPersistedEventMetadata(
+  value: unknown
+): value is PersistedEventMetadata {
+  if (
+    typeof value !== "object" ||
+    value === null ||
+    !("source" in value)
+  ) {
+    return false;
+  }
+
+  const metadata = value as Record<string, unknown>;
+
+  return [
+    "ATS",
+    "RANKING",
+    "RECOMMENDATION",
+    "DECISION",
+    "ORCHESTRATOR",
+    "USER",
+    "KNOWLEDGE",
+  ].includes(String(metadata.source));
+}
+
 function resolveEventType(
   action: string
 ): LearningEventType | "LEARNING_EVENT" {
-
   switch (action.toLowerCase()) {
-
     case "ats_evaluated":
       return "ATS_EVALUATED";
 
@@ -70,43 +120,6 @@ function resolveEventType(
   }
 }
 
-
-/**
- * Resolve the metadata source associated
- * with a canonical learning event.
- */
-function resolveSource(
-  type: LearningEventType | "LEARNING_EVENT"
-):
-  | "ATS"
-  | "RANKING"
-  | "RECOMMENDATION"
-  | "DECISION"
-  | "ORCHESTRATOR"
-  | "USER"
-  | "KNOWLEDGE"
-  | undefined {
-
-  switch (type) {
-
-    case "ATS_EVALUATED":
-      return "ATS";
-
-    case "RANKING_GENERATED":
-      return "RANKING";
-
-    case "RECOMMENDATION_CREATED":
-      return "RECOMMENDATION";
-
-    case "DECISION_CREATED":
-      return "DECISION";
-
-    default:
-      return undefined;
-  }
-}
-
-
 /**
  * Read persisted learning events
  * for one user and tenant.
@@ -115,7 +128,6 @@ export async function readLearningEvents(
   userId: string,
   tenantId: string
 ): Promise<LearningDomainEvent[]> {
-
   const {
     data,
     error,
@@ -142,22 +154,35 @@ export async function readLearningEvents(
   const rows =
     (data ?? []) as LearningEventRow[];
 
-
   return rows.map((row) => {
+    const context = row.context ?? {};
 
-    const type =
-      resolveEventType(row.action);
+    const originalType = context.__learningEventType;
+    const originalId = context.__learningEventId;
+    const originalTimestamp = context.__learningEventTimestamp;
+    const originalMetadata = context.__learningEventMetadata;
 
-    const context =
-      row.context ?? {};
+    const type = isLearningEventType(originalType)
+      ? originalType
+      : resolveEventType(row.action);
 
+    const metadata = isPersistedEventMetadata(originalMetadata)
+      ? originalMetadata
+      : undefined;
 
-    const source =
-      resolveSource(type);
-
+    const {
+      __learningEventId: _eventId,
+      __learningEventType: _eventType,
+      __learningEventTimestamp: _eventTimestamp,
+      __learningEventMetadata: _eventMetadata,
+      ...eventContext
+    } = context;
 
     return {
-      id: row.id,
+      id:
+        typeof originalId === "string"
+          ? originalId
+          : row.id,
 
       userId: row.user_id,
 
@@ -165,24 +190,20 @@ export async function readLearningEvents(
 
       type,
 
-      timestamp: row.created_at,
+      timestamp:
+        typeof originalTimestamp === "string"
+          ? originalTimestamp
+          : row.created_at,
 
       context: {
-        ...context,
-
+        ...eventContext,
         action:
-          typeof context.action === "string"
-            ? context.action
+          typeof eventContext.action === "string"
+            ? eventContext.action
             : row.action,
       },
 
-      ...(source
-        ? {
-            metadata: {
-              source,
-            },
-          }
-        : {}),
+      ...(metadata ? { metadata } : {}),
     };
   });
 }

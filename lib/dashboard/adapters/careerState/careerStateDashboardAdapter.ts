@@ -1,8 +1,7 @@
-
 /**
  * ============================================================
  * Global Career AI
- * Career State Dashboard Adapter V1.2.1
+ * Career State Dashboard Adapter V1.2.2
  * ============================================================
  *
  * Adapter between:
@@ -125,6 +124,9 @@ export function adaptCareerStateToDashboard(
 
             country:
               opportunity.country,
+
+            jobIntelligence:
+              opportunity.jobIntelligence,
 
             reasons:
               opportunity.reasons,

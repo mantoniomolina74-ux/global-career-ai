@@ -13,13 +13,21 @@ import { LearningDomainEvent } from "@/lib/engine/learning/learningTypes";
  * =========================================================
  */
 
+let consumerInitialized = false;
+
 export function initLearningEventConsumer(): void {
+  if (consumerInitialized) {
+    return;
+  }
+
   learningEventBus.onEvent(
     "learning:event",
     async (event: LearningDomainEvent) => {
       await handleLearningEvent(event);
     }
   );
+
+  consumerInitialized = true;
 }
 
 /**

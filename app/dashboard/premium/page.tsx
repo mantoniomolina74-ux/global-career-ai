@@ -4,11 +4,15 @@ import { createSupabaseServerAuth } from "@/lib/supabase/server";
 import { getPremiumDashboardData } from "@/lib/dashboard/services/premiumATSService";
 import { getLearningDashboardInsight } from "@/lib/dashboard/services/learningDashboardService";
 import { initLearningEventConsumer } from "@/lib/engine/events/learningEventConsumer";
+import { getPremiumAccess } from "@/lib/billing/premiumAccess";
 
 export default async function PremiumDashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ jobId?: string }>;
+  searchParams: Promise<{
+    jobId?: string;
+    demo?: string;
+  }>;
 }) {
   const supabase = await createSupabaseServerAuth();
 
@@ -20,30 +24,40 @@ export default async function PremiumDashboardPage({
     redirect("/login");
   }
 
-  const { jobId } = await searchParams;
+  const { jobId, demo } = await searchParams;
+
+  const isDemo = demo === "true";
+
+  if (!isDemo) {
+    const premiumAccess = await getPremiumAccess(user.id);
+
+    if (!premiumAccess.hasAccess) {
+      redirect("/premium/demo");
+    }
+  }
 
   initLearningEventConsumer();
 
   const premiumData =
-  await getPremiumDashboardData(
-    user.id,
-    jobId
-  );
+    await getPremiumDashboardData(
+      user.id,
+      jobId
+    );
 
   const learning: {
-  activePatterns: string[];
-  learningSignals: string[];
-  recommendedActions: string[];
-} =
-  (premiumData.careerState?.intelligence.learning as {
     activePatterns: string[];
     learningSignals: string[];
     recommendedActions: string[];
-  } | undefined) ?? {
-    activePatterns: [],
-    learningSignals: [],
-    recommendedActions: [],
-  };
+  } =
+    (premiumData.careerState?.intelligence.learning as {
+      activePatterns: string[];
+      learningSignals: string[];
+      recommendedActions: string[];
+    } | undefined) ?? {
+      activePatterns: [],
+      learningSignals: [],
+      recommendedActions: [],
+    };
 
   const premiumATS = premiumData.insight;
   const careerHealth = premiumData.careerHealth;
@@ -52,6 +66,9 @@ export default async function PremiumDashboardPage({
   const analytics = premiumData.analytics;
   const careerEvolution = premiumData.careerEvolution;
   const recommendations = premiumData.recommendations;
+
+  const matchingOpportunities =
+    premiumData.careerState?.intelligence.matching?.opportunities ?? [];
 
   const {
     overview,
@@ -429,7 +446,7 @@ export default async function PremiumDashboardPage({
           </div>
         </section>
 
-                 <section className="space-y-4">
+        <section className="space-y-4">
           <div>
             <h2 className="text-xl font-semibold">
               Career Evolution
@@ -449,16 +466,16 @@ export default async function PremiumDashboardPage({
               </h3>
 
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-
                 <div className="rounded-xl border bg-card p-5 shadow-sm">
-                    <p className="text-sm text-muted-foreground">
-                        Career Level
-                      </p>            
+                  <p className="text-sm text-muted-foreground">
+                    Career Level
+                  </p>
 
-                    <p className="mt-2 text-2xl font-semibold">
-                     {careerEvolution.currentPosition.careerLevel || "Not available"}
-                      </p>
-                    </div>
+                  <p className="mt-2 text-2xl font-semibold">
+                    {careerEvolution.currentPosition.careerLevel ||
+                      "Not available"}
+                  </p>
+                </div>
 
                 <MetricCard
                   label="Market Fit"
@@ -488,7 +505,8 @@ export default async function PremiumDashboardPage({
                   </p>
 
                   <p className="mt-2 font-medium">
-                    {careerEvolution.careerDirection.nextCareerStep || "Not available"}
+                    {careerEvolution.careerDirection.nextCareerStep ||
+                      "Not available"}
                   </p>
                 </div>
 
@@ -500,7 +518,9 @@ export default async function PremiumDashboardPage({
 
                   <ListCard
                     title="Target Industries"
-                    items={careerEvolution.careerDirection.targetIndustries}
+                    items={
+                      careerEvolution.careerDirection.targetIndustries
+                    }
                   />
                 </div>
               </div>
@@ -529,7 +549,8 @@ export default async function PremiumDashboardPage({
             </div>
           </div>
         </section>
-              <section className="space-y-4">
+
+        <section className="space-y-4">
           <div>
             <h2 className="text-xl font-semibold">
               Recommendations
@@ -565,6 +586,7 @@ export default async function PremiumDashboardPage({
             />
           </div>
         </section>
+
         <section className="space-y-4">
           <div>
             <h2 className="text-xl font-semibold">
@@ -776,6 +798,244 @@ export default async function PremiumDashboardPage({
         <section className="space-y-4">
           <div>
             <h2 className="text-xl font-semibold">
+              Job Intelligence
+            </h2>
+
+            <p className="text-sm text-muted-foreground">
+              Structured intelligence extracted from the real job
+              opportunities evaluated for your profile.
+            </p>
+          </div>
+
+          {matchingOpportunities.length > 0 ? (
+            <div className="space-y-6">
+              {matchingOpportunities.map((opportunity) => {
+                const intelligence =
+                  opportunity.jobIntelligence;
+
+                if (!intelligence) {
+                  return null;
+                }
+
+                const groupedRequirements =
+                  intelligence.requirements.reduce<
+                    Record<string, typeof intelligence.requirements>
+                  >(
+                    (groups, requirement) => {
+                      const key = requirement.category;
+
+                      if (!groups[key]) {
+                        groups[key] = [];
+                      }
+
+                      groups[key].push(requirement);
+
+                      return groups;
+                    },
+                    {}
+                  );
+
+                return (
+                  <div
+                    key={intelligence.id}
+                    className="rounded-xl border bg-card p-6 shadow-sm"
+                  >
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-xl font-semibold">
+                          {intelligence.title}
+                        </h3>
+
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {intelligence.company}
+                        </p>
+                      </div>
+
+                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                        <InfoCard
+                          label="Country"
+                          value={
+                            intelligence.country ??
+                            "Not specified"
+                          }
+                        />
+
+                        <InfoCard
+                          label="Location"
+                          value={
+                            intelligence.location ??
+                            "Not specified"
+                          }
+                        />
+
+                        <InfoCard
+                          label="Work Mode"
+                          value={getWorkModeLabel(
+                            intelligence.workMode
+                          )}
+                        />
+
+                        <InfoCard
+                          label="Industry"
+                          value={
+                            intelligence.industry ??
+                            "Not specified"
+                          }
+                        />
+                      </div>
+
+                      <InfoCard
+                        label="Category"
+                        value={
+                          intelligence.category ??
+                          "Not specified"
+                        }
+                      />
+
+                      {intelligence.description ? (
+                        <div className="rounded-lg border p-4">
+                          <p className="text-sm font-medium">
+                            Intelligence Source
+                          </p>
+
+                          <p className="mt-2 text-sm text-muted-foreground">
+                            Original job description available as
+                            intelligence evidence.
+                          </p>
+                        </div>
+                      ) : null}
+
+                      {intelligence.requirements.length > 0 ? (
+                        <div className="space-y-5">
+                          <div>
+                            <h4 className="text-lg font-semibold">
+                              Structured Requirements
+                            </h4>
+
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              Requirements identified directly from the
+                              published job information.
+                            </p>
+                          </div>
+
+                          {Object.entries(
+                            groupedRequirements
+                          ).map(
+                            ([
+                              category,
+                              requirements,
+                            ]) => (
+                              <div
+                                key={category}
+                                className="space-y-3"
+                              >
+                                <h5 className="font-semibold">
+                                  {getRequirementLabel(
+                                    category
+                                  )}
+                                </h5>
+
+                                <div className="space-y-3">
+                                  {requirements.map(
+                                    (
+                                      requirement,
+                                      index
+                                    ) => (
+                                      <div
+                                        key={`${requirement.name}-${index}`}
+                                        className="rounded-lg border p-4"
+                                      >
+                                        <p className="font-medium">
+                                          {requirement.name}
+                                        </p>
+
+                                        <p className="mt-2 text-sm text-muted-foreground">
+                                          {requirement.evidence}
+                                        </p>
+                                      </div>
+                                    )
+                                  )}
+                                </div>
+                              </div>
+                            )
+                          )}
+                        </div>
+                      ) : (
+                        <EmptyState
+                          title="No structured requirements available"
+                          description="No explicit requirements were identified from the available job information."
+                        />
+                      )}
+
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <RequirementList
+                          title="Required Skills"
+                          items={
+                            intelligence.requiredSkills
+                          }
+                        />
+
+                        <RequirementList
+                          title="Experience Requirements"
+                          items={
+                            intelligence.experienceRequirements
+                          }
+                        />
+
+                        <RequirementList
+                          title="Education Requirements"
+                          items={
+                            intelligence.educationRequirements
+                          }
+                        />
+
+                        <RequirementList
+                          title="Certification Requirements"
+                          items={
+                            intelligence.certificationRequirements
+                          }
+                        />
+
+                        <RequirementList
+                          title="Language Requirements"
+                          items={
+                            intelligence.languageRequirements
+                          }
+                        />
+
+                        <RequirementList
+                          title="Required Industries"
+                          items={
+                            intelligence.requiredIndustries
+                          }
+                        />
+                      </div>
+
+                      <div className="rounded-lg border p-4">
+                        <p className="text-sm text-muted-foreground">
+                          Source
+                        </p>
+
+                        <p className="mt-1 font-medium">
+                          {intelligence.source}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <EmptyState
+              title="No Job Intelligence available"
+              description="No evaluated opportunity currently contains structured job intelligence."
+            />
+          )}
+        </section>
+
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-xl font-semibold">
               Opportunity ATS
             </h2>
 
@@ -864,6 +1124,59 @@ function MetricCard({
   );
 }
 
+function InfoCard({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-xl border bg-card p-5 shadow-sm">
+      <p className="text-sm text-muted-foreground">
+        {label}
+      </p>
+
+      <p className="mt-2 font-medium">
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function RequirementList({
+  title,
+  items,
+}: {
+  title: string;
+  items: string[];
+}) {
+  return (
+    <div className="rounded-xl border bg-card p-5 shadow-sm">
+      <p className="font-semibold">
+        {title}
+      </p>
+
+      {items.length > 0 ? (
+        <ul className="mt-3 space-y-2">
+          {items.map((item, index) => (
+            <li
+              key={`${item}-${index}`}
+              className="text-sm"
+            >
+              {item}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-3 text-sm text-muted-foreground">
+          No evidence available.
+        </p>
+      )}
+    </div>
+  );
+}
+
 function SkillList({
   title,
   skills,
@@ -948,4 +1261,56 @@ function EmptyState({
       </p>
     </div>
   );
+}
+
+function getWorkModeLabel(
+  workMode:
+    | "REMOTE"
+    | "HYBRID"
+    | "IN_PERSON"
+    | "UNKNOWN"
+): string {
+  switch (workMode) {
+    case "REMOTE":
+      return "Remote";
+
+    case "HYBRID":
+      return "Hybrid";
+
+    case "IN_PERSON":
+      return "In person";
+
+    default:
+      return "Not specified";
+  }
+}
+
+function getRequirementLabel(
+  category: string
+): string {
+  switch (category) {
+    case "SKILL":
+      return "Skills";
+
+    case "EXPERIENCE":
+      return "Experience";
+
+    case "EDUCATION":
+      return "Education";
+
+    case "CERTIFICATION":
+      return "Certifications";
+
+    case "LANGUAGE":
+      return "Languages";
+
+    case "INDUSTRY":
+      return "Industry";
+
+    case "OTHER":
+      return "Other requirements";
+
+    default:
+      return category;
+  }
 }

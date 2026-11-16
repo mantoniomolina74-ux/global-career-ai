@@ -1,7 +1,7 @@
 /**
  * ============================================================
  * Global Career AI
- * Match Reasons V1.2.1
+ * Match Reasons V1.2.2
  * ============================================================
  *
  * Generates transparent explanations for Matching Engine scores.

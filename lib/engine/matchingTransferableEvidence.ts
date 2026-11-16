@@ -62,12 +62,6 @@ function containsConcept(
   );
 }
 
-function getConfidence(
-  source: "skills" | "professionalText"
-): "high" | "medium" {
-  return source === "skills" ? "high" : "medium";
-}
-
 export function buildTransferableEvidence(
   input: TransferableEvidenceInput
 ): CandidateEvidence[] {
@@ -94,13 +88,15 @@ export function buildTransferableEvidence(
       evidences.push({
         skill: relation.target,
         evidenceType: "skill",
+        evidenceLevel: "declared",
         source: "skills_section",
         relevance: "transferable",
         transferableStrength: relation.strength,
-        confidence: getConfidence("skills"),
+        confidence: "medium",
         details:
-          `${skillMatch} transferable to ${relation.target} ` +
-          `(${relation.strength})`,
+          `Declared skill: ${skillMatch}. ` +
+          `Potentially transferable to ${relation.target} ` +
+          `(${relation.strength}); application not verified.`,
       });
 
       return;
@@ -109,14 +105,17 @@ export function buildTransferableEvidence(
     if (containsConcept(professionalText, relation.source)) {
       evidences.push({
         skill: relation.target,
-        evidenceType: "experience",
-        source: "work_experience",
+        evidenceType: "keyword",
+        evidenceLevel: "declared",
+        source: "other",
         relevance: "transferable",
         transferableStrength: relation.strength,
-        confidence: getConfidence("professionalText"),
+        confidence: "low",
         details:
-          `${relation.source} evidence transferable to ` +
-          `${relation.target} (${relation.strength})`,
+          `Textual signal found for ${relation.source}. ` +
+          `Potentially transferable to ${relation.target} ` +
+          `(${relation.strength}); source section and application ` +
+          `not verified.`,
       });
     }
   });

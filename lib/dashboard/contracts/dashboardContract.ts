@@ -17,6 +17,10 @@
  * ============================================================
  */
 
+import type {
+  JobIntelligence,
+} from "@/lib/engine/contracts/intelligence/jobIntelligence";
+
 
 export interface DashboardContract {
 
@@ -108,13 +112,15 @@ export interface OpportunityMatch {
 
   country?: string;
 
+  jobIntelligence?: JobIntelligence;
+
   reasons: string[];
 
   matchedSkills: string[];
 
   matchedIndustries: string[];
 
-    certifications: {
+  certifications: {
     whmis?: boolean;
     csts?: boolean;
     firstAid?: boolean;
@@ -215,6 +221,8 @@ export interface DashboardRecommendations {
 
   longTermGoals: Recommendation[];
 
+
+
 }
 
 
@@ -234,6 +242,8 @@ export interface Recommendation {
 
   expectedImpact: string;
 
+
+
 }
 
 
@@ -243,6 +253,8 @@ export interface DashboardEvidence {
   items: EvidenceItem[];
 
   overallConfidence: number;
+
+
 
 }
 
@@ -275,6 +287,8 @@ export interface DashboardTimeline {
 
   evolutionTrend: string;
 
+
+
 }
 
 
@@ -291,6 +305,8 @@ export interface TimelineSnapshot {
 
   achievements: string[];
 
+
+
 }
 
 
@@ -304,6 +320,8 @@ export interface Milestone {
   date: string;
 
   impact: string;
+
+
 
 }
 
@@ -326,6 +344,8 @@ export interface DashboardDiagnostics {
 
   dataQuality: DataQualityStatus;
 
+
+
 }
 
 
@@ -337,5 +357,7 @@ export interface DataQualityStatus {
   confidence: number;
 
   partialData: boolean;
+
+
 
 }

@@ -8,7 +8,11 @@ import {
 function calculateExperienceMultiplier(
   yearsOfExperience?: number
 ): number {
-  if (!yearsOfExperience) {
+  if (yearsOfExperience === undefined) {
+    return 1.0;
+  }
+
+  if (yearsOfExperience <= 0) {
     return EVIDENCE_WEIGHTS.experience.lessThanOneYear;
   }
 
@@ -25,6 +29,38 @@ function calculateExperienceMultiplier(
   }
 
   return EVIDENCE_WEIGHTS.experience.moreThanFiveYears;
+}
+
+function getEvidenceLevelMultiplier(
+  evidence: CandidateEvidence
+): number {
+  switch (evidence.evidenceLevel) {
+    case "declared":
+      return 0.40;
+
+    case "experience_backed":
+      return 0.75;
+
+    case "demonstrated":
+      return 1.00;
+
+    default:
+      return 0.40;
+  }
+}
+
+function hasContextualProfessionalExperience(
+  evidence: CandidateEvidence
+): boolean {
+  return (
+    evidence.evidenceLevel !== "declared" &&
+    evidence.evidenceType === "experience" &&
+    evidence.source === "work_experience" &&
+    Boolean(
+      evidence.role ||
+      evidence.traceability?.role
+    )
+  );
 }
 
 function getConfidenceMultiplier(
@@ -66,10 +102,18 @@ export function evaluateEvidence(
   const relevanceWeight =
     getRelevanceWeight(evidence);
 
+  const evidenceLevelMultiplier =
+    getEvidenceLevelMultiplier(evidence);
+
+  const hasContextualExperience =
+    hasContextualProfessionalExperience(evidence);
+
   const experienceMultiplier =
-    calculateExperienceMultiplier(
-      evidence.yearsOfExperience
-    );
+    hasContextualExperience
+      ? calculateExperienceMultiplier(
+          evidence.yearsOfExperience
+        )
+      : 1.0;
 
   const confidenceMultiplier =
     getConfidenceMultiplier(
@@ -78,6 +122,7 @@ export function evaluateEvidence(
 
   const rawScore =
     relevanceWeight *
+    evidenceLevelMultiplier *
     experienceMultiplier *
     confidenceMultiplier *
     100;
@@ -90,14 +135,22 @@ export function evaluateEvidence(
   return {
     skill: evidence.skill,
 
-    score: Math.round(score),
+    score: Math.round(
+      score + Number.EPSILON * Math.abs(score)
+    ),
 
     evidenceCount: 1,
 
     confidence: evidence.confidence,
 
     explanation:
-      `${evidence.relevance} evidence with ` +
-      `${evidence.confidence} confidence`
+      `${evidence.relevance} relevance, ` +
+      `${evidence.evidenceLevel} evidence, ` +
+      `${evidence.confidence} confidence` +
+      (
+        hasContextualExperience
+          ? ", contextual professional experience"
+          : ""
+      )
   };
 }

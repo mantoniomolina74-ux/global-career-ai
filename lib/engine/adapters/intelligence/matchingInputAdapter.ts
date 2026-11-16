@@ -1,145 +1,150 @@
 /**
-
-* ============================================================
-* Global Career AI
-* Matching Input Adapter V1.2
-* ============================================================
-*
-* Transforms CareerApplication input into Matching Engine input.
-*
-* Responsibilities:
-* * Normalize application data
-* * Preserve real job information
-* * Preserve candidate profile information
-* * Preserve professional CV text
-* * Preserve domain boundaries
-*
-* No scoring logic.
-* No persistence.
-* No dashboard logic.
-* ============================================================
-  */
+ * ============================================================
+ * Global Career AI
+ * Matching Input Adapter V1.2
+ * ============================================================
+ *
+ * Transforms CareerApplication input into Matching Engine input.
+ *
+ * Responsibilities:
+ * - Normalize application data
+ * - Preserve real job information
+ * - Preserve candidate profile information
+ * - Preserve professional CV text
+ * - Preserve domain boundaries
+ * - Preserve Job Intelligence derived from the real job
+ *
+ * No scoring logic.
+ * No persistence.
+ * No dashboard logic.
+ * ============================================================
+ */
 
 import type {
-CareerApplication,
+  CareerApplication,
 } from "@/lib/engine/contracts/engineContracts";
 
+import type {
+  JobIntelligence,
+} from "@/lib/engine/contracts/intelligence/jobIntelligence";
+
 export interface MatchingInputProfile {
+  skills: string[];
 
-skills: string[];
+  industries: string[];
 
-industries: string[];
+  candidateCertifications: string[];
 
-candidateCertifications: string[];
-
-professionalText?: string;
-
+  professionalText?: string;
 }
 
 export interface MatchingJobInput {
+  id: string;
 
-id: string;
+  title?: string;
 
-title?: string;
+  description?: string;
 
-description?: string;
+  industry?: string;
 
-industry?: string;
+  country?: string;
 
-country?: string;
+  category?: string;
 
-category?: string;
+  tags?: string;
 
-tags?: string;
+  /**
+   * ============================================================
+   * JOB INTELLIGENCE
+   * ============================================================
+   *
+   * Structured intelligence derived from the real job.
+   *
+   * The adapter only transports this information.
+   * It does not calculate, modify, or interpret it.
+   */
 
+  jobIntelligence?: JobIntelligence;
 }
 
 export function buildMatchingInput(
-
-applications: CareerApplication[],
-
-profile: MatchingInputProfile
-
+  applications: CareerApplication[],
+  profile: MatchingInputProfile
 ): {
+  jobs: MatchingJobInput[];
 
-jobs: MatchingJobInput[];
+  cv: {
+    skills: string[];
 
-cv: {
+    industries: string[];
 
-skills: string[];
+    candidateCertifications: string[];
 
-industries: string[];
-
-candidateCertifications: string[];
-
-professionalText: string;
-
-};
-
+    professionalText: string;
+  };
 } {
+  return {
+    /**
+     * ============================================================
+     * REAL JOB INPUT
+     * ============================================================
+     *
+     * Preserve real job information carried by the application.
+     *
+     * These fields are consumed by the Matching Engine and later
+     * become evidence for MatchingState.
+     */
 
-return {
+    jobs: applications.map(
+      (application) => ({
+        id:
+          application.applicationId,
 
-/**
- * ============================================================
- * REAL JOB INPUT
- * ============================================================
- *
- * Preserve real job information carried by the application.
- *
- * These fields are consumed by the Matching Engine and later
- * become evidence for MatchingState.
- */
+        title:
+          application.title,
 
-jobs: applications.map(
-  (application) => ({
+        description:
+          application.jobDescription ?? "",
 
-    id:
-      application.applicationId,
+        industry:
+          application.industry,
 
-    title:
-      application.title,
+        country:
+          application.country,
 
-    description:
-      application.jobDescription ?? "",
+        category:
+          application.category,
 
-    industry:
-      application.industry,
+        tags:
+          application.tags,
 
-    country:
-      application.country,
+        /**
+         * Preserve the structured intelligence already derived
+         * from the real job.
+         */
+        jobIntelligence:
+          application.jobIntelligence,
+      })
+    ),
 
-    category:
-      application.category,
+    /**
+     * ============================================================
+     * CANDIDATE PROFILE
+     * ============================================================
+     */
 
-    tags:
-      application.tags,
-  })
-),
+    cv: {
+      skills:
+        profile.skills,
 
+      industries:
+        profile.industries,
 
-/**
- * ============================================================
- * CANDIDATE PROFILE
- * ============================================================
- */
+      candidateCertifications:
+        profile.candidateCertifications,
 
-cv: {
-
-  skills:
-    profile.skills,
-
-  industries:
-    profile.industries,
-
-  candidateCertifications:
-    profile.candidateCertifications,
-
-  professionalText:
-    profile.professionalText ?? "",
-
-},
-
-};
-
+      professionalText:
+        profile.professionalText ?? "",
+    },
+  };
 }

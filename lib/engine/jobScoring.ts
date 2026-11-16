@@ -4,31 +4,62 @@ import { buildMatchReasons } from "./matchReasons";
 import { buildCandidateEvidence } from "./evidenceAdapter";
 import { buildTransferableEvidence } from "./matchingTransferableEvidence";
 import { accumulateEvidence } from "./evidenceAccumulator";
+import { evaluateEvidence } from "./evidenceEvaluator";
 import { matchesConcept, normalizeText } from "./matchingConcepts";
 
 import type {
   MatchingResultItem,
 } from "@/lib/engine/contracts/matchingContracts";
 
+import type {
+  JobIntelligence,
+} from "@/lib/engine/contracts/intelligence/jobIntelligence";
+
+import type {
+  CandidateEvidence,
+} from "./matchingTypes";
+
+
 type JobScoreInput = {
   id: string;
+
   title?: string;
+
   description?: string;
+
   industry?: string;
+
   country?: string;
+
   category?: string;
+
   tags?: string;
+
+  /**
+   * Structured intelligence derived from the real job.
+   *
+   * This information is preserved through the Matching Engine
+   * but does not participate in score calculation.
+   */
+  jobIntelligence?: JobIntelligence;
+
   match_score?: number;
+
   requires_whmis?: boolean;
+
   requires_csts?: boolean;
+
   requires_first_aid?: boolean;
 };
 
+
 type CvScoreInput = {
   skills?: string[];
+
   industries?: string[];
 
   candidateCertifications?: string[];
+
   professionalText?: string;
 };
 
@@ -78,25 +109,107 @@ function hasCandidateCertification(
 }
 
 
+/**
+ * Two labels represent the same concept when they normalize
+ * identically or matchingConcepts recognizes them as aliases.
+ */
+function isSameConcept(
+  left: string,
+  right: string
+): boolean {
+  if (
+    normalizeText(left) === normalizeText(right)
+  ) {
+    return true;
+  }
+
+  return (
+    matchesConcept(left, right) ||
+    matchesConcept(right, left)
+  );
+}
+
+
+/**
+ * Removes repeated labels and equivalent concept aliases,
+ * preserving the first occurrence.
+ */
+function uniqueConcepts(
+  values: string[]
+): string[] {
+  const unique: string[] = [];
+
+  values.forEach((value) => {
+    if (
+      typeof value !== "string" ||
+      value.trim().length === 0
+    ) {
+      return;
+    }
+
+    const alreadyIncluded = unique.some((existing) =>
+      isSameConcept(existing, value)
+    );
+
+    if (!alreadyIncluded) {
+      unique.push(value.trim());
+    }
+  });
+
+  return unique;
+}
+
+
+/**
+ * Converts the evaluator's score from 0–100 to a multiplier.
+ * The evaluator remains the single source of truth for
+ * relevance, evidence level, experience, transferable strength
+ * and confidence.
+ */
+function getEvidenceMultiplier(
+  evidence: CandidateEvidence
+): number {
+  return evaluateEvidence(evidence).score / 100;
+}
+
+
 export function scoreJobs(
   jobs: JobScoreInput[],
   cv: CvScoreInput
 ): MatchingResultItem[] {
-  const skills = Array.isArray(cv.skills)
+  const rawSkills = Array.isArray(cv.skills)
     ? cv.skills
     : [];
 
-  const industries = Array.isArray(cv.industries)
+  const rawIndustries = Array.isArray(cv.industries)
     ? cv.industries
     : [];
+
+  const skills = uniqueConcepts(rawSkills);
+
+  // Skills take precedence when the same concept appears
+  // in both candidate lists, preventing cross-category duplication.
+  const industries = uniqueConcepts(rawIndustries)
+    .filter((industry) =>
+      !skills.some((skill) =>
+        isSameConcept(skill, industry)
+      )
+    );
 
   const candidateCertifications =
     Array.isArray(cv.candidateCertifications)
       ? cv.candidateCertifications
       : [];
 
+  const normalizedCv: CvScoreInput = {
+    ...cv,
+    skills,
+    industries,
+    candidateCertifications,
+  };
+
   const candidateEvidences =
-    buildCandidateEvidence(cv);
+    buildCandidateEvidence(normalizedCv);
 
   return jobs
     .map((job) => {
@@ -118,19 +231,6 @@ export function scoreJobs(
           professionalText: cv.professionalText ?? "",
           jobText: text,
         });
-
-      const allCandidateEvidences = [
-        ...candidateEvidences,
-        ...transferableEvidences,
-      ];
-
-      const evidenceAnalysis =
-        allCandidateEvidences.length > 0
-          ? accumulateEvidence(
-              "career_profile",
-              allCandidateEvidences
-            )
-          : null;
 
       const skillFieldMultiplier = (skill: string): number => {
         if (matchesConcept(fields.title, skill)) {
@@ -180,24 +280,84 @@ export function scoreJobs(
         return 0;
       };
 
-      skills.forEach((skill) => {
-        const multiplier = skillFieldMultiplier(skill);
+      const scoredDirectConcepts: string[] = [];
 
-        if (multiplier > 0) {
-          score +=
-            SCORING_WEIGHTS.skillsMatch *
-            multiplier;
+      /**
+       * ========================================================
+       * DIRECT SKILL MATCHING
+       * ========================================================
+       *
+       * Direct skill contributions retain their original
+       * context multipliers and incorporate the complete
+       * evidence quality multiplier.
+       */
+
+      skills.forEach((skill) => {
+        const contextMultiplier =
+          skillFieldMultiplier(skill);
+
+        if (contextMultiplier <= 0) {
+          return;
         }
+
+        const evidence = candidateEvidences.find(
+          (item) =>
+            item.skill === skill &&
+            item.evidenceType === "skill"
+        );
+
+        if (!evidence) {
+          return;
+        }
+
+        const evidenceMultiplier =
+          getEvidenceMultiplier(evidence);
+
+        score +=
+          SCORING_WEIGHTS.skillsMatch *
+          contextMultiplier *
+          evidenceMultiplier;
+
+        scoredDirectConcepts.push(skill);
       });
 
-      industries.forEach((industry) => {
-        const multiplier = industryFieldMultiplier(industry);
+      /**
+       * ========================================================
+       * DIRECT INDUSTRY MATCHING
+       * ========================================================
+       *
+       * Industry contributions retain their original
+       * context multipliers and incorporate the evaluator's
+       * evidence quality multiplier.
+       */
 
-        if (multiplier > 0) {
-          score +=
-            SCORING_WEIGHTS.industryMatch *
-            multiplier;
+      industries.forEach((industry) => {
+        const contextMultiplier =
+          industryFieldMultiplier(industry);
+
+        if (contextMultiplier <= 0) {
+          return;
         }
+
+        const evidence = candidateEvidences.find(
+          (item) =>
+            item.skill === industry &&
+            item.evidenceType === "experience"
+        );
+
+        if (!evidence) {
+          return;
+        }
+
+        const evidenceMultiplier =
+          getEvidenceMultiplier(evidence);
+
+        score +=
+          SCORING_WEIGHTS.industryMatch *
+          contextMultiplier *
+          evidenceMultiplier;
+
+        scoredDirectConcepts.push(industry);
       });
 
       /**
@@ -205,63 +365,105 @@ export function scoreJobs(
        * TRANSFERABLE MATCHING
        * ========================================================
        *
-       * Transferable evidence contributes to the official
-       * match_score without replacing direct skill matching.
+       * evaluateEvidence already incorporates:
+       * - Transferable relationship strength (strong/moderate).
+       * - Evidence level.
+       * - Professional experience when contextually supported.
+       * - Confidence.
        *
-       * Strong transferable:
-       *   70% of the direct skill base value.
+       * Its complete score is used directly. Applying another
+       * 0.70 / 0.35 multiplier here would penalize the same
+       * relationship twice.
        *
-       * Moderate transferable:
-       *   35% of the direct skill base value.
+       * A transferable target already scored directly is
+       * excluded to prevent double counting.
        *
-       * Multiple transferable relationships pointing to the
-       * same target are collapsed to the strongest relationship
-       * to avoid double counting.
+       * When multiple relationships point to one target,
+       * the highest effective contribution is retained.
        */
 
-      const transferableStrengthByTarget =
-        new Map<
-          string,
-          "strong" | "moderate"
-        >();
+      const transferableByTarget = new Map<
+        string,
+        {
+          target: string;
+          contribution: number;
+          evidence: CandidateEvidence;
+        }
+      >();
 
       transferableEvidences.forEach((evidence) => {
         if (!evidence.transferableStrength) {
           return;
         }
 
-        const target =
-          normalizeText(evidence.skill);
+        const target = normalizeText(evidence.skill);
+
+        if (!target) {
+          return;
+        }
+
+        const overlapsDirectMatch =
+          scoredDirectConcepts.some((concept) =>
+            isSameConcept(concept, evidence.skill)
+          );
+
+        if (overlapsDirectMatch) {
+          return;
+        }
+
+        // Transferable strength is already included by evaluateEvidence.
+        const contribution =
+          getEvidenceMultiplier(evidence);
 
         const existing =
-          transferableStrengthByTarget.get(target);
+          transferableByTarget.get(target);
 
         if (
           !existing ||
-          (
-            evidence.transferableStrength === "strong" &&
-            existing === "moderate"
-          )
+          contribution > existing.contribution
         ) {
-          transferableStrengthByTarget.set(
-            target,
-            evidence.transferableStrength
-          );
+          transferableByTarget.set(target, {
+            target: evidence.skill,
+            contribution,
+            evidence,
+          });
         }
       });
 
-      transferableStrengthByTarget.forEach(
-        (strength) => {
-          const transferableMultiplier =
-            strength === "strong"
-              ? 0.70
-              : 0.35;
+      transferableByTarget.forEach((item) => {
+        score +=
+          SCORING_WEIGHTS.skillsMatch *
+          item.contribution;
+      });
 
-          score +=
-            SCORING_WEIGHTS.skillsMatch *
-            transferableMultiplier;
-        }
-      );
+      /**
+       * ========================================================
+       * EVIDENCE ANALYSIS — SHADOW / TRANSPARENCY
+       * ========================================================
+       *
+       * Only the selected transferable evidence is included.
+       * This avoids presenting duplicate transfer relationships
+       * as separate evidence contributions.
+       *
+       * This analysis does not replace the official score.
+       */
+
+      const selectedTransferableEvidences =
+        Array.from(transferableByTarget.values())
+          .map((item) => item.evidence);
+
+      const allCandidateEvidences = [
+        ...candidateEvidences,
+        ...selectedTransferableEvidences,
+      ];
+
+      const evidenceAnalysis =
+        allCandidateEvidences.length > 0
+          ? accumulateEvidence(
+              "career_profile",
+              allCandidateEvidences
+            )
+          : null;
 
       /**
        * ========================================================
@@ -329,7 +531,7 @@ export function scoreJobs(
 
         match_reasons: buildMatchReasons(
           job,
-          cv
+          normalizedCv
         ),
 
         match_explanation: {

@@ -1,61 +1,75 @@
 /**
+ * ============================================================
+ * Global Career AI
+ * Matching Contracts V1.2
+ * ============================================================
+ *
+ * Contracts representing Matching Engine output.
+ *
+ * These contracts belong to the engine layer.
+ * They are transformed into domain intelligence state
+ * through MatchingStateAdapter.
+ *
+ * No dashboard logic.
+ * No persistence.
+ * ============================================================
+ */
 
-* ============================================================
-* Global Career AI
-* Matching Contracts V1.1
-* ============================================================
-*
-* Contracts representing Matching Engine output.
-*
-* These contracts belong to the engine layer.
-* They are transformed into domain intelligence state
-* through MatchingStateAdapter.
-*
-* No dashboard logic.
-* No persistence.
-* ============================================================
-  */
+import type {
+  JobIntelligence,
+} from "./intelligence/jobIntelligence";
+
 
 export interface MatchingExplanation {
-matched_skills: string[];
+  matched_skills: string[];
 
-matched_industries: string[];
+  matched_industries: string[];
 
-certifications: {
-whmis?: boolean;
+  certifications: {
+    whmis?: boolean;
 
-csts?: boolean;
+    csts?: boolean;
 
-first_aid?: boolean;
-
-
-};
+    first_aid?: boolean;
+  };
 }
+
 
 export interface MatchingResultItem {
-id: string;
+  id: string;
 
-title?: string;
+  title?: string;
 
-description?: string;
+  description?: string;
 
-industry?: string;
+  industry?: string;
 
-country?: string;
+  country?: string;
 
-category?: string;
+  category?: string;
 
-tags?: string;
+  tags?: string;
 
-match_score: number;
+  /**
+   * Structured intelligence derived from the real job.
+   *
+   * Preserved as job evidence/context for the
+   * Intelligence Core.
+   *
+   * Does not affect match_score.
+   */
+  jobIntelligence?: JobIntelligence;
 
-evidence_analysis: unknown;
+  match_score: number;
 
-match_reasons: string[];
+  evidence_analysis: unknown;
 
-match_explanation: MatchingExplanation;
+  match_reasons: string[];
+
+  match_explanation: MatchingExplanation;
 }
 
+
 export interface MatchingResult {
-items: MatchingResultItem[];
+  items: MatchingResultItem[];
 }

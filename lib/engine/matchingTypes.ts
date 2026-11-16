@@ -28,10 +28,60 @@ export type EvidenceRelevance =
   | "transferable"
   | "irrelevant";
 
+/**
+ * Actual support level of candidate evidence.
+ *
+ * declared:
+ * The candidate declared the skill, but no concrete
+ * supporting experience has been identified.
+ *
+ * experience_backed:
+ * The skill is supported by identifiable work or
+ * project experience.
+ *
+ * demonstrated:
+ * Concrete activities, responsibilities or results
+ * demonstrate the application of the skill.
+ */
+export type EvidenceLevel =
+  | "declared"
+  | "experience_backed"
+  | "demonstrated";
+
+/**
+ * Optional provenance information.
+ *
+ * Only real and available source information may be recorded.
+ * Missing information must remain undefined.
+ */
+export type EvidenceTraceability = {
+  section?: string;
+
+  excerpt?: string;
+
+  page?: number;
+
+  role?: string;
+
+  project?: string;
+
+  organization?: string;
+
+  recordId?: string;
+
+  documentId?: string;
+};
+
 export type CandidateEvidence = {
   skill: string;
 
   evidenceType: EvidenceType;
+
+  /**
+   * Actual support level of this evidence.
+   * This is independent of its relevance to a job.
+   */
+  evidenceLevel: EvidenceLevel;
 
   source: EvidenceSource;
 
@@ -48,6 +98,11 @@ export type CandidateEvidence = {
   industry?: string;
 
   confidence: EvidenceConfidence;
+
+  /**
+   * Optional reference to the real source of the evidence.
+   */
+  traceability?: EvidenceTraceability;
 };
 
 export type SkillEvidenceProfile = {

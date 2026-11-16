@@ -10,6 +10,14 @@ import type {
   LearningWeights,
 } from "@/lib/engine/learning/learningWeights.bridge";
 
+import type {
+  JobIntelligence,
+} from "./intelligence/jobIntelligence";
+
+import type {
+  CandidateEvidence,
+} from "@/lib/engine/matchingTypes";
+
 /**
  * ============================================================
  * Global Career AI
@@ -56,7 +64,17 @@ export interface CareerApplication {
 
   category?: string;
 
-  tags?: string;
+    tags?: string;
+
+  /**
+   * ============================================================
+   * JOB INTELLIGENCE
+   * ============================================================
+   *
+   * Structured intelligence derived from the real job.
+   */
+
+  jobIntelligence?: JobIntelligence;
 
   /**
    * ============================================================
@@ -104,7 +122,7 @@ export type ATSCriticality =
   | "important"
   | "supporting";
 
-  export type ATSRequirementCategory =
+export type ATSRequirementCategory =
   | "technical"
   | "experience"
   | "education"
@@ -283,7 +301,7 @@ export interface RankingResult {
 }
 
 
-// ============================
+ // ============================
 // DECISION DOMAIN
 // ============================
 
@@ -323,11 +341,30 @@ export interface CareerOrchestratorInput {
 
   tenantId: string;
 
+  /**
+   * Persisted CV analysis used as candidate evidence source.
+   * Optional to preserve compatibility with existing callers.
+   */
+  cvAnalysisId?: string;
+
   profile?: {
     professionalText?: string;
   };
 
   applications: CareerApplication[];
+
+  /**
+   * ============================================================
+   * JOB INTELLIGENCE
+   * ============================================================
+   *
+   * Structured intelligence derived from the real job.
+   *
+   * Optional to preserve compatibility with existing
+   * orchestrator consumers during the V1.0 integration.
+   */
+
+  jobIntelligence?: JobIntelligence;
 
   candidateSkills: string[];
 
@@ -407,6 +444,13 @@ export interface ApplicationInsightsResult {
 
 export interface OrchestratorResult {
   userId: string;
+
+    candidateCertificationCount: number;
+
+  /**
+   * Structured candidate evidence with source traceability.
+   */
+  candidateEvidence?: CandidateEvidence[];
 
   profile?: {
     professionalText?: string;

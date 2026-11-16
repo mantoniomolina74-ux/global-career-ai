@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -23,7 +23,7 @@ type AnalysisResult = {
   matchResults: JobMatch[];
 };
 
-export default function SubirCVPage() {
+function SubirCVContent() {
   const supabase = createSupabaseBrowserClient();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -34,33 +34,50 @@ export default function SubirCVPage() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const uploadCV = async () => {
+    const uploadCV = async (): Promise<string> => {
     if (!file) {
       throw new Error("No file selected");
     }
 
-    const fileName = `cvs/${crypto.randomUUID()}-${file.name}`;
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      throw new Error("Debes iniciar sesión");
+    }
+
+    if (
+      file.type !== "application/pdf" ||
+      !file.name.toLowerCase().endsWith(".pdf")
+    ) {
+      throw new Error("Selecciona un archivo PDF válido");
+    }
+
+    const maxSizeBytes = 10 * 1024 * 1024;
+
+    if (file.size <= 0 || file.size > maxSizeBytes) {
+      throw new Error("El PDF debe pesar como máximo 10 MiB");
+    }
+
+    const storagePath = `${user.id}/${crypto.randomUUID()}.pdf`;
 
     const { error: uploadError } = await supabase.storage
       .from("cvs")
-      .upload(fileName, file, {
-        cacheControl: "3600",
+      .upload(storagePath, file, {
+        cacheControl: "0",
         upsert: false,
+        contentType: "application/pdf",
       });
 
     if (uploadError) {
-      throw new Error(uploadError.message);
+      throw new Error(
+        `No se pudo subir el CV: ${uploadError.message}`
+      );
     }
 
-    const { data } = supabase.storage
-      .from("cvs")
-      .getPublicUrl(fileName);
-
-    if (!data?.publicUrl) {
-      throw new Error("No se pudo obtener URL pública");
-    }
-
-    return data.publicUrl;
+    return storagePath;
   };
 
   const saveJob = async (job: Job) => {
@@ -119,20 +136,17 @@ export default function SubirCVPage() {
         throw new Error("Selecciona un archivo PDF");
       }
 
-      // 1. Subir CV
-      const fileUrl = await uploadCV();
+            // 1. Subir CV al almacenamiento privado
+      const storagePath = await uploadCV();
 
-      console.log("CV URL:", fileUrl);
-
-      // 2. Analizar CV
+      // 2. Analizar CV usando la ruta privada
       const res = await fetch("/api/ai/analyze-cv", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          fileUrl,
-          user_id: user.id,
+          storagePath,
         }),
       });
 
@@ -153,7 +167,11 @@ export default function SubirCVPage() {
 
       // 3. El análisis terminó correctamente.
       //    El siguiente paso del flujo V1.0 es Dashboard.
-      router.push(jobId ? `/premium/demo?jobId=${encodeURIComponent(jobId)}` : "/premium/demo");
+      router.push(
+        jobId
+          ? `/premium/demo?jobId=${encodeURIComponent(jobId)}`
+          : "/premium/demo"
+      );
     } catch (err: unknown) {
       console.error(err);
 
@@ -255,140 +273,146 @@ export default function SubirCVPage() {
         </section>
 
         {(result?.matchResults?.length ?? 0) > 0 && (
-        <div style={{ marginTop: 40 }}>
-          <h2
-            style={{
-              fontSize: 22,
-              marginBottom: 20,
-            }}
-          >
-            💼 Empleos recomendados para ti
-          </h2>
+          <div style={{ marginTop: 40 }}>
+            <h2
+              style={{
+                fontSize: 22,
+                marginBottom: 20,
+              }}
+            >
+              💼 Empleos recomendados para ti
+            </h2>
 
-          {result!.matchResults.map(
-            (
-              item: JobMatch,
-              index: number
-            ) => {
-              const score = item.match;
+            {result!.matchResults.map(
+              (
+                item: JobMatch,
+                index: number
+              ) => {
+                const score = item.match;
 
-              let color = "#22c55e";
+                let color = "#22c55e";
 
-              if (score < 70) {
-                color = "#f59e0b";
-              }
+                if (score < 70) {
+                  color = "#f59e0b";
+                }
 
-              if (score < 50) {
-                color = "#ef4444";
-              }
+                if (score < 50) {
+                  color = "#ef4444";
+                }
 
-              return (
-                <div
-                  key={index}
-                  style={{
-                    background: "#fff",
-                    border: "1px solid #e5e7eb",
-                    borderRadius: 14,
-                    padding: 18,
-                    marginBottom: 16,
-                    boxShadow:
-                      "0 2px 8px rgba(0,0,0,0.05)",
-                  }}
-                >
+                return (
                   <div
+                    key={index}
                     style={{
-                      marginBottom: 10,
-                    }}
-                  >
-                    <h3
-                      style={{
-                        margin: 0,
-                        fontSize: 18,
-                      }}
-                    >
-                      {item.job.title}
-                    </h3>
-
-                    <p
-                      style={{
-                        margin: 0,
-                        color: "#6b7280",
-                      }}
-                    >
-                      {item.job.company}
-                    </p>
-                  </div>
-
-                  <div
-                    style={{
-                      marginBottom: 10,
+                      background: "#fff",
+                      border: "1px solid #e5e7eb",
+                      borderRadius: 14,
+                      padding: 18,
+                      marginBottom: 16,
+                      boxShadow:
+                        "0 2px 8px rgba(0,0,0,0.05)",
                     }}
                   >
                     <div
                       style={{
-                        height: 10,
-                        background: "#e5e7eb",
-                        borderRadius: 10,
-                        overflow: "hidden",
+                        marginBottom: 10,
+                      }}
+                    >
+                      <h3
+                        style={{
+                          margin: 0,
+                          fontSize: 18,
+                        }}
+                      >
+                        {item.job.title}
+                      </h3>
+
+                      <p
+                        style={{
+                          margin: 0,
+                          color: "#6b7280",
+                        }}
+                      >
+                        {item.job.company}
+                      </p>
+                    </div>
+
+                    <div
+                      style={{
+                        marginBottom: 10,
                       }}
                     >
                       <div
                         style={{
-                          width: `${score}%`,
-                          height: "100%",
-                          background: color,
+                          height: 10,
+                          background: "#e5e7eb",
+                          borderRadius: 10,
+                          overflow: "hidden",
                         }}
-                      />
+                      >
+                        <div
+                          style={{
+                            width: `${score}%`,
+                            height: "100%",
+                            background: color,
+                          }}
+                        />
+                      </div>
+
+                      <p
+                        style={{
+                          marginTop: 5,
+                          fontSize: 14,
+                        }}
+                      >
+                        Compatibilidad:{" "}
+                        <b>{score}%</b>
+                      </p>
                     </div>
 
                     <p
                       style={{
-                        marginTop: 5,
-                        fontSize: 14,
+                        fontSize: 13,
+                        color: "#4b5563",
                       }}
                     >
-                      Compatibilidad:{" "}
-                      <b>{score}%</b>
+                      Coincidencias:{" "}
+                      {item.reasons.join(", ") ||
+                        "N/A"}
                     </p>
+
+                    <button
+                      onClick={() =>
+                        saveJob(item.job)
+                      }
+                      style={{
+                        marginTop: 10,
+                        padding: "8px 14px",
+                        borderRadius: 8,
+                        border: "none",
+                        background: color,
+                        color: "white",
+                        cursor: "pointer",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      💾 Guardar empleo
+                    </button>
                   </div>
-
-                  <p
-                    style={{
-                      fontSize: 13,
-                      color: "#4b5563",
-                    }}
-                  >
-                    Coincidencias:{" "}
-                    {item.reasons.join(", ") ||
-                      "N/A"}
-                  </p>
-
-                  <button
-                    onClick={() =>
-                      saveJob(item.job)
-                    }
-                    style={{
-                      marginTop: 10,
-                      padding: "8px 14px",
-                      borderRadius: 8,
-                      border: "none",
-                      background: color,
-                      color: "white",
-                      cursor: "pointer",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    💾 Guardar empleo
-                  </button>
-                </div>
-              );
-            }
-          )}
-                </div>
-      )}
+                );
+              }
+            )}
+          </div>
+        )}
       </div>
     </main>
   );
 }
 
-
+export default function SubirCVPage() {
+  return (
+    <Suspense fallback={null}>
+      <SubirCVContent />
+    </Suspense>
+  );
+}

@@ -36,6 +36,10 @@ import type {
   MatchingInsight,
 } from "../contracts/dashboardContract";
 
+import {
+  getCandidateCertifications,
+} from "@/lib/db/repositories/certificationRepository";
+
 
 export interface MatchingDashboardContext {
 
@@ -137,98 +141,57 @@ export async function getMatchingDashboardInsight(
       : [];
 
 
+
   /**
    * ============================================================
    * STEP 1.1 — Candidate certifications
    * ============================================================
    *
    * Only active and non-expired certifications are considered.
-   * Ownership is explicitly restricted to the current user.
+   * Ownership is restricted to the current user.
    *
-   * The validity criteria match Premium ATS.
+   * Data retrieval and normalization are centralized in the
+   * certification repository.
    */
 
-  const {
-    data: certificationRecords,
-    error: certificationsError,
-  } = await supabaseServer
-    .from("certifications")
-    .select("name, status, expiry_date")
-    .eq(
-      "user_id",
-      context.userId
-    );
-
-
-  if (certificationsError) {
-
-    throw new Error(
-      `Error obteniendo certificaciones para Matching: ${certificationsError.message}`
-    );
-
-  }
-
+  const certificationRecords =
+    await getCandidateCertifications(context.userId);
 
   const today =
     new Date().toISOString().slice(0, 10);
 
-
   const uniqueCertifications =
     new Map<string, string>();
 
-
-  for (const certification of certificationRecords ?? []) {
-
-    const name =
-      typeof certification.name === "string"
-        ? certification.name.trim()
-        : "";
-
-
-    const status =
-      typeof certification.status === "string"
-        ? certification.status.trim().toLowerCase()
-        : "";
-
-
-    const expiryDate =
-      certification.expiry_date;
-
+  for (const certification of certificationRecords) {
+    const {
+      name,
+      status,
+      expiryDate,
+    } = certification;
 
     const isNotExpired =
-      expiryDate == null ||
-      (
-        typeof expiryDate === "string" &&
-        expiryDate >= today
-      );
-
+      expiryDate === null ||
+      expiryDate >= today;
 
     if (
       name.length === 0 ||
       status !== "active" ||
       !isNotExpired
     ) {
-
       continue;
-
     }
-
 
     const normalizedName =
       name.toLowerCase();
 
-
     if (!uniqueCertifications.has(normalizedName)) {
-
       uniqueCertifications.set(
         normalizedName,
         name
       );
-
     }
-
   }
-
 
   const candidateCertifications =
     Array.from(
@@ -243,19 +206,19 @@ export async function getMatchingDashboardInsight(
    */
 
   const {
-  data: jobs,
-  error: jobsError,
-} = await supabaseServer
-  .from("jobs")
-  .select("*")
-  .eq(
-    "source",
-    "hirebase"
-  )
-  .eq(
-    "country",
-    "Canada"
-  );
+    data: jobs,
+    error: jobsError,
+  } = await supabaseServer
+    .from("jobs")
+    .select("*")
+    .eq(
+      "source",
+      "hirebase"
+    )
+    .eq(
+      "country",
+      "Canada"
+    );
 
 
   console.log("[MATCHING JOBS DEBUG]", {
@@ -374,31 +337,31 @@ export async function getMatchingDashboardInsight(
    */
 
   const eligibleMatches =
-  result.items.filter(
-    (item) =>
-      item.match_score > 0
-  );
+    result.items.filter(
+      (item) =>
+        item.match_score > 0
+    );
 
 
-if (eligibleMatches.length === 0) {
+  if (eligibleMatches.length === 0) {
 
-  return {
+    return {
 
-    matchScore: 0,
+      matchScore: 0,
 
-    targetRoles: [],
+      targetRoles: [],
 
-    alignmentFactors: [],
+      alignmentFactors: [],
 
-    opportunities: [],
+      opportunities: [],
 
-  };
+    };
 
-}
+  }
 
 
-const topMatches =
-  eligibleMatches.slice(0, 5);
+  const topMatches =
+    eligibleMatches.slice(0, 5);
 
 
   const matchScore =

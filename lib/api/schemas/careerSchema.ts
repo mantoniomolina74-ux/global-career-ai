@@ -21,16 +21,6 @@ export const CareerRunSchema = z.object({
 
   /**
    * ============================================================
-   * USER
-   * ============================================================
-   */
-
-  userId:
-    z.string(),
-
-
-  /**
-   * ============================================================
    * PROFILE
    * ============================================================
    */
@@ -122,11 +112,6 @@ export const CareerRunSchema = z.object({
     ).optional(),
 
   candidateSkills:
-    z.array(
-      z.string()
-    ).optional(),
-
-  candidateCertifications:
     z.array(
       z.string()
     ).optional(),

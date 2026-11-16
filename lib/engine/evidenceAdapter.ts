@@ -1,3 +1,4 @@
+
 import { CandidateEvidence } from "./matchingTypes";
 
 export type CvEvidenceInput = {
@@ -15,9 +16,10 @@ export function buildCandidateEvidence(
     evidences.push({
       skill,
       evidenceType: "skill",
+      evidenceLevel: "declared",
       source: "skills_section",
       relevance: "direct",
-      confidence: "high",
+      confidence: "medium",
     });
   });
 
@@ -25,9 +27,10 @@ export function buildCandidateEvidence(
     evidences.push({
       skill: industry,
       evidenceType: "experience",
-      source: "work_experience",
+      evidenceLevel: "declared",
+      source: "other",
       relevance: "related",
-      confidence: "medium",
+      confidence: "low",
     });
   });
 
@@ -35,9 +38,10 @@ export function buildCandidateEvidence(
     evidences.push({
       skill: certification,
       evidenceType: "certification",
+      evidenceLevel: "declared",
       source: "certifications",
       relevance: "direct",
-      confidence: "high",
+      confidence: "medium",
     });
   });
 

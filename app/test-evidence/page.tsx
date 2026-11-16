@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -8,6 +9,7 @@ const testCases: CandidateEvidence[] = [
   {
     skill: "welding",
     evidenceType: "experience",
+    evidenceLevel: "experience_backed",
     source: "work_experience",
     relevance: "direct",
     yearsOfExperience: 5,
@@ -20,6 +22,7 @@ const testCases: CandidateEvidence[] = [
   {
     skill: "heavy equipment operation",
     evidenceType: "experience",
+    evidenceLevel: "demonstrated",
     source: "work_experience",
     relevance: "transferable",
     yearsOfExperience: 5,
@@ -32,12 +35,13 @@ const testCases: CandidateEvidence[] = [
   {
     skill: "electrical installation",
     evidenceType: "skill",
+    evidenceLevel: "declared",
     source: "skills_section",
     relevance: "irrelevant",
     yearsOfExperience: 5,
     role: "Office Administrator",
     industry: "Administration",
-    confidence: "high",
+    confidence: "medium",
     details: "Skill unrelated to target position",
   },
 ];

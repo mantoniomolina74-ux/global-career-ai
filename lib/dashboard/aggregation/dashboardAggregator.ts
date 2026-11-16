@@ -73,6 +73,143 @@ export interface DashboardContext {
 }
 
 
+/**
+ * ============================================================
+ * Dashboard Response Builder
+ * ============================================================
+ *
+ * Centralizes DashboardContract construction.
+ *
+ * This function does not execute intelligence.
+ * It only composes the intelligence already generated.
+ * ============================================================
+ */
+
+function buildDashboardResponse(
+  context: DashboardContext,
+  intelligence: DashboardIntelligence,
+  partialData: boolean
+): DashboardContract {
+
+  return buildDashboardContract({
+
+    metadata: {
+
+      version: "1.1",
+
+      userId:
+        context.userId,
+
+      tenantId:
+        context.tenantId,
+
+      generatedAt:
+        new Date().toISOString(),
+
+    },
+
+    executiveSummary: {
+
+      overallScore: 0,
+
+      careerPosition:
+        "INITIALIZING",
+
+      mainStrengths: [],
+
+      improvementAreas: [],
+
+    },
+
+    intelligence,
+
+    recommendations: {
+
+      priorityActions: [],
+
+      quickWins: [],
+
+      longTermGoals: [],
+
+    },
+
+    evidence: {
+
+      items: [],
+
+      overallConfidence: 0,
+
+    },
+
+    timeline: {
+
+      snapshots: [],
+
+      milestones: [],
+
+      improvements: [],
+
+      evolutionTrend:
+        "STARTING",
+
+    },
+
+    diagnostics: {
+
+      traceId:
+        crypto.randomUUID(),
+
+      processingTime: 0,
+
+      executionStatus:
+        "SUCCESS",
+
+      engineVersions: {},
+
+      warnings: [],
+
+      dataQuality: {
+
+        completeness: 0,
+
+        confidence: 0,
+
+        partialData,
+
+      },
+
+    },
+
+  });
+
+}
+
+
+/**
+ * ============================================================
+ * Dashboard Aggregator
+ * ============================================================
+ *
+ * Primary path:
+ *
+ * CareerState
+ *      ↓
+ * CareerState Dashboard Adapter
+ *      ↓
+ * DashboardContract
+ *
+ * Legacy fallback:
+ *
+ * Dashboard Services
+ *      ↓
+ * DashboardIntelligence
+ *      ↓
+ * DashboardContract
+ *
+ * CareerState takes precedence whenever available.
+ * ============================================================
+ */
+
 export async function aggregateDashboard(
   context: DashboardContext
 ): Promise<DashboardContract> {
@@ -82,20 +219,11 @@ export async function aggregateDashboard(
    * CAREER STATE PATH
    * ==========================================================
    *
-   * CareerState is the primary source of intelligence.
+   * CareerState is the primary intelligence source.
    *
-   * When available, do not execute Dashboard services again.
-   * CareerState already contains:
-   *
-   * - ATSState
-   * - MatchingState
-   * - CompetencyState
-   * - KnowledgeState
-   * - ApplicationState
-   * - Learning
-   * - Decision
-   *
-   * This prevents duplicate intelligence execution.
+   * When CareerState is available, Dashboard services are not
+   * executed again. This prevents duplicate intelligence
+   * execution.
    */
 
   if (context.careerState) {
@@ -105,97 +233,11 @@ export async function aggregateDashboard(
         context.careerState
       );
 
-    return buildDashboardContract({
-
-      metadata: {
-
-        version: "1.1",
-
-        userId:
-          context.userId,
-
-        tenantId:
-          context.tenantId,
-
-        generatedAt:
-          new Date().toISOString(),
-
-      },
-
-      executiveSummary: {
-
-        overallScore: 0,
-
-        careerPosition:
-          "INITIALIZING",
-
-        mainStrengths: [],
-
-        improvementAreas: [],
-
-      },
-
-      intelligence:
-        dashboardIntelligence,
-
-      recommendations: {
-
-        priorityActions: [],
-
-        quickWins: [],
-
-        longTermGoals: [],
-
-      },
-
-      evidence: {
-
-        items: [],
-
-        overallConfidence: 0,
-
-      },
-
-      timeline: {
-
-        snapshots: [],
-
-        milestones: [],
-
-        improvements: [],
-
-        evolutionTrend:
-          "STARTING",
-
-      },
-
-      diagnostics: {
-
-        traceId:
-          crypto.randomUUID(),
-
-        processingTime: 0,
-
-        executionStatus:
-          "SUCCESS",
-
-        engineVersions: {},
-
-        warnings: [],
-
-        dataQuality: {
-
-          completeness: 0,
-
-          confidence: 0,
-
-          partialData: false,
-
-        },
-
-      },
-
-    });
+    return buildDashboardResponse(
+      context,
+      dashboardIntelligence,
+      false
+    );
 
   }
 
@@ -205,8 +247,8 @@ export async function aggregateDashboard(
    * LEGACY FALLBACK PATH
    * ==========================================================
    *
-   * Preserved temporarily for consumers that do not yet
-   * provide CareerState.
+   * Preserved for consumers that do not yet provide
+   * CareerState.
    */
 
   const [
@@ -306,96 +348,10 @@ export async function aggregateDashboard(
   };
 
 
-  return buildDashboardContract({
-
-    metadata: {
-
-      version: "1.1",
-
-      userId:
-        context.userId,
-
-      tenantId:
-        context.tenantId,
-
-      generatedAt:
-        new Date().toISOString(),
-
-    },
-
-    executiveSummary: {
-
-      overallScore: 0,
-
-      careerPosition:
-        "INITIALIZING",
-
-      mainStrengths: [],
-
-      improvementAreas: [],
-
-    },
-
-    intelligence:
-      dashboardIntelligence,
-
-    recommendations: {
-
-      priorityActions: [],
-
-      quickWins: [],
-
-      longTermGoals: [],
-
-    },
-
-    evidence: {
-
-      items: [],
-
-      overallConfidence: 0,
-
-    },
-
-    timeline: {
-
-      snapshots: [],
-
-      milestones: [],
-
-      improvements: [],
-
-      evolutionTrend:
-        "STARTING",
-
-    },
-
-    diagnostics: {
-
-      traceId:
-        crypto.randomUUID(),
-
-      processingTime: 0,
-
-      executionStatus:
-        "SUCCESS",
-
-      engineVersions: {},
-
-      warnings: [],
-
-      dataQuality: {
-
-        completeness: 0,
-
-        confidence: 0,
-
-        partialData: true,
-
-      },
-
-    },
-
-  });
+  return buildDashboardResponse(
+    context,
+    dashboardIntelligence,
+    true
+  );
 
 }

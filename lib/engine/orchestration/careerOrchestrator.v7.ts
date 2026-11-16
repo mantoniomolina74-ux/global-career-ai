@@ -20,6 +20,11 @@ import {
   analyzeMatchingProfile,
 } from "@/lib/engine/services/matchingProfileService";
 
+import {
+  buildPremiumCandidateEvidence,
+} from "@/lib/engine/intelligence/premiumCandidateEvidenceBuilder";
+
+
 import { getLearningWeights } from "@/lib/engine/learning/learningWeights.bridge";
 
 
@@ -91,9 +96,8 @@ export async function runCareerOrchestratorV7(
 
             atsScore:
               Math.round(
-                ats.data.atsScore *
-                weights.atsMultiplier
-              ),
+              ats.data.atsScore
+             ),
             semanticScore:
               ats.data.semanticScore,
           };
@@ -277,7 +281,10 @@ export async function runCareerOrchestratorV7(
   const decisions =
     ranking.items.map(
       (item) =>
-        resolveDecision(item)
+        resolveDecision({
+          ...item,
+          total: ranking.items.length,
+        })
     );
 
 
@@ -342,7 +349,24 @@ export async function runCareerOrchestratorV7(
   userId:
     input.userId,
 
-  profile:
+      candidateCertificationCount:
+    (input.candidateCertifications ?? []).filter(
+      (certification) =>
+        typeof certification === "string" &&
+        certification.trim().length > 0
+    ).length,
+
+      candidateEvidence:
+    input.cvAnalysisId
+      ? buildPremiumCandidateEvidence({
+          cvAnalysisId: input.cvAnalysisId,
+          candidateSkills: input.candidateSkills ?? [],
+          professionalText:
+            input.profile?.professionalText ?? "",
+        })
+            : undefined,
+
+        profile:
     input.profile,
 
   ats:

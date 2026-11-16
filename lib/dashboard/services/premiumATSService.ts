@@ -19,6 +19,10 @@ import type { CareerEvolutionInsight } from "../contracts/careerEvolutionContrac
 import type { ATSState } from "@/lib/engine/contracts/intelligence/atsState";
 import type { CareerState } from "@/lib/engine/contracts/careerState";
 
+import {
+  buildJobIntelligence,
+} from "@/lib/engine/intelligence/jobIntelligenceBuilder";
+
 import type {
   CareerApplication,
   CareerOrchestratorInput,
@@ -69,10 +73,6 @@ import {
 } from "@/lib/supabase-server";
 
 import {
-  extractCVText,
-} from "@/lib/extract-cv";
-
-import {
   calculateATS,
 } from "@/lib/engine/applications/atsEngine";
 
@@ -84,6 +84,13 @@ import {
   analyzeKnowledgeProfile,
 } from "@/lib/knowledge/services/knowledgeProfileService";
 
+import {
+  extractPrivateCVText,
+} from "@/lib/cv/privateCVService";
+
+import {
+  getCandidateCertifications,
+} from "@/lib/db/repositories/certificationRepository";
 
 export interface PremiumATSOpportunitySource {
 
@@ -131,15 +138,11 @@ export interface PremiumATSData {
 
 
 type CVAnalysisRecord = {
-
+  id: string;
   ats_score?: number | null;
-
-  file_url?: string | null;
-
+  storage_path?: string | null;
   skills?: string[] | string | null;
-
   industries?: string[] | string | null;
-
 };
 
 
@@ -196,7 +199,7 @@ async function getLatestCVAnalysis(
     error,
   } = await supabaseServer
     .from("cv_analyses")
-    .select("ats_score, skills, industries, file_url")
+    .select("id, ats_score, skills, industries, storage_path")
     .eq("user_id", userId)
     .order("created_at", {
       ascending: false,
@@ -217,6 +220,52 @@ async function getLatestCVAnalysis(
     : null;
 
 }
+
+async function getActiveCandidateCertifications(
+  userId: string
+): Promise<string[]> {
+  const certificationRecords =
+    await getCandidateCertifications(userId);
+
+  const today =
+    new Date().toISOString().slice(0, 10);
+
+  const uniqueCertifications =
+    new Map<string, string>();
+
+  for (const certification of certificationRecords) {
+    const {
+      name,
+      status,
+      expiryDate,
+    } = certification;
+
+    const isNotExpired =
+      expiryDate === null ||
+      expiryDate >= today;
+
+    if (
+      name.length === 0 ||
+      status !== "active" ||
+      !isNotExpired
+    ) {
+      continue;
+    }
+
+    const normalizedName =
+      name.toLowerCase();
+
+    if (!uniqueCertifications.has(normalizedName)) {
+      uniqueCertifications.set(
+        normalizedName,
+        name
+      );
+    }
+  }
+
+  return Array.from(uniqueCertifications.values());
+}
+
 
 
 async function buildCareerApplications(
@@ -248,37 +297,46 @@ async function buildCareerApplications(
       continue;
     }
 
-    careerApplications.push({
+    const jobIntelligence =
+  buildJobIntelligence(job);
 
-      applicationId:
-        String(application.id),
+careerApplications.push({
 
-      title:
-        job.title ??
-        application.position,
+  applicationId:
+    String(application.id),
 
-      industry:
-        job.industry ??
-        application.industry,
+  title:
+    job.title ??
+    application.position,
 
-      country:
-        job.country ??
-        application.country,
+  industry:
+    job.industry ??
+    application.industry,
 
-      category: job.category ?? undefined,
+  country:
+    job.country ??
+    application.country,
 
-      tags: job.tags ?? undefined,
+  category:
+    job.category ??
+    undefined,
 
-      candidateSkills,
+  tags:
+    job.tags ??
+    undefined,
 
-      jobDescription:
-        [job.title, job.description]
-          .filter(Boolean)
-          .join("\n"),
+  candidateSkills,
 
-      cvStrengthScore,
+  jobDescription:
+    [job.title, job.description]
+      .filter(Boolean)
+      .join("\n"),
 
-    });
+  cvStrengthScore,
+
+  jobIntelligence,
+
+});
 
   }
 
@@ -331,26 +389,19 @@ async function runPremiumCareerIntelligence(
 
   }
 
-  let professionalText = "";
+      let professionalText = "";
 
-  if (cv.file_url) {
-
-    const response = await fetch(cv.file_url);
-
-    if (!response.ok) {
-      throw new Error(
-        `Failed to download CV: ${response.status} ${response.statusText}`
-      );
-    }
-
-    const arrayBuffer = await response.arrayBuffer();
-
+  if (cv.storage_path) {
     professionalText =
-      await extractCVText(
-        Buffer.from(arrayBuffer)
+      await extractPrivateCVText(
+        userId,
+        cv.storage_path
       );
-
   }
+    const candidateCertifications =
+    await getActiveCandidateCertifications(
+      userId
+    );
 
   const orchestratorInput:
     CareerOrchestratorInput = {
@@ -359,6 +410,7 @@ async function runPremiumCareerIntelligence(
 
       tenantId:
         userId,
+        cvAnalysisId: cv.id,
 
       profile: {
         professionalText,
@@ -368,7 +420,7 @@ async function runPremiumCareerIntelligence(
 
       candidateSkills,
 
-      candidateCertifications: [],
+      candidateCertifications,
 
       requiredSkills: [],
 
@@ -395,23 +447,8 @@ async function runPremiumCareerIntelligence(
     tenantId: userId,
   });
   
-console.log(
-  "=== LEARNING INSIGHT BEFORE ASSIGNMENT ===",
-  JSON.stringify(learningInsight, null, 2)
-);
 careerState.intelligence.learning =
   learningInsight;
-
-  console.log(
-    "=== PREMIUM KNOWLEDGE DEBUG ===",
-    JSON.stringify({
-      fileUrlExists: Boolean(cv.file_url),
-      professionalTextLength:
-        orchestratorResult.profile?.professionalText?.length ?? 0,
-      knowledge:
-        careerState.intelligence.knowledge,
-    }, null, 2)
-  );
 
   return {
     careerState,
@@ -864,27 +901,15 @@ export async function getPremiumATSInsight(
           ? cv.ats_score
           : 50;
 
-      let professionalText = "";
+           let professionalText = "";
 
-      if (cv.file_url) {
-
-        const response = await fetch(cv.file_url);
-
-        if (!response.ok) {
-          throw new Error(
-            `Failed to download CV: ${response.status} ${response.statusText}`
-          );
-        }
-
-        const arrayBuffer =
-          await response.arrayBuffer();
-
-        professionalText =
-          await extractCVText(
-            Buffer.from(arrayBuffer)
-          );
-
-      }
+            if (cv.storage_path) {
+              professionalText =
+                await extractPrivateCVText(
+                  userId,
+                  cv.storage_path
+                );
+            }
 
       const requiredSkills =
         extractJobRequirements(
@@ -903,21 +928,18 @@ export async function getPremiumATSInsight(
         );
 
       console.log(
-        "=== OPPORTUNITY ATS DEBUG ===",
-        JSON.stringify(
-          {
-            jobId,
-            jobTitle: job.title,
-            candidateSkills,
-            cvStrengthScore,
-            professionalTextLength: professionalText.length,
-            requiredSkills,
-            evidence: ats.data.evidence,
-          },
-          null,
-          2
-        )
-      );
+  "=== OPPORTUNITY ATS DEBUG ===",
+  JSON.stringify(
+    {
+      jobId,
+      jobTitle: job.title,
+      cvStrengthScore,
+      professionalTextLength: professionalText.length,
+    },
+    null,
+    2
+  )
+);
 
       opportunityATS = {
 

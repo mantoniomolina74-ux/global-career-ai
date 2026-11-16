@@ -158,7 +158,7 @@ export async function POST(
     const normalizedInput = {
 
       userId:
-        parsed.data.userId,
+        saasContext.user.userId,
 
 
       tenantId:
@@ -180,7 +180,7 @@ export async function POST(
 
 
       candidateCertifications:
-        parsed.data.candidateCertifications ?? [],
+        [],
 
       requiredSkills:
         parsed.data.requiredSkills ?? [],
@@ -229,6 +229,9 @@ export async function POST(
             applicationId:
               app.applicationId ??
               `app-${Date.now()}`,
+
+            userId:
+              saasContext.user.userId,
 
 
             /**

@@ -1,7 +1,16 @@
-﻿import Link from "next/link";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { getDashboardData } from "@/lib/dashboard/dashboardAdapter.v1";
 import { createSupabaseServerAuth } from "@/lib/supabase/server";
+
+async function logout() {
+  "use server";
+
+  const supabase = await createSupabaseServerAuth();
+  await supabase.auth.signOut();
+  redirect("/login");
+}
 
 export default async function DashboardPage() {
   const supabase = await createSupabaseServerAuth();
@@ -129,10 +138,20 @@ export default async function DashboardPage() {
 
         {/* HEADER */}
         <header className="mb-10">
-          <div className="mb-3 inline-flex rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs font-medium uppercase tracking-wider text-slate-400">
-            Career Intelligence
-          </div>
+          <div className="flex items-center justify-between gap-4 mb-3">
+            <div className="inline-flex rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs font-medium uppercase tracking-wider text-slate-400">
+              Career Intelligence
+            </div>
 
+            <form action={logout}>
+              <button
+                type="submit"
+                className="rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:bg-slate-800"
+              >
+                CERRAR SESIÓN
+              </button>
+            </form>
+          </div>
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
             Your professional intelligence
           </h1>
@@ -757,4 +776,3 @@ export default async function DashboardPage() {
     </main>
   );
 }
-

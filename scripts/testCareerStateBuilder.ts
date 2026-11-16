@@ -7,9 +7,9 @@
  * Validates:
  *
  * OrchestratorResult
- *        â†“
+ *        ↓
  * CareerStateBuilder
- *        â†“
+ *        ↓
  * CareerState
  *
  * No external dependencies.
@@ -25,6 +25,8 @@ import {
 
 const mockResult: OrchestratorResult = {
   userId: "test-user",
+
+  candidateCertificationCount: 3,
 
   applications: [],
 
@@ -139,7 +141,13 @@ if (!careerState.intelligence.ats) {
 }
 
 
-console.log(
-  "âœ… CareerState Builder validation passed"
-);
+if (careerState.readiness.certificationCount !== 3) {
+  throw new Error(
+    `Expected certificationCount to be 3, received ${careerState.readiness.certificationCount}`
+  );
+}
 
+
+console.log(
+  "CareerState Builder validation passed"
+);
