@@ -13,6 +13,9 @@ import {
 } from "@/lib/jobs/getJobById";
 import { getLatestCandidateCV } from "@/lib/db/repositories/cvRepository";
 import {
+  getActiveCandidateCertificationNames,
+} from "@/lib/enterprise/certificationService";
+import {
   extractPrivateCVText,
 } from "@/lib/cv/privateCVService";
 import { buildJobIntelligence } from "@/lib/engine/intelligence/jobIntelligenceBuilder";
@@ -112,13 +115,18 @@ async function buildApplicationIntelligence(
   const jobIntelligence =
     buildJobIntelligence(job);
 
+  const candidateCertifications =
+    await getActiveCandidateCertificationNames(
+      application.user_id
+    );
+
   const candidateEvidence =
     buildCandidateEvidenceForJob({
       candidateSkills,
       candidateIndustries,
       professionalText:
         candidateProfessionalText,
-      candidateCertifications: [],
+      candidateCertifications,
       jobText:
         jobIntelligence.description ?? "",
       experienceYears,

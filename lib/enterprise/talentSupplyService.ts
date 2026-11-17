@@ -1,9 +1,12 @@
-import {
+﻿import {
   getOrganizationMembers,
   type EnterpriseOrganizationMember,
 } from "@/lib/enterprise/organizationService";
 
 import { getLatestCandidateCV } from "@/lib/db/repositories/cvRepository";
+import {
+  getActiveCandidateCertificationNames,
+} from "@/lib/enterprise/certificationService";
 
 import {
   buildCandidateEvidence,
@@ -135,13 +138,18 @@ async function buildMemberSupplyRecord(
     };
   }
 
+  const candidateCertifications =
+    await getActiveCandidateCertificationNames(
+      member.user_id
+    );
+
   const evidence =
     buildCandidateEvidence({
       skills:
         candidateCV.skills,
       industries:
         candidateCV.industries,
-      candidateCertifications: [],
+      candidateCertifications,
     });
 
   return {

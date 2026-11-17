@@ -1,4 +1,4 @@
-﻿import type {
+import type {
   ATSPremiumInsight,
   CareerHealthInsight,
   MarketReadinessInsight,
@@ -89,8 +89,8 @@ import {
 } from "@/lib/cv/privateCVService";
 
 import {
-  getCandidateCertifications,
-} from "@/lib/db/repositories/certificationRepository";
+  getActiveCandidateCertificationNames,
+} from "@/lib/enterprise/certificationService";
 
 export interface PremiumATSOpportunitySource {
 
@@ -221,50 +221,6 @@ async function getLatestCVAnalysis(
 
 }
 
-async function getActiveCandidateCertifications(
-  userId: string
-): Promise<string[]> {
-  const certificationRecords =
-    await getCandidateCertifications(userId);
-
-  const today =
-    new Date().toISOString().slice(0, 10);
-
-  const uniqueCertifications =
-    new Map<string, string>();
-
-  for (const certification of certificationRecords) {
-    const {
-      name,
-      status,
-      expiryDate,
-    } = certification;
-
-    const isNotExpired =
-      expiryDate === null ||
-      expiryDate >= today;
-
-    if (
-      name.length === 0 ||
-      status !== "active" ||
-      !isNotExpired
-    ) {
-      continue;
-    }
-
-    const normalizedName =
-      name.toLowerCase();
-
-    if (!uniqueCertifications.has(normalizedName)) {
-      uniqueCertifications.set(
-        normalizedName,
-        name
-      );
-    }
-  }
-
-  return Array.from(uniqueCertifications.values());
-}
 
 
 
@@ -398,8 +354,8 @@ async function runPremiumCareerIntelligence(
         cv.storage_path
       );
   }
-    const candidateCertifications =
-    await getActiveCandidateCertifications(
+  const candidateCertifications =
+    await getActiveCandidateCertificationNames(
       userId
     );
 

@@ -37,8 +37,8 @@ import type {
 } from "../contracts/dashboardContract";
 
 import {
-  getCandidateCertifications,
-} from "@/lib/db/repositories/certificationRepository";
+  getActiveCandidateCertificationNames,
+} from "@/lib/enterprise/certificationService";
 
 
 export interface MatchingDashboardContext {
@@ -150,54 +150,14 @@ export async function getMatchingDashboardInsight(
    * Only active and non-expired certifications are considered.
    * Ownership is restricted to the current user.
    *
-   * Data retrieval and normalization are centralized in the
-   * certification repository.
+   * Active certification filtering is centralized in the
+   * certification service.
    */
 
-  const certificationRecords =
-    await getCandidateCertifications(context.userId);
-
-  const today =
-    new Date().toISOString().slice(0, 10);
-
-  const uniqueCertifications =
-    new Map<string, string>();
-
-  for (const certification of certificationRecords) {
-    const {
-      name,
-      status,
-      expiryDate,
-    } = certification;
-
-    const isNotExpired =
-      expiryDate === null ||
-      expiryDate >= today;
-
-    if (
-      name.length === 0 ||
-      status !== "active" ||
-      !isNotExpired
-    ) {
-      continue;
-    }
-
-    const normalizedName =
-      name.toLowerCase();
-
-    if (!uniqueCertifications.has(normalizedName)) {
-      uniqueCertifications.set(
-        normalizedName,
-        name
-      );
-    }
-  }
-
   const candidateCertifications =
-    Array.from(
-      uniqueCertifications.values()
+    await getActiveCandidateCertificationNames(
+      context.userId
     );
-
 
   /**
    * ============================================================
