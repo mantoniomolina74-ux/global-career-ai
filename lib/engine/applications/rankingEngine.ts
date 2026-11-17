@@ -43,19 +43,23 @@ export function runRankingEngine(
 
   /**
    * ============================================================
-   * STEP 2 — STABLE SORT (ANTI FLUCTUATION)
+   * STEP 2 — DETERMINISTIC STABLE SORT
    * ============================================================
+   *
+   * Higher normalized scores rank first.
+   * Exact ties preserve the original input order.
    */
-  const sorted = [...normalized].sort((a, b) => {
-    const diff = b.normalizedScore - a.normalizedScore;
+  const sorted = normalized
+    .map((item, index) => ({ item, index }))
+    .sort((a, b) => {
+      const diff =
+        b.item.normalizedScore - a.item.normalizedScore;
 
-    // stability threshold → avoids micro rank flips
-    if (Math.abs(diff) < 1.5) {
-      return 0;
-    }
-
-    return diff;
-  });
+      return diff !== 0
+        ? diff
+        : a.index - b.index;
+    })
+    .map(({ item }) => item);
 
   /**
    * ============================================================

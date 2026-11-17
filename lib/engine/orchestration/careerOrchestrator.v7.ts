@@ -89,6 +89,7 @@ export async function runCareerOrchestratorV7(
 
           return {
             ...app,
+            score: Math.round(ats.data.atsScore),
 
             atsResult: {
               ...ats.data,
